@@ -28,7 +28,7 @@ const Auth = {
   async logout() {
     const { error } = await db.auth.signOut();
     if (error) throw error;
-    window.location.href = '/login.html';
+    window.location.href = '/iit-ordenes-servicio-v2/login.html';
   },
 
   // Obtener sesión actual
@@ -56,19 +56,19 @@ const Auth = {
   async requireAuth(rolRequerido = null) {
     const session = await Auth.getSession();
     if (!session) {
-      window.location.href = '/login.html';
+      window.location.href = '/iit-ordenes-servicio-v2/login.html';
       return null;
     }
 
     const user = await Auth.getUser();
     if (!user) {
-      window.location.href = '/login.html';
+      window.location.href = '/iit-ordenes-servicio-v2/login.html';
       return null;
     }
 
     // Verificar rol si se especifica
     if (rolRequerido && user.rol !== rolRequerido && user.rol !== 'admin') {
-      window.location.href = '/login.html';
+      window.location.href = '/iit-ordenes-servicio-v2/login.html';
       return null;
     }
 
