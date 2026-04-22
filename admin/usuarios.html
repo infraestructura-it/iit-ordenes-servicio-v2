@@ -299,7 +299,8 @@ function renderCards(){
       extraData += dataRow('Telefono', u.clientes.telefono||'--');
       extraData += dataRow('Ciudad', u.clientes.ciudad||'--');
       extraData += '<div class="data-row"><span class="data-label">CODIGO ACCESO</span></div>';
-      extraData += '<div class="codigo-box" style="margin:6px 0;">'+(u.clientes.codigo_acceso||'--')+'<button class="copy-btn" onclick="copiar(''+u.clientes.codigo_acceso+'')">&#128203;</button></div>';
+      const cod = u.clientes.codigo_acceso||'--';
+      extraData += '<div class="codigo-box" style="margin:6px 0;">'+cod+'<button class="copy-btn" onclick="copiar(this.dataset.cod)" data-cod="'+cod+'">&#128203;</button></div>';
     }
     if(u.rol==='tecnico' && u.tecnicos){
       const esps = u.tecnicos.especialidades||[];
@@ -324,9 +325,8 @@ function renderCards(){
         extraData+
       '</div>'+
       '<div class="card-actions">'+
-        (u.rol!=='admin'?'<button class="btn btn-danger" style="font-size:10px;padding:6px 10px;" onclick="toggleActivo(''+u.id+'','+activo+')">'+
-          (activo?'DESACTIVAR':'ACTIVAR')+'</button>':'')+
-        (u.rol==='cliente'?'<button class="btn btn-o" style="font-size:10px;padding:6px 10px;" onclick="reenviarCodigo(''+u.id+'',''+u.email+'',''+(u.clientes&&u.clientes.codigo_acceso?u.clientes.codigo_acceso:'')+'')">REENVIAR CODIGO</button>':'')+
+        (u.rol!=='admin'?'<button class="btn btn-danger" style="font-size:10px;padding:6px 10px;" onclick="toggleActivo(this.dataset.id,this.dataset.activo===\'true\')" data-id="'+u.id+'" data-activo="'+activo+'">'+(activo?'DESACTIVAR':'ACTIVAR')+'</button>':'')+
+        (u.rol==='cliente'?'<button class="btn btn-o" style="font-size:10px;padding:6px 10px;" onclick="reenviarCodigo(this.dataset.id,this.dataset.email,this.dataset.cod)" data-id="'+u.id+'" data-email="'+u.email+'" data-cod="'+(u.clientes&&u.clientes.codigo_acceso?u.clientes.codigo_acceso:'')+'" >REENVIAR CODIGO</button>':'')+
       '</div>'+
     '</div>';
   }).join('');
