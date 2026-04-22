@@ -78,11 +78,11 @@ const Auth = {
   // Redirigir según rol
   redirectByRol(rol) {
     const rutas = {
-      admin:   '/admin/dashboard.html',
-      tecnico: '/tecnico/dashboard.html',
-      cliente: '/cliente/dashboard.html'
+      admin:   '/iit-ordenes-servicio-v2/admin/dashboard.html',
+      tecnico: '/iit-ordenes-servicio-v2/tecnico/dashboard.html',
+      cliente: '/iit-ordenes-servicio-v2/cliente/dashboard.html'
     };
-    window.location.href = rutas[rol] || '/login.html';
+    window.location.href = rutas[rol] || '/iit-ordenes-servicio-v2/login.html';
   }
 };
 
