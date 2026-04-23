@@ -203,6 +203,7 @@ td{padding:13px 16px;font-size:12px;vertical-align:middle;}
       <h2 id="modalTitle">OS-000000</h2>
       <div style="display:flex;gap:8px;align-items:center;">
         <span id="modalBadge" class="badge"></span>
+        <button class="btn btn-o btn-sm" id="btnPdfOrden" style="border-color:rgba(0,229,160,0.3);color:var(--success);">&#8659; PDF</button>
         <button class="btn btn-o btn-sm" id="btnCloseModal">CERRAR</button>
       </div>
     </div>
@@ -212,6 +213,8 @@ td{padding:13px 16px;font-size:12px;vertical-align:middle;}
 
 <script src="../assets/supabase.js"></script>
 <script src="../assets/auth.js"></script>
+<script src="../assets/excel.js"></script>
+<script src="../assets/pdf.js"></script>
 <script>
 let _user=null,_ordenes=[],_tecnicos=[],_ordenActual=null;
 
@@ -228,6 +231,12 @@ function setupEvents(){
   document.getElementById('filterPri').addEventListener('change',renderTabla);
   document.getElementById('btnRefresh').addEventListener('click',loadOrdenes);
   document.getElementById('btnCloseModal').addEventListener('click',closeModal);
+  document.getElementById('btnPdfOrden').addEventListener('click', async () => {
+    if (!_ordenActual) return;
+    toast('Generando PDF...','info');
+    const hist = await Ordenes.getHistorial(_ordenActual.id).catch(()=>[]);
+    await exportarPDFOrden(_ordenActual, hist);
+  });
   document.getElementById('modalOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
   document.getElementById('notifBtn').addEventListener('click',()=>document.getElementById('notifPanel').classList.toggle('open'));
   document.getElementById('markAllBtn').addEventListener('click',marcarTodasLeidas);
@@ -236,8 +245,16 @@ function setupEvents(){
   document.getElementById('stCardPend').addEventListener('click',()=>filtrar('pendiente',''));
   document.getElementById('stCardProc').addEventListener('click',()=>filtrar('en_proceso',''));
   document.getElementById('stCardCrit').addEventListener('click',()=>filtrar('','critica'));
-  document.getElementById('nav-excel').addEventListener('click',()=>toast('Excel — disponible proxima version','info'));
-  document.getElementById('nav-pdf').addEventListener('click',()=>toast('PDF — disponible proxima version','info'));
+  document.getElementById('nav-excel').addEventListener('click', async () => {
+    if (!_ordenes.length) { toast('No hay ordenes para exportar','error'); return; }
+    toast('Generando Excel...','info');
+    await exportarExcelOrdenes(_ordenes,'admin');
+  });
+  document.getElementById('nav-pdf').addEventListener('click', async () => {
+    if (!_ordenes.length) { toast('No hay ordenes para exportar','error'); return; }
+    toast('Generando PDF...','info');
+    await exportarPDFListado(_ordenes,'Reporte Admin — Todas las Ordenes');
+  });
 }
 
 async function loadOrdenes(){
