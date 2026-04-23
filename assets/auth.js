@@ -46,21 +46,28 @@ function renderUserInfo(user) {
   const rolLabel = { admin: 'Administrador', tecnico: 'Técnico', cliente: 'Cliente' };
   const rolColor = { admin: '#00d4ff', tecnico: '#0077ff', cliente: '#00e5a0' };
 
+  const rutas = {
+    admin:   '/iit-ordenes-servicio-v2/admin/dashboard.html',
+    tecnico: '/iit-ordenes-servicio-v2/tecnico/dashboard.html',
+    cliente: '/iit-ordenes-servicio-v2/cliente/dashboard.html'
+  };
+  const perfilUrl = '/iit-ordenes-servicio-v2/perfil.html';
+
   el.innerHTML = `
     <div style="display:flex;align-items:center;gap:12px;">
-      <div style="text-align:right;">
+      <a href="${perfilUrl}" style="text-align:right;text-decoration:none;">
         <div style="font-size:13px;font-weight:600;color:var(--text);">${user.nombre}</div>
         <div style="font-size:10px;color:${rolColor[user.rol]};letter-spacing:1px;">
           ${rolLabel[user.rol] || user.rol}
         </div>
-      </div>
-      <div style="
+      </a>
+      <a href="${perfilUrl}" style="
         width:36px;height:36px;border-radius:50%;
         background:linear-gradient(135deg,#0077ff,#00d4ff);
         display:flex;align-items:center;justify-content:center;
         font-weight:700;font-size:14px;color:#080b10;
-        flex-shrink:0;
-      ">${user.nombre.charAt(0).toUpperCase()}</div>
+        flex-shrink:0;text-decoration:none;
+      ">${user.nombre.charAt(0).toUpperCase()}</a>
       <button onclick="Auth.logout()" style="
         background:none;border:1px solid var(--border);
         border-radius:6px;padding:6px 10px;
