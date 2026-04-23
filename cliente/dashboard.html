@@ -153,6 +153,8 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
   <div class="sec-head">
     <span class="sec-title">MIS ORDENES DE SERVICIO</span>
     <button class="btn-o" id="btnRefresh">&#8635; Actualizar</button>
+    <button class="btn-o" id="btnExcel" style="border-color:rgba(0,229,160,0.3);color:var(--success);">&#128217; Excel</button>
+    <button class="btn-o" id="btnPdf" style="border-color:rgba(0,119,255,0.3);color:var(--accent2);">&#128196; PDF</button>
   </div>
 
   <div class="filters">
@@ -169,6 +171,8 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
 
 <script src="../assets/supabase.js"></script>
 <script src="../assets/auth.js"></script>
+<script src="../assets/excel.js"></script>
+<script src="../assets/pdf.js"></script>
 <script>
 let _user = null, _cliente = null, _ordenes = [], _filtro = 'all';
 
@@ -272,6 +276,16 @@ function renderOrdenes() {
 
 function setupEvents() {
   document.getElementById('btnRefresh').addEventListener('click', loadOrdenes);
+  document.getElementById('btnExcel').addEventListener('click', async () => {
+    if (!_ordenes.length) { toast('No hay ordenes para exportar','error'); return; }
+    toast('Generando Excel...','info');
+    await exportarExcelOrdenes(_ordenes, 'cliente');
+  });
+  document.getElementById('btnPdf').addEventListener('click', async () => {
+    if (!_ordenes.length) { toast('No hay ordenes para exportar','error'); return; }
+    toast('Generando PDF...','info');
+    await exportarPDFListado(_ordenes, 'Mis Ordenes de Servicio — ' + (_user?.nombre||'Cliente'));
+  });
   document.querySelectorAll('.fbtn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.fbtn').forEach(b => b.classList.remove('active'));

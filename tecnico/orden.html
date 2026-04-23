@@ -190,11 +190,14 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
 <!-- STICKY BAR -->
 <div class="sticky-bar">
   <a href="dashboard.html" class="btn btn-o btn-sm">← VOLVER</a>
+  <button class="btn btn-o btn-sm" id="btnPdfOrden" style="border-color:rgba(0,229,160,0.3);color:var(--success);">&#8659; PDF</button>
   <button class="btn btn-warn btn-sm" id="btnProtocolo" style="display:none;">&#128295; EJECUTAR PROTOCOLO</button>
 </div>
 
 <script src="../assets/supabase.js"></script>
 <script src="../assets/auth.js"></script>
+<script src="../assets/excel.js"></script>
+<script src="../assets/pdf.js"></script>
 <script>
 let _user = null, _tecnico = null, _orden = null;
 const params = new URLSearchParams(window.location.search);
@@ -350,6 +353,14 @@ function setupEvents() {
       await loadNotas();
       toast('Nota agregada','success');
     } catch(e) { toast('Error al guardar nota','error'); }
+  });
+
+  // PDF individual
+  document.getElementById('btnPdfOrden').addEventListener('click', async () => {
+    if (!_orden) return;
+    toast('Generando PDF...','info');
+    const hist = await Ordenes.getHistorial(_orden.id).catch(()=>[]);
+    await exportarPDFOrden(_orden, hist);
   });
 }
 

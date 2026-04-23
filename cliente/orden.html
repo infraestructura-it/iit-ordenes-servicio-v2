@@ -98,6 +98,7 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
   <span class="logo-name">Infraestructura-IT</span>
   <div class="topbar-sep"></div>
   <a href="dashboard.html" class="btn btn-o">← MIS ORDENES</a>
+  <button class="btn btn-o" id="btnPdfOrden" style="border-color:rgba(0,229,160,0.3);color:var(--success);">&#8659; PDF</button>
   <div id="userInfo"></div>
 </div>
 
@@ -153,6 +154,8 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
 
 <script src="../assets/supabase.js"></script>
 <script src="../assets/auth.js"></script>
+<script src="../assets/excel.js"></script>
+<script src="../assets/pdf.js"></script>
 <script>
 let _user = null, _orden = null;
 const params  = new URLSearchParams(window.location.search);
@@ -171,6 +174,18 @@ const STATUS_LABEL = {
   await loadOrden();
   await loadHistorial();
   await loadProtocolo();
+
+  // PDF individual
+  document.getElementById('btnPdfOrden').addEventListener('click', async () => {
+    if (!_orden) return;
+    toast('Generando PDF...','info');
+    const hist = await db.from('historial_ordenes')
+      .select('*,usuarios(nombre)')
+      .eq('orden_id', ordenId)
+      .order('created_at',{ascending:true})
+      .then(r => r.data || []);
+    await exportarPDFOrden(_orden, hist);
+  });
 })();
 
 async function loadOrden() {
