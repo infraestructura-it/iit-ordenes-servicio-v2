@@ -330,7 +330,8 @@
 
 <!-- Panel derecho -->
 <div class="panel-der">
-  <div class="login-box">
+  <!-- PANEL LOGIN -->
+  <div class="login-box" id="panelLogin">
     <div class="login-header">
       <div class="version-badge">v2.0 — PRODUCCIÓN</div>
       <h1>Iniciar Sesión</h1>
@@ -359,6 +360,36 @@
       <span style="color:rgba(74,96,112,0.5);">¿Sin acceso? Contacta al administrador</span>
     </div>
   </div>
+
+  <!-- PANEL NUEVA CONTRASEÑA -->
+  <div class="login-box" id="panelNuevaPass" style="display:none;">
+    <div class="login-header">
+      <div class="version-badge" style="background:rgba(0,229,160,0.05);border-color:rgba(0,229,160,0.3);color:var(--success);">NUEVA CONTRASEÑA</div>
+      <h1>Define tu Contraseña</h1>
+      <p>Elige una contraseña segura para acceder al sistema IIT</p>
+    </div>
+
+    <div class="field">
+      <label>Nueva Contraseña</label>
+      <input type="password" id="newPass" placeholder="Mínimo 8 caracteres" autocomplete="new-password">
+    </div>
+
+    <div class="field">
+      <label>Confirmar Contraseña</label>
+      <input type="password" id="confirmPass" placeholder="Repite la contraseña" autocomplete="new-password">
+    </div>
+
+    <button class="btn-login" id="btnNuevaPass" style="background:linear-gradient(135deg,#007755,var(--success));">
+      <span class="btn-text">GUARDAR CONTRASEÑA →</span>
+      <div class="spinner"></div>
+    </button>
+
+    <div class="error-msg" id="errorMsgPass"></div>
+
+    <div class="footer-login">
+      INFRAESTRUCTURA-IT · BOGOTÁ, COLOMBIA
+    </div>
+  </div>
 </div>
 
 <script>
@@ -368,10 +399,88 @@ const db = createClient(
   "sb_publishable_bZdHl96uaoS2nhHoPcE6pQ_YeFSyx30"
 );
 
-// Si ya hay sesión redirigir
-db.auth.getSession().then(({ data: { session } }) => {
-  if (session) redirigirPorRol(session.user.id);
+// ── DETECTAR TOKEN DE RECUPERACIÓN EN URL ─────────────────────
+async function detectarRecuperacion() {
+  // Supabase envía el token como hash en la URL
+  const hash = window.location.hash;
+  if (hash && hash.includes('type=recovery')) {
+    // Hay token de recuperación — mostrar panel nueva contraseña
+    mostrarPanelNuevaPass();
+    return true;
+  }
+
+  // También puede venir como query param con code
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+  if (code) {
+    try {
+      await db.auth.exchangeCodeForSession(code);
+      mostrarPanelNuevaPass();
+      return true;
+    } catch(e) {}
+  }
+
+  // Verificar si hay sesión activa de recuperación
+  const { data: { session } } = await db.auth.getSession();
+  if (session?.user?.recovery_sent_at || hash.includes('access_token')) {
+    if (hash.includes('type=recovery') || hash.includes('type=invite')) {
+      mostrarPanelNuevaPass();
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function mostrarPanelNuevaPass() {
+  document.getElementById('panelLogin').style.display = 'none';
+  document.getElementById('panelNuevaPass').style.display = 'block';
+}
+
+// ── GUARDAR NUEVA CONTRASEÑA ──────────────────────────────────
+document.getElementById('btnNuevaPass').addEventListener('click', async () => {
+  const newPass     = document.getElementById('newPass').value;
+  const confirmPass = document.getElementById('confirmPass').value;
+  const btn         = document.getElementById('btnNuevaPass');
+  const errEl       = document.getElementById('errorMsgPass');
+
+  errEl.style.display = 'none';
+
+  if (newPass.length < 8) {
+    errEl.textContent = 'La contraseña debe tener al menos 8 caracteres';
+    errEl.style.display = 'block'; return;
+  }
+  if (newPass !== confirmPass) {
+    errEl.textContent = 'Las contraseñas no coinciden';
+    errEl.style.display = 'block'; return;
+  }
+
+  btn.classList.add('loading'); btn.disabled = true;
+
+  try {
+    const { data, error } = await db.auth.updateUser({ password: newPass });
+    if (error) throw error;
+
+    // Contraseña guardada — redirigir según rol
+    if (data.user) {
+      await redirigirPorRol(data.user.id);
+    }
+  } catch(err) {
+    errEl.textContent = 'Error: ' + err.message;
+    errEl.style.display = 'block';
+    btn.classList.remove('loading'); btn.disabled = false;
+  }
 });
+
+// ── INIT ──────────────────────────────────────────────────────
+(async () => {
+  const esRecuperacion = await detectarRecuperacion();
+  if (!esRecuperacion) {
+    // Verificar sesión normal
+    const { data: { session } } = await db.auth.getSession();
+    if (session) await redirigirPorRol(session.user.id);
+  }
+})();
 
 // Enter para login
 document.getElementById("password").addEventListener("keydown", e => {
