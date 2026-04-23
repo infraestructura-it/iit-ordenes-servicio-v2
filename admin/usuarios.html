@@ -351,15 +351,26 @@ async function crearCliente(){
   btn.textContent='CREANDO...';btn.disabled=true;
 
   try{
+    // Guardar sesión del admin
+    const {data:{session:adminSession}} = await db.auth.getSession();
+
     // Generar codigo unico
     const codigo = 'IIT-'+Math.random().toString(36).slice(2,8).toUpperCase();
 
-    // Crear usuario con password temporal — el cliente lo cambia al primer login
+    // Crear usuario con password temporal
     const tempPass = 'IIT-' + Math.random().toString(36).slice(2,10).toUpperCase();
     const {data:inv,error:invErr} = await db.auth.signUp({
       email, password: tempPass,
       options:{ data:{nombre, rol:'cliente'} }
     });
+
+    // Restaurar sesión admin inmediatamente
+    if(adminSession){
+      await db.auth.setSession({
+        access_token:  adminSession.access_token,
+        refresh_token: adminSession.refresh_token
+      });
+    }
 
     let userId;
     if(invErr || !inv.user){
@@ -404,11 +415,22 @@ async function crearTecnico(){
   btn.textContent='CREANDO...';btn.disabled=true;
 
   try{
+    // Guardar sesión del admin antes del signUp
+    const {data:{session:adminSession}} = await db.auth.getSession();
+
     const tempPass = 'IIT-' + Math.random().toString(36).slice(2,10).toUpperCase();
     const {data:inv,error:invErr} = await db.auth.signUp({
       email, password: tempPass,
       options:{ data:{nombre, rol:'tecnico'} }
     });
+
+    // Restaurar sesión del admin inmediatamente
+    if(adminSession){
+      await db.auth.setSession({
+        access_token:  adminSession.access_token,
+        refresh_token: adminSession.refresh_token
+      });
+    }
 
     let userId;
     if(invErr || !inv.user){
@@ -420,12 +442,48 @@ async function crearTecnico(){
       await db.from('usuarios').insert({id:userId,email,nombre,telefono,rol:'tecnico',activo:true});
     }
 
-    await db.from('tecnicos').insert({usuario_id:userId,especialidades:esps,disponible:true});
+    await db.from('tecnicos').insert({
+      usuario_id:    userId,
+      especialidades: esps,
+      disponible:    true
+    });
+
+    // Enviar email con password temporal via EmailJS
+    if(adminSession){
+      await fetch('https://api.emailjs.com/api/v1.0/email/send',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          service_id:'service_iabbyy7',
+          template_id:'template_0wkaxbf',
+          user_id:'thz9bGg4ZFbVsYKhq',
+          template_params:{
+            order_id:'BIENVENIDA TECNICO',
+            name:nombre,
+            email:email,
+            html_content:'<div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;background:#080b10;border-radius:12px;padding:28px;color:#e8f0f8;">'+
+              '<h2 style="color:#00d4ff;letter-spacing:3px;margin:0 0 4px;">IIT</h2>'+
+              '<p style="color:#4a6070;font-size:11px;letter-spacing:2px;margin:0 0 20px;">INFRAESTRUCTURA-IT</p>'+
+              '<h3 style="color:#e8f0f8;margin:0 0 12px;">Bienvenido al equipo, '+nombre+'</h3>'+
+              '<p style="color:#4a6070;font-size:13px;margin:0 0 20px;">Tu cuenta de tecnico ha sido creada. Usa estas credenciales para acceder:</p>'+
+              '<div style="background:rgba(0,119,255,0.05);border:1px solid rgba(0,119,255,0.2);border-radius:8px;padding:16px;margin-bottom:20px;">'+
+              '<div style="color:#4a6070;font-size:10px;letter-spacing:2px;margin-bottom:4px;">CORREO</div>'+
+              '<div style="color:#e8f0f8;font-size:14px;font-weight:700;margin-bottom:12px;">'+email+'</div>'+
+              '<div style="color:#4a6070;font-size:10px;letter-spacing:2px;margin-bottom:4px;">CONTRASENA TEMPORAL</div>'+
+              '<div style="color:#00d4ff;font-size:18px;font-weight:900;letter-spacing:3px;">'+tempPass+'</div>'+
+              '</div>'+
+              '<p style="color:#4a6070;font-size:11px;margin:0 0 16px;">Te recomendamos cambiar tu contrasena al primer ingreso.</p>'+
+              '<a href="https://infraestructura-it.github.io/iit-ordenes-servicio-v2/login.html" style="display:block;text-align:center;background:#0077ff;color:white;padding:12px;border-radius:8px;text-decoration:none;font-weight:700;font-size:13px;">INGRESAR AL SISTEMA</a>'+
+              '</div>'
+          }
+        })
+      });
+    }
 
     document.getElementById('modalTecnico').classList.remove('open');
     limpiarFormTecnico();
     await loadUsuarios();
-    toast('Tecnico creado — invitacion enviada por email','success');
+    toast('Tecnico creado — credenciales enviadas por email','success');
   }catch(e){
     toast('Error: '+e.message,'error');
     console.error(e);
