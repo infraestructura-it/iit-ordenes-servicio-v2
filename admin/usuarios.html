@@ -236,11 +236,29 @@ let _user=null, _usuarios=[], _tabActual='todos';
 
 async function loadUsuarios(){
   try{
-    const {data,error} = await db.from('usuarios')
-      .select('*, clientes(*), tecnicos(*)')
+    // Cargar usuarios
+    const {data:usuarios,error} = await db.from('usuarios')
+      .select('*')
       .order('created_at',{ascending:false});
     if(error) throw error;
-    _usuarios = data;
+
+    // Cargar tecnicos por separado
+    const {data:tecnicos} = await db.from('tecnicos').select('*');
+    const tecMap = {};
+    (tecnicos||[]).forEach(t => tecMap[t.usuario_id] = t);
+
+    // Cargar clientes por separado
+    const {data:clientes} = await db.from('clientes').select('*');
+    const cliMap = {};
+    (clientes||[]).forEach(c => cliMap[c.usuario_id] = c);
+
+    // Combinar datos
+    _usuarios = (usuarios||[]).map(u => ({
+      ...u,
+      tecnicos: tecMap[u.id] || null,
+      clientes: cliMap[u.id] || null
+    }));
+
     renderCards();
   }catch(e){console.error(e);}
 }
