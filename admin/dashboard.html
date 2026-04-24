@@ -364,12 +364,29 @@ async function asignarTecnico(){
 
 async function cambiarStatus(s){
   if(!_ordenActual)return;
+  const statusActual = _ordenActual.status;
+
+  // Si intenta retroceder desde cerrada/cancelada — pedir confirmación
+  const ORDEN_FLUJO = ['borrador','pendiente','asignada','en_proceso','en_pausa','cerrada'];
+  const idxActual = ORDEN_FLUJO.indexOf(statusActual);
+  const idxNuevo  = ORDEN_FLUJO.indexOf(s);
+  const esRetroceso = idxNuevo < idxActual && idxActual >= 0 && idxNuevo >= 0;
+  const estaFinalizado = ['cerrada','cancelada'].includes(statusActual);
+
+  if(estaFinalizado || esRetroceso){
+    const ok = confirm('⚠ Esta accion cambia el estado de "'+statusActual.replace('_',' ').toUpperCase()+'" a "'+s.replace('_',' ').toUpperCase()+'".\n\nEste cambio quedara registrado en el historial.\n¿Confirmas?');
+    if(!ok) return;
+  }
+
   try{
     await Ordenes.cambiarStatus(_ordenActual.id,s,_user.id);
-    if(_ordenActual.clientes&&_ordenActual.clientes.usuario_id)
-      await Notificaciones.crear(_ordenActual.clientes.usuario_id,_ordenActual.id,'cambio_estado','Su orden '+_ordenActual.orden_id+' cambio a: '+s.replace('_',' ').toUpperCase(),'');
+    // Notificar cliente
+    if(_ordenActual.cliente_id){
+      const {data:cl} = await db.from('clientes').select('usuario_id').eq('id',_ordenActual.cliente_id).single();
+      if(cl) await Notificaciones.crear(cl.usuario_id,_ordenActual.id,'cambio_estado','Su orden '+_ordenActual.orden_id+' cambio a: '+s.replace('_',' ').toUpperCase(),'');
+    }
     await loadOrdenes();closeModal();toast('Estado: '+s.replace('_',' '),'success');
-  }catch(e){toast('Error','error');}
+  }catch(e){toast('Error al cambiar estado','error');}
 }
 
 function filtrar(st,pr){

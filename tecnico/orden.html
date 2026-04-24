@@ -154,7 +154,7 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
         <button class="sbtn" data-s="en_pausa">EN PAUSA</button>
         <button class="sbtn" data-s="cerrada">CERRADA</button>
       </div>
-      <div style="margin-top:12px;font-size:11px;color:var(--muted);">Al cambiar el estado el cliente recibira una notificacion automatica.</div>
+      <div style="margin-top:12px;font-size:11px;color:var(--muted);" id="statusHint">Al cambiar el estado el cliente recibira una notificacion automatica.</div>
     </div>
   </div>
 
@@ -200,6 +200,51 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
 <script src="../assets/pdf.js"></script>
 <script>
 let _user = null, _tecnico = null, _orden = null;
+
+// ── FLUJO DE ESTADOS PERMITIDOS ───────────────────────────────
+const FLUJO_TECNICO = {
+  asignada:   ['en_proceso'],
+  en_proceso: ['en_pausa','cerrada'],
+  en_pausa:   ['en_proceso','cerrada'],
+  cerrada:    [],
+  cancelada:  [],
+  borrador:   [],
+  pendiente:  []
+};
+
+function actualizarBotonesEstado(statusActual) {
+  const permitidos = FLUJO_TECNICO[statusActual] || [];
+  const bloqueado  = ['cerrada','cancelada'].includes(statusActual);
+
+  document.querySelectorAll('.sbtn').forEach(btn => {
+    const s = btn.dataset.s;
+    const esActual    = s === statusActual;
+    const esPermitido = permitidos.includes(s);
+    btn.classList.toggle('active', esActual);
+    if (bloqueado || (!esPermitido && !esActual)) {
+      btn.disabled = true;
+      btn.style.opacity = esActual ? '1' : '0.25';
+      btn.style.cursor  = 'not-allowed';
+    } else if (esActual) {
+      btn.disabled = true;
+      btn.style.opacity = '1';
+      btn.style.cursor  = 'default';
+    } else {
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.style.cursor  = 'pointer';
+    }
+  });
+
+  const hint = document.getElementById('statusHint');
+  if (bloqueado) {
+    hint.textContent = 'Orden ' + statusActual + '. Solo el administrador puede modificar el estado.';
+    hint.style.color = 'var(--error)';
+  } else {
+    hint.textContent = 'Al cambiar el estado el cliente recibira una notificacion automatica.';
+    hint.style.color = 'var(--muted)';
+  }
+}
 const params = new URLSearchParams(window.location.search);
 const ordenId = params.get('id');
 
@@ -250,10 +295,8 @@ async function loadOrden() {
   });
   if (!(data.equipos||[]).length) eqEl.innerHTML = '<span style="color:var(--muted);font-size:12px;">No especificados</span>';
 
-  // Status btns
-  document.querySelectorAll('.sbtn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.s === data.status);
-  });
+  // Actualizar botones con flujo permitido
+  actualizarBotonesEstado(data.status || 'asignada');
 }
 
 async function loadNotas() {
@@ -337,6 +380,7 @@ function setupEvents() {
         _orden.status = nuevo;
         const badge = document.getElementById('ohBadge');
         badge.innerHTML = '<span class="badge b-' + nuevo + '">' + nuevo.replace('_',' ').toUpperCase() + '</span>';
+        actualizarBotonesEstado(nuevo);
         toast('Estado actualizado: ' + nuevo.replace('_',' '), 'success');
         await loadHistorial();
       } catch(e) { toast('Error al cambiar estado','error'); }
