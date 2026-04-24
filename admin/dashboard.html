@@ -221,7 +221,9 @@ let _user=null,_ordenes=[],_tecnicos=[],_ordenActual=null;
 (async()=>{
   _user = await initAuth('admin');
   if(!_user) return;
-  await Promise.all([loadOrdenes(),loadTecnicos(),loadNotifs()]);
+  // Cargar técnicos primero para que estén disponibles al renderizar órdenes
+  await loadTecnicos();
+  await Promise.all([loadOrdenes(), loadNotifs()]);
   setupEvents();
 })();
 
@@ -259,28 +261,18 @@ function setupEvents(){
 
 async function loadOrdenes(){
   try{
-    // Cargar órdenes sin JOINs problemáticos
     const {data:ordenes,error} = await db.from('ordenes')
       .select('*')
       .order('created_at',{ascending:false});
     if(error) throw error;
 
-    // Cargar técnicos y usuarios por separado
-    const {data:tecnicos} = await db.from('tecnicos').select('*');
-    const {data:usuarios} = await db.from('usuarios').select('id,nombre,email');
-
-    // Mapas para lookup rápido
+    // Usar _tecnicos ya cargado — construir mapa por id
     const tecMap={};
-    (tecnicos||[]).forEach(t=>tecMap[t.id]=t);
-    const usrMap={};
-    (usuarios||[]).forEach(u=>usrMap[u.id]=u);
+    _tecnicos.forEach(t => tecMap[t.id] = t);
 
-    // Combinar datos
     _ordenes = (ordenes||[]).map(o=>({
       ...o,
-      tecnicos: o.tecnico_id && tecMap[o.tecnico_id]
-        ? { ...tecMap[o.tecnico_id], usuarios: usrMap[tecMap[o.tecnico_id].usuario_id] || null }
-        : null
+      tecnicos: o.tecnico_id ? (tecMap[o.tecnico_id] || null) : null
     }));
 
     updateStats();
