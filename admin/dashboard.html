@@ -48,7 +48,9 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
 .srch{flex:1;min-width:200px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:"DM Mono",monospace;font-size:12px;color:var(--text);outline:none;}
 .srch:focus{border-color:var(--accent2);}
 .srch::placeholder{color:var(--muted);opacity:0.5;}
-.fsel{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:"DM Mono",monospace;font-size:12px;color:var(--muted);outline:none;cursor:pointer;}
+.fsel{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-family:"DM Mono",monospace;font-size:11px;color:var(--text);outline:none;cursor:pointer;appearance:none;min-width:130px;flex:1;}
+.fsel:focus{border-color:var(--accent2);}
+.fsel option{background:#131820;}
 .fsel option{background:#131820;}
 .tw{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
 .thbar{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,0.2);}
@@ -144,6 +146,7 @@ td{padding:13px 16px;font-size:12px;vertical-align:middle;}
     <div class="sidebar-label">Reportes</div>
     <button class="nav-item" id="nav-excel"><span class="nav-icon">&#128217;</span>Exportar Excel</button>
     <button class="nav-item" id="nav-pdf"><span class="nav-icon">&#128196;</span>Exportar PDF</button>
+    <button class="nav-item" id="nav-stats"><span class="nav-icon">&#128200;</span>Estadisticas</button>
   </div>
   <div class="sidebar-section">
     <div class="sidebar-label">Sistema</div>
@@ -163,12 +166,12 @@ td{padding:13px 16px;font-size:12px;vertical-align:middle;}
     <div class="sec-head">
       <span class="sec-title">REGISTRO DE ORDENES</span>
       <div style="display:flex;gap:8px;">
-        <button class="btn btn-o btn-sm" id="btnRefresh">Actualizar</button>
+        <button class="btn btn-o btn-sm" id="btnRefresh">&#8635; Actualizar</button>
         <a href="../index.html" class="btn btn-p btn-sm">+ Nueva Orden</a>
       </div>
     </div>
     <div class="filters">
-      <input type="text" class="srch" id="searchInput" placeholder="Buscar OS ID, empresa, nombre...">
+      <input type="text" class="srch" id="searchInput" placeholder="Buscar OS ID, empresa, nombre, ciudad...">
       <select class="fsel" id="filterStatus">
         <option value="">Todos los estados</option>
         <option value="borrador">Borrador</option>
@@ -186,13 +189,68 @@ td{padding:13px 16px;font-size:12px;vertical-align:middle;}
         <option value="media">Media</option>
         <option value="baja">Baja</option>
       </select>
+      <select class="fsel" id="filterTecnico">
+        <option value="">Todos los tecnicos</option>
+      </select>
+      <select class="fsel" id="filterFecha">
+        <option value="">Todo el tiempo</option>
+        <option value="hoy">Hoy</option>
+        <option value="semana">Esta semana</option>
+        <option value="mes">Este mes</option>
+      </select>
     </div>
     <div class="tw">
       <div class="thbar">
         <span style="font-family:Syne,sans-serif;font-size:13px;font-weight:700;color:var(--text);">ORDENES</span>
-        <span style="font-size:11px;color:var(--muted);" id="countLabel">Cargando...</span>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:11px;color:var(--muted);" id="countLabel">Cargando...</span>
+          <button class="btn btn-o btn-sm" id="btnLimpiarFiltros" style="font-size:10px;padding:4px 10px;">✕ Limpiar</button>
+        </div>
       </div>
       <div id="tablaBody"><div class="empty"><p>Cargando ordenes...</p></div></div>
+    </div>
+  </div>
+
+  <!-- VISTA ESTADISTICAS -->
+  <div id="viewStats" style="display:none;">
+    <div class="sec-head">
+      <span class="sec-title">ESTADISTICAS Y REPORTES</span>
+      <button class="btn btn-o btn-sm" id="btnRefreshStats">&#8635; Actualizar</button>
+    </div>
+
+    <!-- KPIs secundarios -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;" id="kpiGrid"></div>
+
+    <!-- Charts row -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+      <!-- Por estado -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;">
+        <div style="font-family:Syne,sans-serif;font-size:12px;font-weight:700;color:var(--text);margin-bottom:16px;letter-spacing:0.5px;">ORDENES POR ESTADO</div>
+        <div id="chartEstado"></div>
+      </div>
+      <!-- Por prioridad -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;">
+        <div style="font-family:Syne,sans-serif;font-size:12px;font-weight:700;color:var(--text);margin-bottom:16px;letter-spacing:0.5px;">ORDENES POR PRIORIDAD</div>
+        <div id="chartPrioridad"></div>
+      </div>
+    </div>
+
+    <!-- Por técnico -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;">
+      <div style="font-family:Syne,sans-serif;font-size:12px;font-weight:700;color:var(--text);margin-bottom:16px;letter-spacing:0.5px;">CARGA POR TECNICO</div>
+      <div id="chartTecnicos"></div>
+    </div>
+
+    <!-- Por área -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;">
+      <div style="font-family:Syne,sans-serif;font-size:12px;font-weight:700;color:var(--text);margin-bottom:16px;letter-spacing:0.5px;">ORDENES POR AREA TECNICA</div>
+      <div id="chartArea"></div>
+    </div>
+
+    <!-- Historial por mes -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;">
+      <div style="font-family:Syne,sans-serif;font-size:12px;font-weight:700;color:var(--text);margin-bottom:16px;letter-spacing:0.5px;">VOLUMEN MENSUAL (ULTIMOS 6 MESES)</div>
+      <div id="chartMensual"></div>
     </div>
   </div>
 </div>
@@ -231,7 +289,10 @@ function setupEvents(){
   document.getElementById('searchInput').addEventListener('input',renderTabla);
   document.getElementById('filterStatus').addEventListener('change',renderTabla);
   document.getElementById('filterPri').addEventListener('change',renderTabla);
+  document.getElementById('filterTecnico').addEventListener('change',renderTabla);
+  document.getElementById('filterFecha').addEventListener('change',renderTabla);
   document.getElementById('btnRefresh').addEventListener('click',loadOrdenes);
+  document.getElementById('btnLimpiarFiltros').addEventListener('click',limpiarFiltros);
   document.getElementById('btnCloseModal').addEventListener('click',closeModal);
   document.getElementById('btnPdfOrden').addEventListener('click', async () => {
     if (!_ordenActual) return;
@@ -243,20 +304,24 @@ function setupEvents(){
   document.getElementById('notifBtn').addEventListener('click',()=>document.getElementById('notifPanel').classList.toggle('open'));
   document.getElementById('markAllBtn').addEventListener('click',marcarTodasLeidas);
   document.addEventListener('click',e=>{if(!e.target.closest('#notifBtn')&&!e.target.closest('#notifPanel'))document.getElementById('notifPanel').classList.remove('open');});
-  document.getElementById('stCardTotal').addEventListener('click',()=>filtrar('',''));
+  document.getElementById('stCardTotal').addEventListener('click',()=>{limpiarFiltros();filtrar('','');});
   document.getElementById('stCardPend').addEventListener('click',()=>filtrar('pendiente',''));
   document.getElementById('stCardProc').addEventListener('click',()=>filtrar('en_proceso',''));
   document.getElementById('stCardCrit').addEventListener('click',()=>filtrar('','critica'));
   document.getElementById('nav-excel').addEventListener('click', async () => {
-    if (!_ordenes.length) { toast('No hay ordenes para exportar','error'); return; }
+    const f = getOrdenesFiltered();
+    if (!f.length) { toast('No hay ordenes para exportar','error'); return; }
     toast('Generando Excel...','info');
-    await exportarExcelOrdenes(_ordenes,'admin');
+    await exportarExcelOrdenes(f,'admin');
   });
   document.getElementById('nav-pdf').addEventListener('click', async () => {
-    if (!_ordenes.length) { toast('No hay ordenes para exportar','error'); return; }
+    const f = getOrdenesFiltered();
+    if (!f.length) { toast('No hay ordenes para exportar','error'); return; }
     toast('Generando PDF...','info');
-    await exportarPDFListado(_ordenes,'Reporte Admin — Todas las Ordenes');
+    await exportarPDFListado(f,'Reporte Admin');
   });
+  document.getElementById('nav-stats').addEventListener('click',()=>toggleView('stats'));
+  document.getElementById('btnRefreshStats').addEventListener('click',renderStats);
 }
 
 async function loadOrdenes(){
@@ -303,24 +368,26 @@ function updateStats(){
   const p=_ordenes.filter(o=>o.status==='pendiente').length;
   const b=document.getElementById('sidebarPend');
   b.textContent=p;b.style.display=p>0?'inline-block':'none';
+  poblarFiltroTecnico();
 }
 
 function renderTabla(){
-  const q=document.getElementById('searchInput').value.toLowerCase();
-  const st=document.getElementById('filterStatus').value;
-  const pr=document.getElementById('filterPri').value;
-  let f=_ordenes.filter(o=>{
-    if(st&&o.status!==st)return false;
-    if(pr&&o.prioridad!==pr)return false;
-    if(q){const s=[o.orden_id,o.nombre,o.empresa,o.correo,o.ciudad].join(' ').toLowerCase();if(!s.includes(q))return false;}
-    return true;
-  });
+  const f = getOrdenesFiltered();
   document.getElementById('countLabel').textContent=f.length+' de '+_ordenes.length+' ordenes';
-  if(!f.length){document.getElementById('tablaBody').innerHTML='<div class="empty"><p>Sin resultados</p></div>';return;}
+  if(!f.length){document.getElementById('tablaBody').innerHTML='<div class="empty"><p>Sin resultados — <button onclick="limpiarFiltros()" style="color:var(--accent2);background:none;border:none;cursor:pointer;font-family:DM Mono,monospace;font-size:13px;">limpiar filtros</button></p></div>';return;}
   const rows=f.map(o=>{
     const fecha=o.created_at?new Date(o.created_at).toLocaleDateString('es-CO',{day:'2-digit',month:'short'}):'--';
     const tec=o.tecnicos?.usuarios?.nombre||o.tecnicos?.nombre||'--';
-    return '<tr data-id="'+o.id+'"><td><div class="oid">'+(o.orden_id||'--')+'</div></td><td><div class="enm">'+(o.empresa||'--')+'</div><div class="esub">'+(o.nombre||'')+'</div></td><td style="color:var(--muted);font-size:11px;">'+(o.area||o.tipo_servicio||'--')+'</td><td><span class="pd p-'+(o.prioridad||'baja')+'"></span><span style="font-size:11px;color:var(--muted);">'+(o.prioridad||'--').toUpperCase()+'</span></td><td><span class="badge b-'+(o.status||'borrador')+'">'+(o.status||'borrador').replace('_',' ').toUpperCase()+'</span></td><td style="color:var(--muted);font-size:11px;">'+tec+'</td><td style="color:var(--muted);font-size:11px;">'+fecha+'</td></tr>';
+    const sinTec = !o.tecnico_id;
+    return '<tr data-id="'+o.id+'">' +
+      '<td><div class="oid">'+(o.orden_id||'--')+'</div></td>' +
+      '<td><div class="enm">'+(o.empresa||'--')+'</div><div class="esub">'+(o.nombre||'')+'</div></td>' +
+      '<td style="color:var(--muted);font-size:11px;">'+(o.area||o.tipo_servicio||'--')+'</td>' +
+      '<td><span class="pd p-'+(o.prioridad||'baja')+'"></span><span style="font-size:11px;color:var(--muted);">'+(o.prioridad||'--').toUpperCase()+'</span></td>' +
+      '<td><span class="badge b-'+(o.status||'borrador')+'">'+(o.status||'borrador').replace(/_/g,' ').toUpperCase()+'</span></td>' +
+      '<td style="font-size:11px;color:'+(sinTec?'var(--warn)':'var(--muted)')+';">'+(sinTec?'⚠ Sin asignar':tec)+'</td>' +
+      '<td style="color:var(--muted);font-size:11px;">'+fecha+'</td>' +
+    '</tr>';
   }).join('');
   document.getElementById('tablaBody').innerHTML='<table><thead><tr><th>NO. ORDEN</th><th>EMPRESA / CONTACTO</th><th>AREA</th><th>PRIORIDAD</th><th>ESTADO</th><th>TECNICO</th><th>FECHA</th></tr></thead><tbody>'+rows+'</tbody></table>';
   document.querySelectorAll('tbody tr').forEach(tr=>tr.addEventListener('click',()=>openModal(tr.dataset.id)));
@@ -393,6 +460,165 @@ function filtrar(st,pr){
   document.getElementById('filterStatus').value=st;
   document.getElementById('filterPri').value=pr;
   renderTabla();
+  toggleView('ordenes');
+}
+
+function limpiarFiltros(){
+  document.getElementById('searchInput').value='';
+  document.getElementById('filterStatus').value='';
+  document.getElementById('filterPri').value='';
+  document.getElementById('filterTecnico').value='';
+  document.getElementById('filterFecha').value='';
+  renderTabla();
+}
+
+function poblarFiltroTecnico(){
+  const sel = document.getElementById('filterTecnico');
+  const current = sel.value;
+  sel.innerHTML = '<option value="">Todos los tecnicos</option>';
+  _tecnicos.forEach(t=>{
+    const opt = document.createElement('option');
+    opt.value = t.id;
+    opt.textContent = t.usuarios?.nombre || t.nombre || '—';
+    sel.appendChild(opt);
+  });
+  sel.value = current;
+}
+
+function getOrdenesFiltered(){
+  const q    = document.getElementById('searchInput').value.toLowerCase();
+  const st   = document.getElementById('filterStatus').value;
+  const pr   = document.getElementById('filterPri').value;
+  const tec  = document.getElementById('filterTecnico').value;
+  const fecha= document.getElementById('filterFecha').value;
+
+  const ahora = new Date();
+  const hoy   = new Date(ahora.getFullYear(),ahora.getMonth(),ahora.getDate());
+  const semana= new Date(hoy); semana.setDate(hoy.getDate()-7);
+  const mes   = new Date(ahora.getFullYear(),ahora.getMonth(),1);
+
+  return _ordenes.filter(o=>{
+    if(st && o.status!==st) return false;
+    if(pr && o.prioridad!==pr) return false;
+    if(tec && o.tecnico_id!==tec) return false;
+    if(fecha){
+      const d = new Date(o.created_at);
+      if(fecha==='hoy'    && d < hoy)    return false;
+      if(fecha==='semana' && d < semana) return false;
+      if(fecha==='mes'    && d < mes)    return false;
+    }
+    if(q){
+      const s=[o.orden_id,o.nombre,o.empresa,o.correo,o.ciudad,o.area,o.tipo_servicio].join(' ').toLowerCase();
+      if(!s.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+// ── TOGGLE ENTRE VISTAS ────────────────────────────────────────
+function toggleView(view){
+  document.getElementById('viewOrdenes').style.display = view==='ordenes' ? 'block' : 'none';
+  document.getElementById('viewStats').style.display   = view==='stats'   ? 'block' : 'none';
+  // Actualizar nav activo
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if(view==='stats') renderStats();
+}
+
+// ── ESTADÍSTICAS ───────────────────────────────────────────────
+function renderStats(){
+  const o = _ordenes;
+  if(!o.length){
+    document.getElementById('kpiGrid').innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:40px;">Sin datos para mostrar</div>';
+    return;
+  }
+
+  // KPIs secundarios
+  const cerradas   = o.filter(x=>x.status==='cerrada').length;
+  const tasaCierre = o.length ? Math.round(cerradas/o.length*100) : 0;
+  const criticas   = o.filter(x=>x.prioridad==='critica').length;
+  const sinTecnico = o.filter(x=>!x.tecnico_id).length;
+  const enPausa    = o.filter(x=>x.status==='en_pausa').length;
+
+  document.getElementById('kpiGrid').innerHTML = [
+    ['TASA DE CIERRE', tasaCierre+'%', 'var(--success)'],
+    ['SIN TECNICO', sinTecnico, 'var(--warn)'],
+    ['CRITICAS ACTIVAS', criticas, 'var(--error)'],
+    ['EN PAUSA', enPausa, '#ff8c00']
+  ].map(([l,v,c])=>`
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;">
+      <div style="font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:6px;">${l}</div>
+      <div style="font-family:Syne,sans-serif;font-size:32px;font-weight:800;color:${c};line-height:1;">${v}</div>
+    </div>`).join('');
+
+  // Gráfico por estado
+  renderBarras('chartEstado', contarPor(o,'status'), {
+    borrador:'var(--muted)',pendiente:'var(--warn)',asignada:'var(--accent2)',
+    en_proceso:'var(--accent)',en_pausa:'#ff8c00',cerrada:'var(--success)',cancelada:'var(--error)'
+  });
+
+  // Gráfico por prioridad
+  renderBarras('chartPrioridad', contarPor(o,'prioridad'), {
+    baja:'var(--success)',media:'var(--warn)',alta:'var(--error)',critica:'var(--error)'
+  });
+
+  // Por técnico
+  const porTec = {};
+  o.forEach(x=>{
+    const nombre = x.tecnicos?.usuarios?.nombre || x.tecnicos?.nombre || 'Sin asignar';
+    porTec[nombre] = (porTec[nombre]||0)+1;
+  });
+  renderBarras('chartTecnicos', porTec, {}, 'var(--accent2)');
+
+  // Por área
+  const porArea = contarPor(o,'area');
+  renderBarras('chartArea', porArea, {}, 'var(--accent)');
+
+  // Por mes
+  const porMes = {};
+  const meses  = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const ahora  = new Date();
+  for(let i=5;i>=0;i--){
+    const d = new Date(ahora.getFullYear(),ahora.getMonth()-i,1);
+    const key = meses[d.getMonth()]+' '+d.getFullYear().toString().slice(-2);
+    porMes[key] = 0;
+  }
+  o.forEach(x=>{
+    if(!x.created_at) return;
+    const d = new Date(x.created_at);
+    const key = meses[d.getMonth()]+' '+d.getFullYear().toString().slice(-2);
+    if(key in porMes) porMes[key]++;
+  });
+  renderBarras('chartMensual', porMes, {}, 'var(--accent2)', true);
+}
+
+function contarPor(arr, campo){
+  const r={};
+  arr.forEach(x=>{ const v=x[campo]||'sin dato'; r[v]=(r[v]||0)+1; });
+  return r;
+}
+
+function renderBarras(containerId, data, colorMap, defaultColor='var(--accent)', showValues=false){
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  const entries = Object.entries(data).sort((a,b)=>b[1]-a[1]);
+  const max = Math.max(...entries.map(e=>e[1]),1);
+  const total = entries.reduce((s,e)=>s+e[1],0);
+
+  el.innerHTML = entries.map(([k,v])=>{
+    const pct   = Math.round(v/max*100);
+    const pctTotal = Math.round(v/total*100);
+    const color = colorMap[k] || defaultColor;
+    const label = k.replace(/_/g,' ').toUpperCase();
+    return `<div style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:11px;">
+        <span style="color:var(--text);">${label}</span>
+        <span style="color:var(--muted);">${v} <span style="color:var(--muted);font-size:10px;">(${pctTotal}%)</span></span>
+      </div>
+      <div style="height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;">
+        <div style="height:100%;width:${pct}%;background:${color};border-radius:4px;transition:width 0.6s ease;"></div>
+      </div>
+    </div>`;
+  }).join('') || '<div style="color:var(--muted);font-size:12px;">Sin datos</div>';
 }
 
 async function loadNotifs(){
