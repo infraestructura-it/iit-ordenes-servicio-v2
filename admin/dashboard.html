@@ -259,14 +259,47 @@ function setupEvents(){
 
 async function loadOrdenes(){
   try{
-    _ordenes = await Ordenes.getAll();
+    // Cargar órdenes sin JOINs problemáticos
+    const {data:ordenes,error} = await db.from('ordenes')
+      .select('*')
+      .order('created_at',{ascending:false});
+    if(error) throw error;
+
+    // Cargar técnicos y usuarios por separado
+    const {data:tecnicos} = await db.from('tecnicos').select('*');
+    const {data:usuarios} = await db.from('usuarios').select('id,nombre,email');
+
+    // Mapas para lookup rápido
+    const tecMap={};
+    (tecnicos||[]).forEach(t=>tecMap[t.id]=t);
+    const usrMap={};
+    (usuarios||[]).forEach(u=>usrMap[u.id]=u);
+
+    // Combinar datos
+    _ordenes = (ordenes||[]).map(o=>({
+      ...o,
+      tecnicos: o.tecnico_id && tecMap[o.tecnico_id]
+        ? { ...tecMap[o.tecnico_id], usuarios: usrMap[tecMap[o.tecnico_id].usuario_id] || null }
+        : null
+    }));
+
     updateStats();
     renderTabla();
   }catch(e){console.error(e);}
 }
 
 async function loadTecnicos(){
-  try{_tecnicos=await Usuarios.getTecnicos();}catch(e){}
+  try{
+    const {data:tecnicos} = await db.from('tecnicos').select('*');
+    const {data:usuarios} = await db.from('usuarios').select('id,nombre,email,rol').eq('rol','tecnico');
+    const usrMap={};
+    (usuarios||[]).forEach(u=>usrMap[u.id]=u);
+    _tecnicos = (tecnicos||[]).map(t=>({
+      ...t,
+      nombre: usrMap[t.usuario_id]?.nombre || '—',
+      email:  usrMap[t.usuario_id]?.email  || '—'
+    }));
+  }catch(e){console.error(e);}
 }
 
 function updateStats(){
@@ -293,7 +326,7 @@ function renderTabla(){
   if(!f.length){document.getElementById('tablaBody').innerHTML='<div class="empty"><p>Sin resultados</p></div>';return;}
   const rows=f.map(o=>{
     const fecha=o.created_at?new Date(o.created_at).toLocaleDateString('es-CO',{day:'2-digit',month:'short'}):'--';
-    const tec=o.tecnicos&&o.tecnicos.usuarios?o.tecnicos.usuarios.nombre:'--';
+    const tec=o.tecnicos?.nombre||'--';
     return '<tr data-id="'+o.id+'"><td><div class="oid">'+(o.orden_id||'--')+'</div></td><td><div class="enm">'+(o.empresa||'--')+'</div><div class="esub">'+(o.nombre||'')+'</div></td><td style="color:var(--muted);font-size:11px;">'+(o.area||o.tipo_servicio||'--')+'</td><td><span class="pd p-'+(o.prioridad||'baja')+'"></span><span style="font-size:11px;color:var(--muted);">'+(o.prioridad||'--').toUpperCase()+'</span></td><td><span class="badge b-'+(o.status||'borrador')+'">'+(o.status||'borrador').replace('_',' ').toUpperCase()+'</span></td><td style="color:var(--muted);font-size:11px;">'+tec+'</td><td style="color:var(--muted);font-size:11px;">'+fecha+'</td></tr>';
   }).join('');
   document.getElementById('tablaBody').innerHTML='<table><thead><tr><th>NO. ORDEN</th><th>EMPRESA / CONTACTO</th><th>AREA</th><th>PRIORIDAD</th><th>ESTADO</th><th>TECNICO</th><th>FECHA</th></tr></thead><tbody>'+rows+'</tbody></table>';
@@ -309,7 +342,7 @@ async function openModal(id){
   badge.className='badge b-'+(o.status||'borrador');
   badge.textContent=(o.status||'borrador').replace('_',' ').toUpperCase();
   const d=(l,v)=>v?'<div class="df"><div class="dl">'+l+'</div><div class="dv">'+v+'</div></div>':'';
-  const tecOpts=_tecnicos.map(t=>'<option value="'+(t.tecnicos&&t.tecnicos.id?t.tecnicos.id:'')+'" '+(o.tecnico_id===(t.tecnicos&&t.tecnicos.id)?'selected':'')+'>'+t.nombre+' - '+(t.tecnicos&&t.tecnicos.especialidades?t.tecnicos.especialidades.join(', '):'')+'</option>').join('');
+  const tecOpts=_tecnicos.map(t=>'<option value="'+t.id+'" '+(o.tecnico_id===t.id?'selected':'')+'>'+t.nombre+' — '+(t.especialidades?t.especialidades.join(', '):'Sin especialidad')+'</option>').join('');
   let hist='<div style="color:var(--muted);font-size:12px;">Sin historial</div>';
   try{
     const h=await Ordenes.getHistorial(o.id);
