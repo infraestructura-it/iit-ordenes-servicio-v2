@@ -31,7 +31,7 @@ const C = {
   white:   [255,255,255]
 };
 
-const STATUS_COLOR = {
+const PDF_STATUS_COLOR = {
   borrador:   C.muted,
   pendiente:  C.warn,
   asignada:   C.blue,
@@ -41,7 +41,7 @@ const STATUS_COLOR = {
   cancelada:  C.error
 };
 
-const PRI_COLOR = {
+const PDF_PRI_COLOR = {
   baja:    C.success,
   media:   C.warn,
   alta:    C.error,
@@ -105,7 +105,7 @@ async function exportarPDFOrden(orden, historial = [], protocolo = null, logoB64
   doc.text(orden.orden_id || '—', W - M, 14, { align:'right' });
 
   // Status badge
-  const sc = STATUS_COLOR[orden.status] || C.muted;
+  const sc = PDF_STATUS_COLOR[orden.status] || C.muted;
   doc.setFillColor(...sc);
   doc.roundedRect(W - M - 30, 18, 30, 7, 1.5, 1.5, 'F');
   doc.setTextColor(...C.bg);
@@ -184,7 +184,7 @@ async function exportarPDFOrden(orden, historial = [], protocolo = null, logoB64
 
   // Prioridad con color
   if (orden.prioridad) {
-    const pc = PRI_COLOR[orden.prioridad] || C.muted;
+    const pc = PDF_PRI_COLOR[orden.prioridad] || C.muted;
     doc.setTextColor(...C.muted);
     doc.setFontSize(7);
     doc.text('PRIORIDAD', M + 2, y);
@@ -413,8 +413,8 @@ async function exportarPDFListado(ordenes, titulo = 'Reporte de Órdenes', logoB
       doc.rect(M, y - 1, W - M*2, 6.5, 'F');
     }
 
-    const sc = STATUS_COLOR[o.status] || C.muted;
-    const pc = PRI_COLOR[o.prioridad] || C.muted;
+    const sc = PDF_STATUS_COLOR[o.status] || C.muted;
+    const pc = PDF_PRI_COLOR[o.prioridad] || C.muted;
     const tec = o.tecnicos?.usuarios?.nombre || '—';
     const vals = [
       o.orden_id || '—',
