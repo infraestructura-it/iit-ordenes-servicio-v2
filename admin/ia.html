@@ -1049,7 +1049,7 @@ async function exportarPDFInforme(texto, titulo, tipo) {
       const bold=trim.startsWith('**')&&trim.endsWith('**');
       doc.setFontSize(8.5);
       doc.setFont('helvetica',bold?'bold':'normal');
-      doc.setTextColor(bold?...[...NG]:...[...GR]);
+      if(bold) doc.setTextColor(...NG); else doc.setTextColor(...GR);
       const clean=bold?trim.slice(2,-2):trim;
       const lines=doc.splitTextToSize(clean,CW);
       lines.forEach(l=>{if(y>268){doc.addPage();y=16;}doc.text(l,M,y);y+=4.5;});
