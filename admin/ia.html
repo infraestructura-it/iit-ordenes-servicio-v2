@@ -119,7 +119,33 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
 .res-sub{font-size:11px;color:var(--muted);margin-top:2px;}
 .res-body{padding:20px;}
 
-/* MARKDOWN RENDER */
+/* CRITERIOS */
+.crit-chk{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;font-size:11px;color:var(--muted);cursor:pointer;transition:all 0.2s;}
+.crit-chk:has(input:checked){background:rgba(0,119,255,0.08);border-color:rgba(0,119,255,0.3);color:var(--accent2);}
+.crit-chk input{accent-color:var(--accent2);}
+
+/* MODELO INPUT ROW */
+.modelo-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
+.modelo-row input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:"DM Mono",monospace;font-size:13px;color:var(--text);outline:none;}
+.modelo-row input:focus{border-color:var(--purple);}
+.modelo-row input::placeholder{color:var(--muted);opacity:0.5;}
+.btn-del-modelo{background:none;border:1px solid rgba(255,69,96,0.2);border-radius:6px;padding:8px 10px;color:var(--error);cursor:pointer;font-size:12px;transition:all 0.2s;flex-shrink:0;}
+.btn-del-modelo:hover{background:rgba(255,69,96,0.1);}
+
+/* TABLA COMPARATIVA */
+.cmp-table{width:100%;border-collapse:collapse;font-size:12px;}
+.cmp-table th{background:rgba(0,82,155,0.8);color:white;padding:10px 12px;text-align:left;font-size:10px;letter-spacing:1px;border:1px solid rgba(255,255,255,0.1);}
+.cmp-table th.th-modelo{background:rgba(0,82,155,1);font-size:11px;}
+.cmp-table td{padding:9px 12px;border:1px solid var(--border);color:var(--text);}
+.cmp-table tr:nth-child(even) td{background:rgba(0,0,0,0.1);}
+.cmp-table .td-criterio{color:var(--muted);font-size:11px;letter-spacing:0.5px;}
+.score{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;font-weight:800;font-size:13px;}
+.score-10,.score-9{background:rgba(0,229,160,0.15);color:var(--success);border:2px solid var(--success);}
+.score-8,.score-7{background:rgba(0,119,255,0.12);color:var(--accent2);border:2px solid var(--accent2);}
+.score-6,.score-5{background:rgba(255,183,0,0.12);color:var(--warn);border:2px solid var(--warn);}
+.score-4,.score-3,.score-2,.score-1{background:rgba(255,69,96,0.12);color:var(--error);border:2px solid var(--error);}
+.td-total{background:rgba(0,0,0,0.2);font-family:"Syne",sans-serif;font-size:14px;font-weight:800;text-align:center;}
+.td-ganador{background:rgba(0,229,160,0.08) !important;}
 .md-content{font-size:13px;color:var(--text);line-height:1.8;}
 .md-content h1,.md-content h2{font-family:"Syne",sans-serif;font-weight:800;color:var(--accent);margin:16px 0 8px;}
 .md-content h1{font-size:16px;}
@@ -188,6 +214,10 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
     <button class="tab" data-tab="excel">
       <span class="tab-icon">&#128202;</span>
       <span>Informe desde Excel</span>
+    </button>
+    <button class="tab" data-tab="comparativa">
+      <span class="tab-icon">&#9878;</span>
+      <span>Comparativa de Equipos</span>
     </button>
   </div>
 
@@ -471,6 +501,119 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
     </div>
   </div>
 
+  <!-- ══════════════════════════════════════════ -->
+  <!-- TAB 4: COMPARATIVA DE EQUIPOS              -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="tab-panel" id="panel-comparativa">
+    <div class="card" style="border-top:2px solid transparent;background:var(--surface);border-image:linear-gradient(90deg,#f59e0b,#ef4444,#8b5cf6) 1;">
+      <div class="card-title">&#9878; Comparativa de Equipos IA</div>
+      <div class="card-sub">Ingresa los modelos a comparar — Claude busca en internet especificaciones, precios y opiniones de cada uno, genera una tabla comparativa con calificación 1-10 por criterio y recomienda el mejor para infraestructura IT colombiana.</div>
+
+      <div class="row2" style="margin-bottom:14px;">
+        <div class="field">
+          <label>Tipo de Equipo</label>
+          <select id="cmpTipo">
+            <option value="switch">Switch</option>
+            <option value="router">Router</option>
+            <option value="ap">Access Point</option>
+            <option value="firewall">Firewall / UTM</option>
+            <option value="ups">UPS / Regulador</option>
+            <option value="servidor">Servidor</option>
+            <option value="camara">Cámara IP</option>
+            <option value="panel_solar">Panel Solar</option>
+            <option value="inversor">Inversor Solar</option>
+            <option value="nas">NAS / Almacenamiento</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Uso / Contexto</label>
+          <select id="cmpUso">
+            <option value="pyme">PyME colombiana (10-50 usuarios)</option>
+            <option value="empresa">Empresa mediana (50-200 usuarios)</option>
+            <option value="datacenter">Data Center / Servidor</option>
+            <option value="exterior">Uso exterior / intemperie</option>
+            <option value="industrial">Ambiente industrial / IoT</option>
+            <option value="residencial">Residencial / pequeña oficina</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Modelos dinámicos -->
+      <div style="margin-bottom:10px;">
+        <div style="font-size:9px;color:var(--muted);letter-spacing:1.5px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;">
+          <span>MODELOS A COMPARAR (mínimo 2, máximo 6)</span>
+          <button class="btn btn-o" style="font-size:10px;padding:4px 10px;" id="btnAddModelo">+ Agregar</button>
+        </div>
+        <div id="modelosList"></div>
+      </div>
+
+      <!-- Criterios -->
+      <div class="field" style="margin-bottom:14px;">
+        <label>Criterios de evaluación (selecciona los que aplican)</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;" id="criteriosList">
+          <label class="crit-chk"><input type="checkbox" value="rendimiento" checked> Rendimiento técnico</label>
+          <label class="crit-chk"><input type="checkbox" value="precio" checked> Relación precio/calidad</label>
+          <label class="crit-chk"><input type="checkbox" value="soporte" checked> Soporte y garantía</label>
+          <label class="crit-chk"><input type="checkbox" value="facilidad"> Facilidad de instalación</label>
+          <label class="crit-chk"><input type="checkbox" value="seguridad" checked> Seguridad</label>
+          <label class="crit-chk"><input type="checkbox" value="escalabilidad"> Escalabilidad</label>
+          <label class="crit-chk"><input type="checkbox" value="consumo"> Consumo energético</label>
+          <label class="crit-chk"><input type="checkbox" value="disponibilidad" checked> Disponibilidad en Colombia</label>
+          <label class="crit-chk"><input type="checkbox" value="firmware"> Actualizaciones firmware</label>
+          <label class="crit-chk"><input type="checkbox" value="documentacion"> Documentación</label>
+        </div>
+      </div>
+
+      <div class="field" style="margin-bottom:14px;">
+        <label>Criterios adicionales o contexto específico</label>
+        <input type="text" id="cmpContexto" placeholder="Ej: presupuesto máximo $500 USD, necesita PoE, compatible con VLAN...">
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-p" id="btnComparar">
+          <span class="btn-text">&#9889; COMPARAR EQUIPOS</span>
+          <div class="spin"></div>
+        </button>
+      </div>
+    </div>
+
+    <!-- AI Steps -->
+    <div class="ai-wrap" id="aiWrapCmp">
+      <div class="ai-header"><div class="pulse"></div><div class="ai-label">BUSCANDO Y COMPARANDO...</div></div>
+      <div class="ai-steps">
+        <div class="ai-step" id="cm1"><div class="step-dot"></div>Buscando especificaciones de cada modelo en internet</div>
+        <div class="ai-step" id="cm2"><div class="step-dot"></div>Verificando precios y disponibilidad en Colombia</div>
+        <div class="ai-step" id="cm3"><div class="step-dot"></div>Analizando fallas reportadas y opiniones técnicas</div>
+        <div class="ai-step" id="cm4"><div class="step-dot"></div>Calculando calificaciones por criterio</div>
+        <div class="ai-step" id="cm5"><div class="step-dot"></div>Generando recomendación final</div>
+      </div>
+    </div>
+
+    <!-- Resultado -->
+    <div class="resultado-wrap" id="resCmp">
+      <div class="res-card">
+        <div class="res-head">
+          <div>
+            <div class="res-titulo" id="cmpTitulo">Comparativa</div>
+            <div class="res-sub" id="cmpSub">—</div>
+          </div>
+          <div id="cmpGanador" style="padding:8px 16px;background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.3);border-radius:8px;font-size:11px;color:var(--success);font-weight:700;display:none;"></div>
+        </div>
+        <div class="res-body">
+          <!-- Tabla de calificaciones -->
+          <div id="cmpTablaWrap" style="overflow-x:auto;margin-bottom:20px;"></div>
+          <!-- Informe detallado -->
+          <div class="md-content" id="cmpInformeBody"></div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-o" id="btnDescartarCmp">Descartar</button>
+        <button class="btn btn-pdf" id="btnPdfCmp">&#8659; Descargar PDF Comparativa</button>
+      </div>
+    </div>
+  </div>
+
 </div><!-- /main -->
 
 <script src="../assets/supabase.js"></script>
@@ -481,12 +624,13 @@ const ANON  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJl
 
 let _user = null;
 let _protocolo = null;
-let _pdfData = null;   // base64
+let _pdfData = null;
 let _pdfNombre = '';
-let _excelData = null; // texto plano del excel
+let _excelData = null;
 let _excelNombre = '';
 let _informePDF = '';
 let _informeExcel = '';
+let _comparativa = null;
 
 // ── INIT ──────────────────────────────────────────────────────
 (async () => {
@@ -496,6 +640,7 @@ let _informeExcel = '';
   setupProto();
   setupPDF();
   setupExcel();
+  setupComparativa();
 })();
 
 // ── TABS ──────────────────────────────────────────────────────
@@ -858,6 +1003,379 @@ ${limit}`;
     toast('Error: '+e.message,'error');
   }
   btn.classList.remove('loading'); btn.disabled=false;
+}
+
+// ══════════════════════════════════════════════════════════════
+// TAB 4 — COMPARATIVA DE EQUIPOS
+// ══════════════════════════════════════════════════════════════
+function setupComparativa() {
+  // Agregar 3 modelos por defecto
+  ['','',''].forEach(()=>agregarModeloRow());
+
+  document.getElementById('btnAddModelo').addEventListener('click',()=>{
+    const rows=document.querySelectorAll('.modelo-row');
+    if(rows.length>=6){ toast('Máximo 6 modelos','error'); return; }
+    agregarModeloRow();
+  });
+
+  document.getElementById('btnComparar').addEventListener('click', generarComparativa);
+  document.getElementById('btnDescartarCmp').addEventListener('click',()=>{
+    document.getElementById('resCmp').classList.remove('visible'); _comparativa=null;
+  });
+  document.getElementById('btnPdfCmp').addEventListener('click', exportarPDFComparativa);
+}
+
+function agregarModeloRow(valor='') {
+  const div = document.createElement('div');
+  div.className = 'modelo-row';
+  const n = document.querySelectorAll('.modelo-row').length + 1;
+  div.innerHTML = `
+    <div style="width:24px;height:24px;background:linear-gradient(135deg,var(--purple),var(--accent2));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:white;flex-shrink:0;">${n}</div>
+    <input type="text" class="modelo-input" placeholder="Ej: TP-Link EAP225 Outdoor, Ubiquiti NanoStation M2..." value="${valor}">
+    <button class="btn-del-modelo" title="Eliminar">&#10005;</button>`;
+  div.querySelector('.btn-del-modelo').addEventListener('click',()=>{
+    if(document.querySelectorAll('.modelo-row').length<=2){ toast('Mínimo 2 modelos','error'); return; }
+    div.remove(); renumerarModelos();
+  });
+  document.getElementById('modelosList').appendChild(div);
+}
+
+function renumerarModelos() {
+  document.querySelectorAll('.modelo-row').forEach((row,i)=>{
+    const circle = row.querySelector('div');
+    if(circle) circle.textContent = i+1;
+  });
+}
+
+async function generarComparativa() {
+  const modelos = [...document.querySelectorAll('.modelo-input')]
+    .map(i=>i.value.trim()).filter(Boolean);
+
+  if(modelos.length < 2){ toast('Ingresa al menos 2 modelos','error'); return; }
+
+  const tipo     = document.getElementById('cmpTipo').value;
+  const uso      = document.getElementById('cmpUso').value;
+  const contexto = document.getElementById('cmpContexto').value.trim();
+  const criterios = [...document.querySelectorAll('#criteriosList input:checked')]
+    .map(c=>c.value);
+
+  if(!criterios.length){ toast('Selecciona al menos un criterio','error'); return; }
+
+  const btn = document.getElementById('btnComparar');
+  btn.classList.add('loading'); btn.disabled=true;
+  document.getElementById('resCmp').classList.remove('visible');
+  document.getElementById('aiWrapCmp').classList.add('visible');
+  animarSteps(['cm1','cm2','cm3','cm4','cm5'], 1200);
+
+  const criteriosLabel = {
+    rendimiento:'Rendimiento técnico', precio:'Relación precio/calidad',
+    soporte:'Soporte y garantía', facilidad:'Facilidad instalación',
+    seguridad:'Seguridad', escalabilidad:'Escalabilidad',
+    consumo:'Consumo energético', disponibilidad:'Disponibilidad Colombia',
+    firmware:'Actualizaciones firmware', documentacion:'Documentación'
+  };
+
+  const criteriosStr = criterios.map(c=>criteriosLabel[c]||c).join(', ');
+  const modelosStr   = modelos.map((m,i)=>`${i+1}. ${m}`).join('\n');
+
+  const prompt = `Eres un ingeniero de infraestructura IT especialista en el mercado colombiano.
+
+Realiza una comparativa técnica detallada de los siguientes equipos tipo "${tipo}" para uso en "${uso}":
+${modelosStr}
+
+CRITERIOS DE EVALUACIÓN: ${criteriosStr}
+${contexto ? 'CONTEXTO ADICIONAL: '+contexto : ''}
+
+INSTRUCCIONES:
+1. Busca en internet las especificaciones reales, precios aproximados en Colombia y opiniones técnicas de CADA modelo
+2. Califica cada modelo en cada criterio del 1 al 10 (10 = excelente)
+3. Identifica el ganador general y justifica por qué
+4. Considera factores importantes para Colombia: distribuidores locales, soporte técnico en español, precio en COP, disponibilidad de repuestos
+
+RESPONDE SOLO con JSON válido sin markdown:
+{
+  "titulo": "Comparativa de [tipo] para [uso]",
+  "modelos": [
+    {
+      "nombre": "nombre completo del modelo",
+      "fabricante": "marca",
+      "precio_usd": "precio aproximado en USD",
+      "precio_cop": "precio aproximado en COP",
+      "disponibilidad_col": "Alta|Media|Baja",
+      "descripcion": "descripción breve del modelo",
+      "calificaciones": {
+        "criterio": calificacion_numerica_1_10
+      },
+      "pros": ["ventaja 1", "ventaja 2", "ventaja 3"],
+      "contras": ["desventaja 1", "desventaja 2"],
+      "ideal_para": "descripción del caso de uso ideal"
+    }
+  ],
+  "ganador": "nombre del modelo ganador",
+  "razon_ganador": "justificación detallada de por qué ganó",
+  "recomendacion_colombia": "recomendación específica para el mercado colombiano",
+  "criterios_evaluados": ["lista de criterios usados"]
+}`;
+
+  try {
+    const data = await llamarClaude(prompt, true);
+    const raw  = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+    const ini  = raw.indexOf('{'); const fin = raw.lastIndexOf('}');
+    if(ini===-1||fin===-1) throw new Error('Sin JSON en respuesta');
+    _comparativa = JSON.parse(raw.slice(ini,fin+1));
+
+    renderComparativa(_comparativa);
+    document.getElementById('aiWrapCmp').classList.remove('visible');
+    document.getElementById('resCmp').classList.add('visible');
+  } catch(e) {
+    document.getElementById('aiWrapCmp').classList.remove('visible');
+    toast('Error: '+e.message, 'error');
+  }
+  btn.classList.remove('loading'); btn.disabled=false;
+}
+
+function renderComparativa(cmp) {
+  document.getElementById('cmpTitulo').textContent = cmp.titulo||'Comparativa';
+  document.getElementById('cmpSub').textContent    = (cmp.modelos?.length||0)+' modelos · '+new Date().toLocaleString('es-CO');
+
+  // Ganador badge
+  if(cmp.ganador){
+    const g=document.getElementById('cmpGanador');
+    g.textContent='🏆 GANADOR: '+cmp.ganador;
+    g.style.display='block';
+  }
+
+  // Tabla de calificaciones
+  const modelos    = cmp.modelos||[];
+  const criterios  = cmp.criterios_evaluados||[];
+
+  // Calcular totales y ganador col
+  const totales = modelos.map(m=>{
+    const vals = criterios.map(c=>m.calificaciones?.[c]||0);
+    return vals.length ? Math.round(vals.reduce((a,b)=>a+b,0)/vals.length*10)/10 : 0;
+  });
+  const maxTotal = Math.max(...totales);
+
+  let tablaHTML = `<table class="cmp-table">
+    <thead>
+      <tr>
+        <th class="th-modelo">CRITERIO</th>
+        ${modelos.map(m=>`<th class="th-modelo">${m.nombre}<br><span style="font-size:9px;opacity:0.7;">${m.fabricante||''}</span></th>`).join('')}
+      </tr>
+    </thead><tbody>`;
+
+  // Filas por criterio
+  criterios.forEach(crit=>{
+    const label=({rendimiento:'⚡ Rendimiento',precio:'💰 Precio/Calidad',soporte:'🛠 Soporte',facilidad:'🔧 Instalación',seguridad:'🔒 Seguridad',escalabilidad:'📈 Escalabilidad',consumo:'⚡ Consumo',disponibilidad:'🇨🇴 Disponibilidad',firmware:'🔄 Firmware',documentacion:'📄 Documentación'})[crit]||crit;
+    tablaHTML += `<tr><td class="td-criterio">${label}</td>`;
+    modelos.forEach(m=>{
+      const score = m.calificaciones?.[crit]||0;
+      const cls   = 'score score-'+Math.min(10,Math.max(1,Math.round(score)));
+      tablaHTML += `<td style="text-align:center;"><div class="${cls}">${score}</div></td>`;
+    });
+    tablaHTML += '</tr>';
+  });
+
+  // Fila de totales
+  tablaHTML += `<tr><td class="td-criterio" style="font-weight:700;color:var(--text);">PROMEDIO FINAL</td>`;
+  totales.forEach((t,i)=>{
+    const isGanador = t===maxTotal;
+    const color = t>=8?'var(--success)':t>=6?'var(--accent2)':'var(--warn)';
+    tablaHTML += `<td class="td-total${isGanador?' td-ganador':''}" style="color:${color};">
+      ${isGanador?'🏆 ':''}${t}<br><span style="font-size:9px;color:var(--muted);">/10</span>
+    </td>`;
+  });
+  tablaHTML += '</tr>';
+
+  // Fila de precios
+  tablaHTML += `<tr><td class="td-criterio">💵 Precio (USD)</td>`;
+  modelos.forEach(m=>{ tablaHTML+=`<td style="text-align:center;font-size:11px;">${m.precio_usd||'—'}</td>`; });
+  tablaHTML += '</tr>';
+  tablaHTML += `<tr><td class="td-criterio">🇨🇴 Disponibilidad</td>`;
+  modelos.forEach(m=>{
+    const c={Alta:'var(--success)',Media:'var(--warn)',Baja:'var(--error)'}[m.disponibilidad_col]||'var(--muted)';
+    tablaHTML+=`<td style="text-align:center;font-size:11px;color:${c};">${m.disponibilidad_col||'—'}</td>`;
+  });
+  tablaHTML += '</tr></tbody></table>';
+  document.getElementById('cmpTablaWrap').innerHTML = tablaHTML;
+
+  // Informe detallado
+  let informe = '';
+  if(cmp.razon_ganador) informe += `## 🏆 Por qué gana ${cmp.ganador}\n${cmp.razon_ganador}\n\n`;
+  if(cmp.recomendacion_colombia) informe += `## 🇨🇴 Recomendación para Colombia\n${cmp.recomendacion_colombia}\n\n`;
+
+  informe += '## Detalle por modelo\n\n';
+  modelos.forEach(m=>{
+    informe += `### ${m.nombre} — ${m.fabricante||''}\n`;
+    informe += m.descripcion+'\n\n';
+    if(m.pros?.length) informe += '**Ventajas:** '+m.pros.join(' · ')+'\n\n';
+    if(m.contras?.length) informe += '**Desventajas:** '+m.contras.join(' · ')+'\n\n';
+    if(m.ideal_para) informe += '**Ideal para:** '+m.ideal_para+'\n\n';
+    informe += '---\n\n';
+  });
+
+  document.getElementById('cmpInformeBody').innerHTML = marcarMD(informe);
+}
+
+// ── PDF COMPARATIVA ───────────────────────────────────────────
+async function exportarPDFComparativa() {
+  if(!_comparativa){ toast('Sin comparativa para exportar','error'); return; }
+  toast('Generando PDF...','info');
+  await cargarJsPDF();
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({unit:'mm',format:'a4',orientation:'landscape'});
+  const W=297,M=14,CW=W-M*2;let y=0;
+  const AZ=[0,82,155],AZL=[0,119,255],NG=[20,20,30],GR=[100,110,130];
+  const GRL=[220,225,235],BL=[255,255,255],VD=[0,140,80],RJ=[200,30,50],AM=[200,140,0];
+
+  // Header
+  doc.setFillColor(...AZ);doc.rect(0,0,W,38,'F');
+  doc.setFillColor(...AZL);doc.rect(0,0,4,38,'F');
+  doc.setFontSize(18);doc.setFont('helvetica','bold');doc.setTextColor(...BL);doc.text('IIT',M,16);
+  doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(180,200,230);
+  doc.text('INFRAESTRUCTURA-IT  ·  Comparativa técnica generada por IA',M,22);
+  doc.setFontSize(10);doc.setFont('helvetica','bold');doc.setTextColor(...BL);
+  doc.text(_comparativa.titulo||'Comparativa de Equipos',M,30);
+  doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(200,215,240);
+  doc.text(new Date().toLocaleString('es-CO'),W-M,22,{align:'right'});
+  if(_comparativa.ganador){
+    doc.setFillColor(...VD);doc.roundedRect(W-M-60,26,60,8,2,2,'F');
+    doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(...BL);
+    doc.text('GANADOR: '+_comparativa.ganador,W-M-30,31.5,{align:'center'});
+  }
+  y=44;
+
+  // Tabla comparativa
+  const modelos  = _comparativa.modelos||[];
+  const criterios= _comparativa.criterios_evaluados||[];
+  const totales  = modelos.map(m=>{
+    const vals=criterios.map(c=>m.calificaciones?.[c]||0);
+    return vals.length?Math.round(vals.reduce((a,b)=>a+b,0)/vals.length*10)/10:0;
+  });
+  const maxTotal=Math.max(...totales);
+  const colW=Math.min(36,(CW-50)/modelos.length);
+
+  // Header tabla
+  doc.setFillColor(...AZ);doc.rect(M,y,50,8,'F');
+  doc.setFillColor(0,60,120);
+  modelos.forEach((_,i)=>doc.rect(M+50+i*colW,y,colW,8,'F'));
+  doc.setFontSize(7);doc.setFont('helvetica','bold');doc.setTextColor(...BL);
+  doc.text('CRITERIO',M+2,y+5.5);
+  modelos.forEach((m,i)=>{
+    const nm=m.nombre.length>18?m.nombre.slice(0,16)+'..':m.nombre;
+    doc.text(nm,M+50+i*colW+colW/2,y+5.5,{align:'center'});
+  });
+  y+=10;
+
+  // Filas criterios
+  const critLabel={rendimiento:'Rendimiento',precio:'Precio/Calidad',soporte:'Soporte',facilidad:'Instalación',seguridad:'Seguridad',escalabilidad:'Escalabilidad',consumo:'Consumo',disponibilidad:'Colombia',firmware:'Firmware',documentacion:'Documentación'};
+  criterios.forEach((crit,ri)=>{
+    if(y>188){doc.addPage();y=16;}
+    if(ri%2===0){doc.setFillColor(248,249,252);doc.rect(M,y-1,CW,7,'F');}
+    doc.setFontSize(7.5);doc.setFont('helvetica','normal');doc.setTextColor(...GR);
+    doc.text(critLabel[crit]||crit,M+2,y+4);
+    modelos.forEach((m,i)=>{
+      const score=m.calificaciones?.[crit]||0;
+      const color=score>=8?VD:score>=6?AZL:score>=4?AM:RJ;
+      doc.setFillColor(...color.map(v=>Math.min(255,v+140)));
+      doc.circle(M+50+i*colW+colW/2,y+3.5,3.5,'F');
+      doc.setFontSize(7);doc.setFont('helvetica','bold');doc.setTextColor(...color.map(v=>Math.max(0,v-60)));
+      doc.text(String(score),M+50+i*colW+colW/2,y+4.8,{align:'center'});
+    });
+    y+=7;
+  });
+
+  // Fila totales
+  y+=2;
+  doc.setFillColor(...AZ);doc.rect(M,y,50,9,'F');
+  modelos.forEach((_,i)=>doc.rect(M+50+i*colW,y,colW,9,'F'));
+  doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(...BL);
+  doc.text('PROMEDIO FINAL',M+2,y+6);
+  totales.forEach((t,i)=>{
+    const isG=t===maxTotal;
+    if(isG){doc.setFillColor(0,180,100);doc.rect(M+50+i*colW,y,colW,9,'F');}
+    doc.setFontSize(10);doc.setFont('helvetica','bold');doc.setTextColor(...BL);
+    doc.text((isG?'★ ':'')+t,M+50+i*colW+colW/2,y+6.5,{align:'center'});
+  });
+  y+=13;
+
+  // Fila precios
+  doc.setFillColor(240,244,255);doc.rect(M,y,CW,7,'F');
+  doc.setFontSize(7);doc.setFont('helvetica','bold');doc.setTextColor(...AZ);doc.text('PRECIO USD',M+2,y+5);
+  modelos.forEach((m,i)=>{
+    doc.setFont('helvetica','normal');doc.setTextColor(...NG);
+    doc.text(m.precio_usd||'—',M+50+i*colW+colW/2,y+5,{align:'center'});
+  });
+  y+=9;
+
+  // Sección ganador y recomendación
+  if(_comparativa.razon_ganador||_comparativa.recomendacion_colombia){
+    if(y>170){doc.addPage();y=16;}
+    y+=4;
+    if(_comparativa.razon_ganador){
+      doc.setFillColor(235,252,245);doc.roundedRect(M,y,CW/2-4,30,2,2,'F');
+      doc.setFillColor(...VD);doc.rect(M,y,3,30,'F');
+      doc.setFontSize(7.5);doc.setFont('helvetica','bold');doc.setTextColor(...VD);
+      doc.text('POR QUÉ GANA '+(_comparativa.ganador||'').toUpperCase(),M+6,y+6);
+      doc.setFont('helvetica','normal');doc.setTextColor(...GR);
+      const gl=doc.splitTextToSize(_comparativa.razon_ganador,CW/2-16);
+      doc.text(gl.slice(0,5),M+6,y+12);
+    }
+    if(_comparativa.recomendacion_colombia){
+      const x2=M+CW/2+4;
+      doc.setFillColor(235,243,255);doc.roundedRect(x2,y,CW/2-4,30,2,2,'F');
+      doc.setFillColor(...AZL);doc.rect(x2,y,3,30,'F');
+      doc.setFontSize(7.5);doc.setFont('helvetica','bold');doc.setTextColor(...AZL);
+      doc.text('RECOMENDACIÓN PARA COLOMBIA',x2+6,y+6);
+      doc.setFont('helvetica','normal');doc.setTextColor(...GR);
+      const cl=doc.splitTextToSize(_comparativa.recomendacion_colombia,CW/2-16);
+      doc.text(cl.slice(0,5),x2+6,y+12);
+    }
+    y+=36;
+  }
+
+  // Pros/Contras de cada modelo
+  if(y>160){doc.addPage();y=16;}
+  y+=4;
+  doc.setFillColor(...AZ);doc.rect(M,y,CW,8,'F');
+  doc.setFontSize(8.5);doc.setFont('helvetica','bold');doc.setTextColor(...BL);
+  doc.text('DETALLE POR MODELO',M+4,y+5.5);y+=12;
+
+  modelos.forEach((m,i)=>{
+    if(y>170){doc.addPage();y=16;}
+    const color=[AZL,VD,[180,70,20],[150,0,100],[0,110,150],[170,90,0]][i%6];
+    doc.setFillColor(248,249,252);doc.roundedRect(M,y,CW,28,2,2,'F');
+    doc.setFillColor(...color);doc.rect(M,y,3,28,'F');
+    doc.setFontSize(9);doc.setFont('helvetica','bold');doc.setTextColor(...NG);
+    doc.text(m.nombre,M+6,y+6);
+    doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(...GR);
+    if(m.descripcion) doc.text(doc.splitTextToSize(m.descripcion,CW-10)[0],M+6,y+11);
+    if(m.pros?.length){
+      doc.setTextColor(...VD);
+      doc.text('✓ '+m.pros.slice(0,2).join('  ·  '),M+6,y+17);
+    }
+    if(m.contras?.length){
+      doc.setTextColor(...RJ);
+      doc.text('✗ '+m.contras.slice(0,2).join('  ·  '),M+6,y+22);
+    }
+    doc.setTextColor(...color);
+    doc.setFont('helvetica','bold');doc.setFontSize(11);
+    doc.text(String(totales[i])+'/10',CW+M-8,y+16,{align:'right'});
+    y+=32;
+  });
+
+  // Footer
+  const pages=doc.internal.getNumberOfPages();
+  for(let i=1;i<=pages;i++){
+    doc.setPage(i);doc.setDrawColor(...GRL);doc.line(M,196,W-M,196);
+    doc.setFontSize(6.5);doc.setFont('helvetica','normal');doc.setTextColor(...GR);
+    doc.text('INFRAESTRUCTURA-IT  ·  Comparativa IA  ·  Bogotá, Colombia',M,200);
+    doc.text('Página '+i+'/'+pages,W-M,200,{align:'right'});
+  }
+
+  const n=(_comparativa.titulo||'comparativa').replace(/[^a-zA-Z0-9]/g,'-').toLowerCase().slice(0,40);
+  doc.save('IIT-Comparativa-'+n+'-'+new Date().toISOString().slice(0,10)+'.pdf');
+  toast('✓ PDF comparativa descargado','success');
 }
 
 // ══════════════════════════════════════════════════════════════
