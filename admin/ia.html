@@ -571,8 +571,14 @@ Genera SOLO JSON válido sin markdown:
   try {
     const data = await llamarClaude(prompt, true);
     const raw  = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
-    const clean = raw.replace(/```json|```/g,'').trim();
-    _protocolo = JSON.parse(clean);
+    if(!raw) throw new Error('La IA no devolvió respuesta');
+
+    // Extraer JSON del texto — buscar el primer { y el último }
+    const inicio = raw.indexOf('{');
+    const fin    = raw.lastIndexOf('}');
+    if(inicio === -1 || fin === -1) throw new Error('No se encontró JSON en la respuesta');
+    const jsonStr = raw.slice(inicio, fin+1);
+    _protocolo = JSON.parse(jsonStr);
     renderProtoPreview(_protocolo);
     document.getElementById('aiWrapProto').classList.remove('visible');
     document.getElementById('resProto').classList.add('visible');
