@@ -403,7 +403,10 @@ RESPONDE UNICAMENTE con JSON valido, sin texto adicional, sin markdown:
   try {
     const response = await fetch('https://szvtqdvfxqwhubpqqfhk.supabase.co/functions/v1/claude-proxy', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer sb_publishable_bZdHl96uaoS2nhHoPcE6pQ_YeFSyx30'
+      },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 2000,
