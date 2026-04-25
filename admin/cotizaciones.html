@@ -925,8 +925,8 @@ async function exportarPDFCotizacion(cot) {
         doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(...NEGRO);
         doc.text(descLines, cx+1, y+5);
       } else {
-        doc.setFontSize(7.5); doc.setFont(ci===0?'helvetica','bold':'helvetica','normal');
-        doc.setTextColor(ci===7?[...VERDE]:ci===0?[...AZUL]:[...NEGRO]);
+        doc.setFontSize(7.5); doc.setFont('helvetica', ci===0 ? 'bold' : 'normal');
+        doc.setTextColor(...(ci===7 ? VERDE : ci===0 ? AZUL : NEGRO));
         if(vals[ci]) doc.text(vals[ci], cx+col.w-1, y+5, {align:'right'});
       }
       cx+=col.w;
