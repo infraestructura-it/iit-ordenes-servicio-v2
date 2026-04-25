@@ -279,6 +279,7 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
     <div class="acciones-bar">
       <button class="btn btn-regen" id="btnRegen">&#9889; Regenerar</button>
       <button class="btn btn-o" id="btnDescartar">Descartar</button>
+      <button class="btn btn-o" id="btnExportarPDF" style="border-color:rgba(0,229,160,0.3);color:var(--success);">&#8659; PDF Completo</button>
       <button class="btn btn-save" id="btnGuardar">
         <span class="btn-text">&#128190; GUARDAR EN PROTOCOLOS</span>
         <div class="spin2"></div>
@@ -314,6 +315,7 @@ function setupEvents() {
   });
 
   document.getElementById('btnGenerar').addEventListener('click', generarProtocolo);
+  document.getElementById('btnExportarPDF').addEventListener('click', exportarPDFCompleto);
   document.getElementById('btnRegen').addEventListener('click', generarProtocolo);
   document.getElementById('btnGuardar').addEventListener('click', guardarProtocolo);
   document.getElementById('btnAgregarCampo').addEventListener('click', agregarCampoManual);
@@ -361,44 +363,55 @@ async function generarProtocolo() {
   }[tipo];
   const lang = idioma === 'en' ? 'English' : 'espanol colombiano tecnico';
 
-  const prompt = `Eres un ingeniero de soporte tecnico especialista en infraestructura IT colombiana con experiencia en data centers, redes, energia solar e IoT.
+  document.getElementById('streamLabel').textContent = 'BUSCANDO EN INTERNET...';
 
-Genera un protocolo de "${tipoLabel}" para el siguiente equipo: "${equipo}"
+  const prompt = `Eres un ingeniero de soporte tecnico especialista en infraestructura IT colombiana.
 
-REQUISITOS:
-- Genera entre ${nCampos} campos especializados para este equipo especifico
-- Usa ${lang} tecnico
-- Cada campo debe ser especifico al equipo (no campos genericos)
-- Incluye verificaciones criticas de seguridad y operacion
-- Usa valores reales de referencia donde aplique (voltajes, temperaturas, frecuencias, etc.)
+El equipo a analizar es: "${equipo}"
+Tipo de protocolo: "${tipoLabel}"
+Nivel de detalle: ${nCampos} campos
+Idioma: ${lang}
 
-TIPOS DE CAMPO disponibles:
-- texto: respuesta libre
-- numero: valor numerico (agrega unidad si aplica: V, A, W, °C, MHz, dBm, ms, etc.)
-- si_no: verificacion booleana
-- lista: opciones predefinidas (incluye las opciones separadas por |)
-- rango: valor en escala con min y max
-- foto: captura fotografica
-- firma: firma del tecnico
-- fecha_hora: registro automatico de fecha y hora
+INSTRUCCIONES:
+1. Busca en internet informacion tecnica sobre este equipo especifico
+2. Busca fallas comunes reportadas por usuarios y tecnicos
+3. Busca el manual oficial o datasheet
+4. Busca especificaciones tecnicas oficiales
 
-RESPONDE UNICAMENTE con JSON valido, sin texto adicional, sin markdown:
+Con toda esa informacion genera una respuesta JSON con esta estructura exacta:
+
 {
   "nombre": "nombre descriptivo del protocolo",
-  "equipo_tipo": "categoria del equipo (Router|Switch|Servidor|UPS|Camara IP|Panel Solar|Inversor|Access Point|Firewall|NAS|Workstation|Otro)",
-  "descripcion": "descripcion breve del protocolo en 1 oracion",
+  "equipo_tipo": "Router|Switch|Servidor|UPS|Camara IP|Panel Solar|Inversor|Access Point|Firewall|NAS|Workstation|Otro",
+  "descripcion": "descripcion breve del protocolo",
+  "especificaciones": {
+    "fabricante": "nombre del fabricante",
+    "modelo": "modelo exacto",
+    "voltaje": "voltaje de operacion",
+    "consumo": "consumo en watts",
+    "temperatura": "rango de temperatura operacion",
+    "otros": "otras specs relevantes"
+  },
+  "fallas_comunes": [
+    {"titulo": "nombre de la falla", "descripcion": "descripcion de la falla y como detectarla", "solucion": "como resolverla"},
+    {"titulo": "...", "descripcion": "...", "solucion": "..."}
+  ],
+  "manual_url": "URL del manual oficial si encontraste uno, si no null",
+  "notas_tecnicas": "notas tecnicas importantes encontradas en internet",
   "campos": [
     {
       "etiqueta": "nombre del campo",
-      "tipo": "tipo_de_campo",
-      "requerido": true/false,
-      "unidad": "unidad si aplica o null",
-      "opciones": ["opcion1","opcion2"] o null,
+      "tipo": "texto|numero|si_no|lista|rango|foto|firma|fecha_hora",
+      "requerido": true,
+      "unidad": "unidad o null",
+      "opciones": ["op1","op2"] o null,
       "rango_min": numero o null,
       "rango_max": numero o null
     }
   ]
-}`;
+}
+
+RESPONDE UNICAMENTE con JSON valido sin markdown ni texto adicional.`;
 
   try {
     const response = await fetch('https://szvtqdvfxqwhubpqqfhk.supabase.co/functions/v1/claude-proxy', {
@@ -409,7 +422,8 @@ RESPONDE UNICAMENTE con JSON valido, sin texto adicional, sin markdown:
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 2000,
+        max_tokens: 4000,
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
         messages: [{ role: 'user', content: prompt }]
       })
     });
@@ -419,9 +433,13 @@ RESPONDE UNICAMENTE con JSON valido, sin texto adicional, sin markdown:
 
     if (!response.ok) throw new Error('Error API: ' + response.status);
     const data = await response.json();
-    const raw  = data.content?.[0]?.text || '';
+    // Extraer texto de la respuesta (puede incluir tool_use blocks de web_search)
+    const raw = (data.content || [])
+      .filter(b => b.type === 'text')
+      .map(b => b.text)
+      .join('');
 
-    // Parsear JSON
+    if (!raw) throw new Error('La IA no devolvio respuesta de texto. Intenta de nuevo.');
     let proto;
     try {
       const clean = raw.replace(/^```json\s*/,'').replace(/```\s*$/,'').trim();
@@ -448,13 +466,55 @@ RESPONDE UNICAMENTE con JSON valido, sin texto adicional, sin markdown:
 // ── RENDER PREVIEW ────────────────────────────────────────────
 function renderPreview(proto) {
   document.getElementById('ppNombre').textContent  = proto.nombre || '—';
-  document.getElementById('ppEquipo').textContent  = '&#128295; ' + (proto.equipo_tipo || '—');
+  document.getElementById('ppEquipo').innerHTML    = '&#128295; ' + (proto.equipo_tipo || '—');
   document.getElementById('ppCampos').textContent  = (proto.campos?.length || 0) + ' campos';
 
-  const tipoIcon = { texto:'T',numero:'#',si_no:'✓',lista:'☰',rango:'↔',foto:'📷',firma:'✍',fecha_hora:'⏱' };
   const tipoLabel = { texto:'Texto',numero:'Numero',si_no:'Si / No',lista:'Lista',rango:'Rango',foto:'Foto',firma:'Firma',fecha_hora:'Fecha/Hora auto' };
 
-  document.getElementById('ppBody').innerHTML = (proto.campos || []).map((c, i) => `
+  // Specs técnicas si existen
+  let specsHtml = '';
+  if (proto.especificaciones) {
+    const sp = proto.especificaciones;
+    const specs = [
+      ['Fabricante', sp.fabricante], ['Modelo', sp.modelo],
+      ['Voltaje', sp.voltaje], ['Consumo', sp.consumo],
+      ['Temperatura', sp.temperatura], ['Otros', sp.otros]
+    ].filter(([,v]) => v);
+    if (specs.length) {
+      specsHtml = '<div style="background:rgba(0,119,255,0.05);border:1px solid rgba(0,119,255,0.15);border-radius:8px;padding:14px;margin-bottom:16px;">' +
+        '<div style="font-size:9px;color:var(--accent2);letter-spacing:2px;margin-bottom:10px;">ESPECIFICACIONES TECNICAS</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">' +
+        specs.map(([k,v])=>'<div><span style="font-size:9px;color:var(--muted);">'+k.toUpperCase()+': </span><span style="font-size:11px;color:var(--text);">'+v+'</span></div>').join('') +
+        '</div>' +
+        (proto.manual_url ? '<div style="margin-top:10px;"><a href="'+proto.manual_url+'" target="_blank" style="font-size:11px;color:var(--accent);text-decoration:none;">&#128196; Ver manual oficial →</a></div>' : '') +
+        '</div>';
+    }
+  }
+
+  // Fallas comunes si existen
+  let fallasHtml = '';
+  if (proto.fallas_comunes?.length) {
+    fallasHtml = '<div style="margin-bottom:16px;">' +
+      '<div style="font-size:9px;color:var(--error);letter-spacing:2px;margin-bottom:10px;">FALLAS COMUNES REPORTADAS</div>' +
+      proto.fallas_comunes.map((f,i)=>'<div style="padding:10px;background:rgba(255,69,96,0.04);border:1px solid rgba(255,69,96,0.15);border-radius:7px;margin-bottom:8px;">' +
+        '<div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px;">'+(i+1)+'. '+f.titulo+'</div>' +
+        '<div style="font-size:11px;color:var(--muted);margin-bottom:4px;">'+f.descripcion+'</div>' +
+        '<div style="font-size:11px;color:var(--success);">&#10003; '+f.solucion+'</div>' +
+      '</div>').join('') +
+      '</div>';
+  }
+
+  // Notas técnicas
+  let notasHtml = '';
+  if (proto.notas_tecnicas) {
+    notasHtml = '<div style="padding:12px;background:rgba(255,183,0,0.04);border:1px solid rgba(255,183,0,0.15);border-radius:8px;margin-bottom:16px;">' +
+      '<div style="font-size:9px;color:var(--warn);letter-spacing:2px;margin-bottom:6px;">NOTAS TECNICAS</div>' +
+      '<div style="font-size:12px;color:var(--muted);line-height:1.6;">'+proto.notas_tecnicas+'</div>' +
+    '</div>';
+  }
+
+  // Campos editables
+  const camposHtml = (proto.campos || []).map((c, i) => `
     <div class="campo-edit-row" data-idx="${i}">
       <div style="display:flex;align-items:center;gap:10px;">
         <div class="cp-num">${i+1}</div>
@@ -471,22 +531,180 @@ function renderPreview(proto) {
     </div>
   `).join('');
 
-  // Eventos eliminar campo
+  document.getElementById('ppBody').innerHTML = specsHtml + fallasHtml + notasHtml +
+    '<div style="font-size:9px;color:var(--purple);letter-spacing:2px;margin-bottom:10px;">CAMPOS DEL PROTOCOLO</div>' +
+    camposHtml;
+
+  // Eventos
   document.querySelectorAll('.btn-del-c').forEach(btn => {
     btn.addEventListener('click', () => {
-      const idx = parseInt(btn.dataset.idx);
-      _protocolo.campos.splice(idx, 1);
+      _protocolo.campos.splice(parseInt(btn.dataset.idx), 1);
       renderPreview(_protocolo);
     });
   });
-
-  // Sync cambios en tiempo real a _protocolo
   document.querySelectorAll('.campo-edit-row').forEach((row, i) => {
     row.querySelector('.c-etiqueta').addEventListener('input', e => { _protocolo.campos[i].etiqueta = e.target.value; });
     row.querySelector('.c-tipo').addEventListener('change', e => { _protocolo.campos[i].tipo = e.target.value; });
     row.querySelector('.c-unidad').addEventListener('input', e => { _protocolo.campos[i].unidad = e.target.value || null; });
     row.querySelector('.c-req').addEventListener('change', e => { _protocolo.campos[i].requerido = e.target.checked; });
   });
+}
+
+// ── EXPORTAR PDF COMPLETO ─────────────────────────────────────
+async function exportarPDFCompleto() {
+  if (!_protocolo) return;
+  toast('Generando PDF...', 'info');
+
+  // Cargar jsPDF
+  await new Promise((res, rej) => {
+    if (window.jspdf) return res();
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    s.onload = res; s.onerror = rej;
+    document.head.appendChild(s);
+  });
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit:'mm', format:'a4' });
+  const W = 210, M = 16;
+  let y = 0;
+
+  const C = {
+    bg:[8,11,16], surface:[13,17,23], border:[30,42,56],
+    accent:[0,212,255], blue:[0,119,255], text:[232,240,248],
+    muted:[74,96,112], success:[0,229,160], warn:[255,183,0],
+    error:[255,69,96], purple:[124,58,237]
+  };
+
+  // ── HEADER ──
+  doc.setFillColor(...C.bg); doc.rect(0,0,W,40,'F');
+  doc.setFillColor(...C.purple); doc.rect(0,0,W,2,'F');
+  doc.setTextColor(...C.text); doc.setFontSize(14); doc.setFont('helvetica','bold');
+  doc.text('Infraestructura-IT', M, 14);
+  doc.setTextColor(...C.muted); doc.setFontSize(7); doc.setFont('helvetica','normal');
+  doc.text('INFORME TECNICO GENERADO POR IA', M, 20);
+  doc.text('Generado: ' + new Date().toLocaleString('es-CO'), M, 25);
+  doc.setTextColor(...C.accent); doc.setFontSize(13); doc.setFont('helvetica','bold');
+  doc.text(_protocolo.nombre || '—', W-M, 14, {align:'right'});
+  doc.setTextColor(...C.muted); doc.setFontSize(9); doc.setFont('helvetica','normal');
+  doc.text((_protocolo.equipo_tipo||'') + ' · ' + document.getElementById('optTipo').options[document.getElementById('optTipo').selectedIndex].text, W-M, 20, {align:'right'});
+  y = 48;
+
+  const sec = (titulo, color=C.blue) => {
+    if(y>265){doc.addPage();y=16;}
+    doc.setFillColor(...C.bg); doc.rect(M,y,W-M*2,7,'F');
+    doc.setFillColor(...color); doc.rect(M,y,3,7,'F');
+    doc.setTextColor(...C.text); doc.setFontSize(8); doc.setFont('helvetica','bold');
+    doc.text(titulo, M+6, y+5); y+=11;
+  };
+
+  const linea = () => { doc.setDrawColor(...C.border); doc.line(M,y,W-M,y); y+=4; };
+
+  const campo = (label, val) => {
+    if(!val||val==='—'||val==='null') return;
+    if(y>268){doc.addPage();y=16;}
+    doc.setTextColor(...C.muted); doc.setFontSize(7); doc.setFont('helvetica','normal');
+    doc.text(label.toUpperCase(), M+2, y);
+    doc.setTextColor(...C.text); doc.setFontSize(9); doc.setFont('helvetica','bold');
+    const lines = doc.splitTextToSize(String(val), W-M*2-38);
+    doc.text(lines, M+44, y);
+    y += Math.max(6, lines.length*4.5);
+  };
+
+  // ── ESPECIFICACIONES ──
+  if (_protocolo.especificaciones) {
+    sec('1. ESPECIFICACIONES TECNICAS', C.blue);
+    const sp = _protocolo.especificaciones;
+    campo('Fabricante', sp.fabricante);
+    campo('Modelo', sp.modelo);
+    campo('Voltaje', sp.voltaje);
+    campo('Consumo', sp.consumo);
+    campo('Temperatura', sp.temperatura);
+    campo('Otros', sp.otros);
+    if (_protocolo.manual_url) campo('Manual oficial', _protocolo.manual_url);
+    linea();
+  }
+
+  // ── FALLAS COMUNES ──
+  if (_protocolo.fallas_comunes?.length) {
+    sec('2. FALLAS COMUNES REPORTADAS', C.error);
+    _protocolo.fallas_comunes.forEach((f, i) => {
+      if(y>255){doc.addPage();y=16;}
+      doc.setFillColor(20,10,12); doc.rect(M,y,W-M*2,1,'F');
+      doc.setTextColor(...C.text); doc.setFontSize(9); doc.setFont('helvetica','bold');
+      const tLines = doc.splitTextToSize((i+1)+'. '+f.titulo, W-M*2-4);
+      doc.text(tLines, M+2, y+4);
+      y += tLines.length*4.5 + 3;
+      if(f.descripcion){
+        doc.setTextColor(...C.muted); doc.setFontSize(8); doc.setFont('helvetica','normal');
+        const dLines = doc.splitTextToSize(f.descripcion, W-M*2-6);
+        doc.text(dLines, M+4, y);
+        y += dLines.length*4.2 + 2;
+      }
+      if(f.solucion){
+        doc.setTextColor(...C.success); doc.setFontSize(8);
+        const sLines = doc.splitTextToSize('Solucion: '+f.solucion, W-M*2-6);
+        doc.text(sLines, M+4, y);
+        y += sLines.length*4.2 + 4;
+      }
+    });
+    linea();
+  }
+
+  // ── NOTAS TECNICAS ──
+  if (_protocolo.notas_tecnicas) {
+    sec('3. NOTAS TECNICAS', C.warn);
+    if(y>250){doc.addPage();y=16;}
+    doc.setTextColor(...C.muted); doc.setFontSize(8); doc.setFont('helvetica','normal');
+    const nLines = doc.splitTextToSize(_protocolo.notas_tecnicas, W-M*2-4);
+    doc.text(nLines, M+2, y);
+    y += nLines.length*4.5 + 4;
+    linea();
+  }
+
+  // ── PROTOCOLO DE MANTENIMIENTO ──
+  sec('4. PROTOCOLO DE MANTENIMIENTO — ' + (_protocolo.campos?.length||0) + ' CAMPOS', C.purple);
+  (_protocolo.campos||[]).forEach((c, i) => {
+    if(y>260){doc.addPage();y=16;}
+    doc.setFillColor(13,17,23); doc.rect(M,y,W-M*2,8,'F');
+    doc.setFillColor(...C.purple); doc.rect(M,y,2,8,'F');
+    doc.setTextColor(...C.text); doc.setFontSize(9); doc.setFont('helvetica','bold');
+    doc.text((i+1)+'. '+c.etiqueta, M+5, y+5.5);
+    const tipo = c.tipo?.replace(/_/g,' ').toUpperCase()||'';
+    doc.setTextColor(...C.muted); doc.setFontSize(7);
+    doc.text(tipo+(c.unidad?' ('+c.unidad+')':''), W-M-2, y+5.5, {align:'right'});
+    if(c.requerido){
+      doc.setTextColor(...C.error); doc.setFontSize(6);
+      doc.text('REQUERIDO', W-M-2, y+2, {align:'right'});
+    }
+    y+=10;
+    if(c.opciones?.length){
+      doc.setTextColor(...C.muted); doc.setFontSize(7);
+      doc.text('Opciones: '+c.opciones.join(', '), M+5, y);
+      y+=5;
+    }
+    if(c.rango_min!==null&&c.rango_max!==null){
+      doc.setTextColor(...C.muted); doc.setFontSize(7);
+      doc.text('Rango: '+c.rango_min+' — '+c.rango_max+(c.unidad?' '+c.unidad:''), M+5, y);
+      y+=5;
+    }
+    y+=2;
+  });
+
+  // ── FOOTER ──
+  const pages = doc.internal.getNumberOfPages();
+  for(let i=1;i<=pages;i++){
+    doc.setPage(i);
+    doc.setFillColor(...C.bg); doc.rect(0,287,W,10,'F');
+    doc.setDrawColor(...C.border); doc.line(0,287,W,287);
+    doc.setTextColor(...C.muted); doc.setFontSize(6.5);
+    doc.text('INFRAESTRUCTURA-IT · Informe generado por IA (Claude) · '+new Date().toLocaleDateString('es-CO'), M, 293);
+    doc.text('Pagina '+i+' / '+pages, W-M, 293, {align:'right'});
+  }
+
+  const nombre = (_protocolo.nombre||'protocolo').replace(/[^a-zA-Z0-9]/g,'-').toLowerCase();
+  doc.save('IIT-IA-'+nombre+'-'+new Date().toISOString().slice(0,10)+'.pdf');
+  toast('PDF descargado', 'success');
 }
 
 // ── AGREGAR CAMPO MANUAL ──────────────────────────────────────
