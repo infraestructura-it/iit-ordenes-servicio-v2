@@ -198,6 +198,7 @@ textarea{resize:vertical;min-height:60px;}
       <h2 id="editorTitulo">NUEVA COTIZACION</h2>
       <div style="display:flex;gap:8px;">
         <button class="btn btn-success btn-sm" id="btnEnviarCliente" style="display:none;">&#128231; Enviar a Cliente</button>
+        <button class="btn btn-o btn-sm" id="btnPdfCot" style="display:none;border-color:rgba(0,229,160,0.3);color:var(--success);">&#8659; PDF</button>
         <button class="btn btn-o btn-sm" id="btnCerrarEditor">CERRAR</button>
       </div>
     </div>
@@ -415,6 +416,7 @@ function abrirEditor(id=null){
   document.getElementById('itemsList').innerHTML='';
   document.getElementById('btnEliminar').style.display = id?'inline-flex':'none';
   document.getElementById('btnEnviarCliente').style.display = id?'inline-flex':'none';
+  document.getElementById('btnPdfCot').style.display = id?'inline-flex':'none';
   document.getElementById('editorTitulo').textContent = id?'EDITAR COTIZACION':'NUEVA COTIZACION';
 
   if(id){
@@ -733,6 +735,11 @@ function setupEvents(){
   document.getElementById('btnCancelar').addEventListener('click',()=>document.getElementById('modalEditor').classList.remove('open'));
   document.getElementById('btnCerrarEditor').addEventListener('click',()=>document.getElementById('modalEditor').classList.remove('open'));
   document.getElementById('btnEnviarCliente').addEventListener('click',enviarACliente);
+  document.getElementById('btnPdfCot').addEventListener('click',()=>{
+    const cot=_editId?_cotizaciones.find(x=>x.id===_editId):null;
+    if(cot) exportarPDFCotizacion(cot);
+    else toast('Guarda la cotizacion primero','error');
+  });
   document.getElementById('btnEliminar').addEventListener('click',eliminarCotizacion);
   document.getElementById('modalEditor').addEventListener('click',e=>{if(e.target===e.currentTarget)document.getElementById('modalEditor').classList.remove('open');});
 
@@ -756,6 +763,272 @@ function setupEvents(){
 }
 
 function fNum(n){return Math.round(n).toLocaleString('es-CO');}
+
+// ── PDF COTIZACION ─────────────────────────────────────────────
+async function exportarPDFCotizacion(cot) {
+  toast('Generando PDF...','info');
+
+  // Cargar jsPDF
+  await new Promise((res,rej)=>{
+    if(window.jspdf) return res();
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    s.onload=res;s.onerror=rej;document.head.appendChild(s);
+  });
+
+  // Cargar items si no están
+  if(!cot.cotizacion_items){
+    const {data}=await db.from('cotizacion_items').select('*').eq('cotizacion_id',cot.id).order('orden');
+    cot.cotizacion_items=data||[];
+  }
+
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({unit:'mm',format:'a4'});
+  const W=210,M=16,CW=W-M*2;
+  let y=0;
+
+  // Colores
+  const AZUL=[0,82,155],AZUL_L=[0,119,255],NEGRO=[20,20,30];
+  const GRIS=[100,110,130],GRIS_L=[220,225,235],BLANCO=[255,255,255];
+  const VERDE=[0,140,80],ROJO=[200,30,50],GRIS_BG=[248,249,252];
+
+  const wrap=(t,w)=>doc.splitTextToSize(String(t||'—'),w);
+  const chk=(h=10)=>{if(y+h>272){doc.addPage();y=20;}};
+
+  // ── HEADER ──
+  // Franja azul top
+  doc.setFillColor(...AZUL); doc.rect(0,0,W,45,'F');
+  doc.setFillColor(...AZUL_L); doc.rect(0,0,4,45,'F');
+
+  // Logo IIT (texto estilizado)
+  doc.setFontSize(28); doc.setFont('helvetica','bold'); doc.setTextColor(...BLANCO);
+  doc.text('IIT', M, 22);
+  doc.setFontSize(7); doc.setFont('helvetica','normal'); doc.setTextColor(180,200,230);
+  doc.text('INFRAESTRUCTURA-IT', M, 28);
+  doc.text('Bogotá, Colombia  ·  soporte@infraestructura-it.co', M, 33);
+  doc.text('www.infraestructura-it.github.io', M, 38);
+
+  // Número cotización — derecha
+  doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.setTextColor(180,200,230);
+  doc.text('COTIZACIÓN DE SERVICIOS', W-M, 16, {align:'right'});
+  doc.setFontSize(16); doc.setFont('helvetica','bold'); doc.setTextColor(...BLANCO);
+  doc.text(cot.cotizacion_id||'—', W-M, 26, {align:'right'});
+  doc.setFontSize(7); doc.setFont('helvetica','normal'); doc.setTextColor(200,215,240);
+  const fechaDoc=cot.created_at?new Date(cot.created_at).toLocaleDateString('es-CO',{day:'2-digit',month:'long',year:'numeric'}):'—';
+  doc.text('Fecha: '+fechaDoc, W-M, 32, {align:'right'});
+  const vence=cot.fecha_vence?new Date(cot.fecha_vence).toLocaleDateString('es-CO',{day:'2-digit',month:'long',year:'numeric'}):'—';
+  doc.text('Valida hasta: '+vence, W-M, 37, {align:'right'});
+
+  // Badge estado
+  const stColor={borrador:GRIS,enviada:AZUL_L,aceptada:VERDE,rechazada:ROJO,vencida:[200,140,0]}[cot.status]||GRIS;
+  doc.setFillColor(...stColor);
+  doc.roundedRect(W-M-30, 39, 30, 6, 1.5, 1.5, 'F');
+  doc.setFontSize(7); doc.setFont('helvetica','bold'); doc.setTextColor(...BLANCO);
+  doc.text((cot.status||'borrador').toUpperCase(), W-M-15, 43.5, {align:'center'});
+
+  y = 53;
+
+  // ── QR ──
+  try {
+    const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data='+
+      encodeURIComponent('https://infraestructura-it.github.io/iit-ordenes-servicio-v2/cliente/cotizaciones.html?cot='+(cot.cotizacion_id||''))+
+      '&bgcolor=ffffff&color=00529b&margin=2';
+    const qrImg = await cargarImagenPDF(qrUrl);
+    doc.addImage(qrImg,'PNG',W-M-28,y,28,28);
+    doc.setFontSize(6); doc.setFont('helvetica','normal'); doc.setTextColor(...GRIS);
+    doc.text('Escanear para ver', W-M-14, y+30, {align:'center'});
+  } catch(e){}
+
+  // ── DATOS CLIENTE Y CONDICIONES ──
+  // Card cliente
+  doc.setFillColor(...GRIS_BG);
+  doc.roundedRect(M, y, CW-35, 32, 2, 2, 'F');
+  doc.setDrawColor(...GRIS_L); doc.setLineWidth(0.3);
+  doc.roundedRect(M, y, CW-35, 32, 2, 2, 'S');
+  doc.setFillColor(...AZUL); doc.rect(M, y, 3, 32, 'F');
+
+  doc.setFontSize(7); doc.setFont('helvetica','bold'); doc.setTextColor(...AZUL);
+  doc.text('CLIENTE', M+5, y+6);
+  doc.setFontSize(10); doc.setFont('helvetica','bold'); doc.setTextColor(...NEGRO);
+  doc.text(cot.empresa||'—', M+5, y+13);
+  doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(...GRIS);
+  doc.text(cot.nombre||'', M+5, y+19);
+  if(cot.nit) doc.text('NIT: '+cot.nit, M+5, y+24);
+  doc.text([cot.telefono, cot.email, cot.ciudad].filter(Boolean).join('  ·  '), M+5, y+29);
+
+  y += 36;
+
+  // Condiciones en fila
+  const conds=[
+    ['ASESOR',cot.asesor||'—'],
+    ['PLAZO ENTREGA',cot.plazo_entrega||'—'],
+    ['FORMA DE PAGO',cot.forma_pago||'—'],
+    ['GARANTÍA',cot.garantia||'—'],
+    ['ORDEN DE COMPRA',cot.orden_compra||'—']
+  ];
+  doc.setFillColor(235,243,255);
+  doc.rect(M, y, CW, 14, 'F');
+  doc.setDrawColor(...GRIS_L); doc.line(M,y,M+CW,y);
+  doc.setDrawColor(...GRIS_L); doc.line(M,y+14,M+CW,y+14);
+
+  const cw=CW/conds.length;
+  conds.forEach(([lbl,val],i)=>{
+    const x=M+i*cw+3;
+    doc.setFontSize(6.5); doc.setFont('helvetica','bold'); doc.setTextColor(...AZUL);
+    doc.text(lbl, x, y+5);
+    doc.setFontSize(7.5); doc.setFont('helvetica','normal'); doc.setTextColor(...NEGRO);
+    doc.text(wrap(val,cw-4)[0]||'—', x, y+11);
+    if(i>0){doc.setDrawColor(...GRIS_L);doc.line(M+i*cw,y+2,M+i*cw,y+12);}
+  });
+  y += 18;
+
+  // ── TABLA ITEMS ──
+  doc.setFillColor(...AZUL);
+  doc.rect(M, y, CW, 8, 'F');
+  const cols=[
+    {label:'#',w:8},
+    {label:'REF',w:22},
+    {label:'DESCRIPCIÓN',w:CW-8-22-18-28-16-16-22},
+    {label:'CANT.',w:18},
+    {label:'VALOR UNIT.',w:28},
+    {label:'DESC.%',w:16},
+    {label:'IVA%',w:16},
+    {label:'TOTAL',w:22}
+  ];
+  let x=M;
+  cols.forEach(col=>{
+    doc.setFontSize(6.5); doc.setFont('helvetica','bold'); doc.setTextColor(...BLANCO);
+    doc.text(col.label, x+1, y+5.5);
+    x+=col.w;
+  });
+  y+=9;
+
+  const items=(cot.cotizacion_items||[]).sort((a,b)=>a.orden-b.orden);
+  items.forEach((it,i)=>{
+    const cant=it.cantidad||1, vu=it.valor_unitario||0;
+    const dpct=it.descuento_pct||0, iva=it.iva_pct||0;
+    const base=cant*vu*(1-dpct/100);
+    const totalIt=base*(1+iva/100);
+    const descLines=wrap(it.descripcion||'',cols[2].w-2);
+    const h=Math.max(8,descLines.length*4.5+2);
+    chk(h);
+    if(i%2===0){doc.setFillColor(...GRIS_BG);doc.rect(M,y,CW,h,'F');}
+    doc.setDrawColor(...GRIS_L); doc.setLineWidth(0.2);
+    doc.line(M,y+h,M+CW,y+h);
+    const vals=[
+      String(i+1), it.referencia||'', null,
+      String(cant), '$'+fNum(vu), dpct+'%', iva+'%', '$'+fNum(totalIt)
+    ];
+    let cx=M;
+    cols.forEach((col,ci)=>{
+      if(ci===2){
+        doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(...NEGRO);
+        doc.text(descLines, cx+1, y+5);
+      } else {
+        doc.setFontSize(7.5); doc.setFont(ci===0?'helvetica','bold':'helvetica','normal');
+        doc.setTextColor(ci===7?[...VERDE]:ci===0?[...AZUL]:[...NEGRO]);
+        if(vals[ci]) doc.text(vals[ci], cx+col.w-1, y+5, {align:'right'});
+      }
+      cx+=col.w;
+    });
+    y+=h;
+  });
+
+  // ── TOTALES ──
+  y+=4;
+  const items2=cot.cotizacion_items||[];
+  let subtotal=0,totalIva=0;
+  items2.forEach(it=>{
+    const base=(it.cantidad||1)*(it.valor_unitario||0)*(1-(it.descuento_pct||0)/100);
+    subtotal+=base; totalIva+=base*((it.iva_pct||0)/100);
+  });
+  const admin=(cot.pct_administracion||0)/100*subtotal;
+  const imprev=(cot.pct_imprevistos||0)/100*subtotal;
+  const util=(cot.pct_utilidad||0)/100*subtotal;
+  const total=cot.total_final||subtotal+totalIva+admin+imprev+util;
+
+  const totRows=[
+    ['Subtotal (sin IVA)', subtotal, false],
+    cot.pct_administracion>0?['Administración ('+cot.pct_administracion+'%)', admin, false]:null,
+    cot.pct_imprevistos>0?['Imprevistos ('+cot.pct_imprevistos+'%)', imprev, false]:null,
+    cot.pct_utilidad>0?['Utilidad ('+cot.pct_utilidad+'%)', util, false]:null,
+    ['IVA Total', totalIva, false],
+    ['TOTAL A PAGAR', total, true]
+  ].filter(Boolean);
+
+  const totW=80;
+  totRows.forEach(([lbl,val,bold])=>{
+    chk(7);
+    if(bold){
+      doc.setFillColor(...AZUL);
+      doc.rect(W-M-totW, y-1, totW, 9, 'F');
+      doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.setTextColor(...BLANCO);
+    } else {
+      doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(...GRIS);
+    }
+    doc.text(lbl+':', W-M-totW+2, y+5);
+    doc.setFont('helvetica','bold');
+    if(bold) doc.setTextColor(...BLANCO);
+    else doc.setTextColor(...NEGRO);
+    doc.text('$'+fNum(val), W-M-1, y+5, {align:'right'});
+    y+=bold?10:7;
+  });
+
+  // ── OBSERVACIONES ──
+  if(cot.observaciones){
+    y+=4; chk(20);
+    doc.setFontSize(7); doc.setFont('helvetica','bold'); doc.setTextColor(...AZUL);
+    doc.text('OBSERVACIONES', M, y);
+    y+=5;
+    doc.setFillColor(248,248,255);
+    const obsLines=wrap(cot.observaciones,CW-4);
+    const oh=obsLines.length*4.5+6;
+    doc.roundedRect(M,y,CW,oh,1,1,'F');
+    doc.setFontSize(7.5); doc.setFont('helvetica','normal'); doc.setTextColor(...GRIS);
+    doc.text(obsLines,M+3,y+5);
+    y+=oh+6;
+  }
+
+  // ── FIRMA CLIENTE (si aceptó) ──
+  if(cot.firma_cliente){
+    chk(30); y+=4;
+    doc.setFontSize(7); doc.setFont('helvetica','bold'); doc.setTextColor(...VERDE);
+    doc.text('FIRMA DE ACEPTACIÓN DEL CLIENTE', M, y); y+=4;
+    try{
+      doc.addImage(cot.firma_cliente,'PNG',M,y,60,20);
+      y+=24;
+    }catch(e){}
+    doc.setFontSize(7); doc.setFont('helvetica','normal'); doc.setTextColor(...GRIS);
+    if(cot.fecha_aceptacion) doc.text('Aceptada: '+new Date(cot.fecha_aceptacion).toLocaleString('es-CO'), M, y);
+    y+=6;
+  }
+
+  // ── FOOTER ──
+  const pages=doc.internal.getNumberOfPages();
+  for(let i=1;i<=pages;i++){
+    doc.setPage(i);
+    doc.setFillColor(...AZUL); doc.rect(0,285,W,12,'F');
+    doc.setFontSize(6.5); doc.setFont('helvetica','normal'); doc.setTextColor(180,200,230);
+    doc.text('INFRAESTRUCTURA-IT  ·  Bogotá, Colombia  ·  Construye. Conecta. Evoluciona.', M, 291);
+    doc.text((cot.cotizacion_id||'')+'  ·  Página '+i+'/'+pages, W-M, 291, {align:'right'});
+  }
+
+  doc.save('COT-'+(cot.cotizacion_id||'cotizacion')+'-'+new Date().toISOString().slice(0,10)+'.pdf');
+  toast('PDF generado: '+(cot.cotizacion_id||''), 'success');
+}
+
+function cargarImagenPDF(url){
+  return new Promise((resolve,reject)=>{
+    const img=new Image(); img.crossOrigin='anonymous';
+    img.onload=()=>{
+      const cv=document.createElement('canvas');
+      cv.width=img.width; cv.height=img.height;
+      cv.getContext('2d').drawImage(img,0,0);
+      resolve(cv.toDataURL('image/png'));
+    };
+    img.onerror=reject; img.src=url;
+  });
+}
 
 function toast(msg,tipo='success'){
   const c={success:'var(--success)',error:'var(--error)',info:'var(--accent2)'};
