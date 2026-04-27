@@ -526,9 +526,13 @@ async function openModal(id){
   badge.className = 'badge b-'+(o.status||'borrador');
   badge.textContent = (o.status||'borrador').replace(/_/g,' ').toUpperCase();
 
-  // Helper campo
-  const d = (l,v) => v && v!=='—' ? '<div class="df"><div class="dl">'+l+'</div><div class="dv">'+v+'</div></div>' : '';
-  const dFull = (l,v) => v && v!=='—' ? '<div class="df full"><div class="dl">'+l+'</div><div class="dv">'+v+'</div></div>' : '';
+  // Helper campo — muestra también strings vacíos con valor real
+  const d = (l,v) => (v !== null && v !== undefined && v !== '' && v !== '—') ?
+    '<div class="df"><div class="dl">'+l+'</div><div class="dv">'+v+'</div></div>' : '';
+  const dFull = (l,v) => (v !== null && v !== undefined && v !== '' && v !== '—') ?
+    '<div class="df full"><div class="dl">'+l+'</div><div class="dv">'+v+'</div></div>' : '';
+  const dAlways = (l,v) =>
+    '<div class="df"><div class="dl">'+l+'</div><div class="dv">'+(v||'—')+'</div></div>';
 
   // Técnico select
   const tecOpts = _tecnicos.map(t=>'<option value="'+t.id+'" '+(o.tecnico_id===t.id?'selected':'')+'>'+
@@ -555,7 +559,17 @@ async function openModal(id){
   // Prioridad badge color
   const priColor = {baja:'var(--success)',media:'var(--warn)',alta:'var(--error)',critica:'var(--error)'}[o.prioridad]||'var(--muted)';
 
+  // Fecha creación
+  const fechaCreacion = o.created_at ? new Date(o.created_at).toLocaleString('es-CO',{day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
+
   document.getElementById('modalBody').innerHTML =
+
+    // ── ENCABEZADO INFO RAPIDA ──
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;padding:12px;background:rgba(0,0,0,0.15);border-radius:8px;border:1px solid var(--border);">' +
+      '<div><div style="font-size:9px;color:var(--muted);letter-spacing:1.5px;margin-bottom:3px;">CREADA</div><div style="font-size:12px;color:var(--text);">'+fechaCreacion+'</div></div>' +
+      '<div><div style="font-size:9px;color:var(--muted);letter-spacing:1.5px;margin-bottom:3px;">PRIORIDAD</div><div style="font-size:12px;font-weight:700;color:'+priColor+';">'+(o.prioridad||'—').toUpperCase()+'</div></div>' +
+      '<div><div style="font-size:9px;color:var(--muted);letter-spacing:1.5px;margin-bottom:3px;">TÉCNICO</div><div style="font-size:12px;color:'+(o.tecnico_id?'var(--success)':'var(--warn)')+';">'+(o.tecnico_id?tecNombre:'⚠ Sin asignar')+'</div></div>' +
+    '</div>' +
 
     // ── 1. SOLICITANTE ──
     '<div class="dsec"><div class="dsec-t">SOLICITANTE</div><div class="dgrid">' +
