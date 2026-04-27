@@ -8,6 +8,79 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{--bg:#080b10;--surface:#0d1117;--surface2:#131820;--border:#1e2a38;--accent:#00d4ff;--accent2:#0077ff;--text:#e8f0f8;--muted:#4a6070;--success:#00e5a0;--error:#ff4560;--warn:#ffb700;}
+
+/* ══════════════════════════════════════════
+   TEMA CLARO — BLANCO PROFESIONAL
+   ══════════════════════════════════════════ */
+[data-theme="light"] {
+  --bg:      #ffffff;
+  --surface: #f5f7fa;
+  --surface2:#eef1f6;
+  --border:  #dde2ed;
+  --accent:  #0077ff;
+  --accent2: #0055cc;
+  --text:    #111827;
+  --muted:   #6b7280;
+  --success: #059669;
+  --error:   #dc2626;
+  --warn:    #d97706;
+  --purple:  #7c3aed;
+}
+[data-theme="light"] body::before {
+  background-image:
+    linear-gradient(rgba(0,85,204,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,85,204,0.04) 1px, transparent 1px);
+}
+[data-theme="light"] .topbar {
+  background: rgba(255,255,255,0.97);
+  box-shadow: 0 1px 12px rgba(0,0,0,0.08);
+}
+[data-theme="light"] .sidebar {
+  background: #f5f7fa;
+  box-shadow: 1px 0 12px rgba(0,0,0,0.05);
+}
+[data-theme="light"] input,
+[data-theme="light"] select,
+[data-theme="light"] textarea {
+  background: #ffffff;
+  color: var(--text);
+}
+[data-theme="light"] input::placeholder,
+[data-theme="light"] textarea::placeholder { color: #9ca3af; }
+[data-theme="light"] select option { background: #ffffff; color: #111827; }
+[data-theme="light"] .modal,
+[data-theme="light"] .modal-overlay > .modal { background: #ffffff; }
+[data-theme="light"] .tw,
+[data-theme="light"] .stat-card,
+[data-theme="light"] .cot-card,
+[data-theme="light"] .proto-preview,
+[data-theme="light"] .res-card,
+[data-theme="light"] .card { background: #ffffff; }
+[data-theme="light"] tbody tr:hover { background: #f0f4ff; }
+[data-theme="light"] .nav-item.active { background: rgba(0,85,204,0.08); }
+[data-theme="light"] .nav-item:hover  { background: rgba(0,0,0,0.04); }
+[data-theme="light"] .badge.b-borrador { background: rgba(107,114,128,0.1); }
+[data-theme="light"] #themeToggle {
+  background: rgba(0,85,204,0.08);
+  border-color: rgba(0,85,204,0.2);
+}
+
+/* TOGGLE BUTTON BASE */
+#themeToggle {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#themeToggle:hover { opacity: 0.8; transform: scale(1.05); }
+
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:"DM Mono",monospace;background:var(--bg);color:var(--text);min-height:100vh;display:grid;grid-template-rows:60px 1fr;grid-template-columns:220px 1fr;}
 body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.02) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
@@ -93,7 +166,9 @@ tbody td{padding:12px 14px;font-size:12px;color:var(--text);}
 .mhead{padding:18px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface);z-index:1;border-radius:16px 16px 0 0;}
 .mhead h2{font-family:"Syne",sans-serif;font-size:15px;color:var(--accent);letter-spacing:1px;}
 .mbody{padding:24px;}
-.msec{margin-bottom:20px;}
+.msec{margin-bottom:20px;display:none;}
+.msec.active{display:block;animation:mSlide 0.25s ease;}
+@keyframes mSlide{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 .msec-t{font-family:"Syne",sans-serif;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
@@ -129,6 +204,7 @@ textarea{resize:vertical;min-height:60px;}
 /* EMPTY */
 .empty{text-align:center;padding:60px 20px;color:var(--muted);}
 </style>
+<script src="../assets/theme.js"></script>
 </head>
 <body>
 <div class="topbar">
@@ -203,8 +279,21 @@ textarea{resize:vertical;min-height:60px;}
       </div>
     </div>
     <div class="mbody">
+      <!-- PROGRESO COTIZACION -->
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;">
+          <span style="font-size:10px;color:var(--muted);letter-spacing:1px;" id="cotProgLabel">Paso 1 de 6 — Datos Generales</span>
+          <div style="display:flex;gap:6px;">
+            <button onclick="cotNavegar(-1)" id="cotBtnAnt" style="display:none;background:none;border:1px solid var(--border);border-radius:5px;padding:3px 10px;color:var(--muted);cursor:pointer;font-size:11px;">←</button>
+            <button onclick="cotNavegar(1)"  id="cotBtnSig" style="background:rgba(0,119,255,0.1);border:1px solid rgba(0,119,255,0.3);border-radius:5px;padding:3px 10px;color:var(--accent2);cursor:pointer;font-size:11px;font-weight:700;">→ Siguiente</button>
+          </div>
+        </div>
+        <div style="height:3px;background:var(--border);">
+          <div id="cotProgFill" style="height:100%;width:16.6%;background:linear-gradient(90deg,var(--accent2),var(--accent));transition:width 0.4s ease;"></div>
+        </div>
+      </div>
       <!-- Header -->
-      <div class="msec">
+      <div class="msec" id="cot-1">
         <div class="msec-t">Datos Generales</div>
         <div class="row4">
           <div class="field"><label>No. Cotizacion</label><input type="text" id="c_id" placeholder="Auto" disabled></div>
@@ -224,7 +313,7 @@ textarea{resize:vertical;min-height:60px;}
       </div>
 
       <!-- Datos cliente -->
-      <div class="msec">
+      <div class="msec" id="cot-2">
         <div class="msec-t">Datos del Cliente</div>
         <div class="row2" style="margin-bottom:10px;">
           <div class="field">
@@ -248,7 +337,7 @@ textarea{resize:vertical;min-height:60px;}
       </div>
 
       <!-- Condiciones -->
-      <div class="msec">
+      <div class="msec" id="cot-3">
         <div class="msec-t">Condiciones Comerciales</div>
         <div class="row4">
           <div class="field"><label>Orden de Compra</label><input type="text" id="c_oc" placeholder="OC-2026-001"></div>
@@ -275,7 +364,7 @@ textarea{resize:vertical;min-height:60px;}
       </div>
 
       <!-- Items -->
-      <div class="msec">
+      <div class="msec" id="cot-4">
         <div class="msec-t" style="display:flex;justify-content:space-between;align-items:center;">
           <span>Productos / Servicios</span>
           <button class="btn btn-o btn-sm" id="btnAddItem">+ Agregar Fila</button>
@@ -290,7 +379,7 @@ textarea{resize:vertical;min-height:60px;}
       </div>
 
       <!-- Porcentajes adicionales -->
-      <div class="msec">
+      <div class="msec" id="cot-5">
         <div class="msec-t">Cargos Adicionales</div>
         <div class="row3">
           <div class="field"><label>Administracion %</label><input type="number" id="c_admin" value="0" min="0" max="100" step="0.5"></div>
@@ -454,6 +543,7 @@ function abrirEditor(id=null){
 
   calcularTotales();
   document.getElementById('modalEditor').classList.add('open');
+  cotMostrarPaso(0);
 }
 
 function limpiarFormulario(){
@@ -761,6 +851,65 @@ function setupEvents(){
     document.getElementById(id).addEventListener('input',calcularTotales);
   });
 }
+
+// ── NAVEGACION MODAL COTIZACION ───────────────────────────────
+const COT_PASOS = [
+  {id:'cot-1',titulo:'Datos Generales'},
+  {id:'cot-2',titulo:'Datos del Cliente'},
+  {id:'cot-3',titulo:'Condiciones Comerciales'},
+  {id:'cot-4',titulo:'Productos / Servicios'},
+  {id:'cot-5',titulo:'Cargos Adicionales'},
+  {id:'cot-6',titulo:'Observaciones'},
+];
+let _cotPaso = 0;
+
+function cotMostrarPaso(n) {
+  _cotPaso = n;
+  COT_PASOS.forEach(p => {
+    const el = document.getElementById(p.id);
+    if(el) el.classList.remove('active');
+  });
+  const el = document.getElementById(COT_PASOS[n].id);
+  if(el) el.classList.add('active');
+  const pct = Math.round(((n+1)/COT_PASOS.length)*100);
+  const fill = document.getElementById('cotProgFill');
+  if(fill) fill.style.width = pct+'%';
+  const lbl = document.getElementById('cotProgLabel');
+  if(lbl) lbl.textContent = 'Paso '+(n+1)+' de '+COT_PASOS.length+' — '+COT_PASOS[n].titulo;
+  const ant = document.getElementById('cotBtnAnt');
+  const sig = document.getElementById('cotBtnSig');
+  if(ant) ant.style.display = n > 0 ? 'inline-block' : 'none';
+  if(sig) {
+    sig.textContent = n < COT_PASOS.length-1 ? '→ Siguiente' : '✓ Listo';
+    sig.style.background = n === COT_PASOS.length-1 ? 'rgba(0,229,160,0.1)' : 'rgba(0,119,255,0.1)';
+    sig.style.borderColor = n === COT_PASOS.length-1 ? 'rgba(0,229,160,0.3)' : 'rgba(0,119,255,0.3)';
+    sig.style.color = n === COT_PASOS.length-1 ? 'var(--success)' : 'var(--accent2)';
+    if(n === COT_PASOS.length-1) sig.onclick = null;
+    else sig.onclick = () => cotNavegar(1);
+  }
+  // Recalcular totales si es el paso de items
+  if(n === 3 || n === 4) calcularTotales();
+}
+
+function cotNavegar(dir) {
+  const nuevo = _cotPaso + dir;
+  if(nuevo >= 0 && nuevo < COT_PASOS.length) cotMostrarPaso(nuevo);
+}
+
+// Reiniciar pasos al abrir el modal
+const _origAbrirEditor = abrirEditor;
+// Hook en el modal para reiniciar al abrir
+document.getElementById('modalEditor').addEventListener('transitionend', ()=>{});
+// Observar cuando el modal se abre
+const _origBtnNueva = document.getElementById('btnNueva');
+
+// Reiniciar al abrir editor
+function iniciarPasosModal() {
+  cotMostrarPaso(0);
+}
+
+// Parchear abrirEditor para reiniciar pasos
+const _origAE = window.abrirEditor;
 
 function fNum(n){return Math.round(n).toLocaleString('es-CO');}
 
