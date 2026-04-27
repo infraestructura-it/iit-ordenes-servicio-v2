@@ -650,10 +650,12 @@ const labels = ['Ciudad','Direccion','Tipo de servicio','Area tecnica','Sintoma'
 function updateProgress(){
   const filled = required.filter(fn=>fn()).length;
   const pct    = Math.round((filled/required.length)*100);
-  document.getElementById('progFill').style.width = pct+'%';
-  document.getElementById('progLabel').textContent = 'Completado: '+filled+' de '+required.length+' campos requeridos ('+pct+'%)';
-  document.getElementById('stickyInfo').textContent = filled === required.length ? '¡Listo para enviar!' : 'Faltan: '+labels.filter((_,i)=>!required[i]()).join(', ');
+  // Solo actualizar barra de progreso si NO estamos en navegación por pasos
+  // (el progFill ya lo maneja mostrarPaso)
   document.getElementById('btnEnviar').disabled = filled < required.length;
+
+  // Actualizar sticky solo en último paso
+  if(_pasoActual === PASOS.length-1) updateEnviarBtn();
 
   // Checkmarks en secciones
   const secChecks = [
@@ -759,20 +761,36 @@ function mostrarPaso(n) {
     actual.classList.add('active');
     window.scrollTo({top:0, behavior:'smooth'});
   }
-  // Actualizar info de paso
+  // Info de paso (encima de la sección)
   document.getElementById('pasoInfo').innerHTML =
     '<strong>Paso '+(n+1)+' de '+PASOS.length+'</strong> — '+PASOS[n].titulo;
-  // Botones
-  document.getElementById('btnAnterior').style.display = n > 0 ? 'inline-flex' : 'none';
+
+  // Botones sticky
+  document.getElementById('btnAnterior').style.display  = n > 0 ? 'inline-flex' : 'none';
   document.getElementById('btnSiguiente').style.display = n < PASOS.length-1 ? 'inline-flex' : 'none';
   document.getElementById('btnEnviar').style.display    = n === PASOS.length-1 ? 'inline-flex' : 'none';
-  // Barra de progreso
+
+  // Info sticky — paso actual (no sobrescribir con updateProgress en último paso)
+  document.getElementById('stickyInfo').textContent = 'Paso '+(n+1)+' / '+PASOS.length+' — '+PASOS[n].titulo;
+
+  // Barra superior — progreso de pasos
   const pct = Math.round(((n+1)/PASOS.length)*100);
   document.getElementById('progFill').style.width = pct+'%';
   document.getElementById('progLabel').textContent = 'Paso '+(n+1)+' de '+PASOS.length+' — '+PASOS[n].titulo;
-  // Info sticky
-  document.getElementById('stickyInfo').textContent = (n+1)+' / '+PASOS.length;
-  updateProgress();
+
+  // En el último paso actualizar estado del botón ENVIAR
+  if(n === PASOS.length-1) updateEnviarBtn();
+}
+
+function updateEnviarBtn(){
+  const filled = required.filter(fn=>fn()).length;
+  const btn = document.getElementById('btnEnviar');
+  btn.disabled = filled < required.length;
+  if(filled < required.length){
+    document.getElementById('stickyInfo').textContent = '⚠ Faltan campos: '+labels.filter((_,i)=>!required[i]()).join(', ');
+  } else {
+    document.getElementById('stickyInfo').textContent = '✓ ¡Listo para enviar!';
+  }
 }
 
 function validarPasoActual() {
