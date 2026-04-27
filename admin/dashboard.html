@@ -510,22 +510,125 @@ function renderTabla(){
 }
 
 async function openModal(id){
-  _ordenActual=_ordenes.find(o=>o.id===id);
-  if(!_ordenActual)return;
-  const o=_ordenActual;
-  document.getElementById('modalTitle').textContent=o.orden_id||'--';
-  const badge=document.getElementById('modalBadge');
-  badge.className='badge b-'+(o.status||'borrador');
-  badge.textContent=(o.status||'borrador').replace('_',' ').toUpperCase();
-  const d=(l,v)=>v?'<div class="df"><div class="dl">'+l+'</div><div class="dv">'+v+'</div></div>':'';
-  const tecOpts=_tecnicos.map(t=>'<option value="'+t.id+'" '+(o.tecnico_id===t.id?'selected':'')+'>'+( t.usuarios?.nombre||t.nombre||'--')+' — '+(t.especialidades?t.especialidades.join(', '):'Sin especialidad')+'</option>').join('');
-  let hist='<div style="color:var(--muted);font-size:12px;">Sin historial</div>';
+  // Cargar orden fresca desde Supabase para tener TODOS los campos
+  let o;
+  try {
+    const {data} = await db.from('ordenes').select('*').eq('id',id).single();
+    o = data || _ordenes.find(x=>x.id===id);
+  } catch(e) {
+    o = _ordenes.find(x=>x.id===id);
+  }
+  if(!o) return;
+  _ordenActual = o;
+
+  document.getElementById('modalTitle').textContent = o.orden_id||'--';
+  const badge = document.getElementById('modalBadge');
+  badge.className = 'badge b-'+(o.status||'borrador');
+  badge.textContent = (o.status||'borrador').replace(/_/g,' ').toUpperCase();
+
+  // Helper campo
+  const d = (l,v) => v && v!=='—' ? '<div class="df"><div class="dl">'+l+'</div><div class="dv">'+v+'</div></div>' : '';
+  const dFull = (l,v) => v && v!=='—' ? '<div class="df full"><div class="dl">'+l+'</div><div class="dv">'+v+'</div></div>' : '';
+
+  // Técnico select
+  const tecOpts = _tecnicos.map(t=>'<option value="'+t.id+'" '+(o.tecnico_id===t.id?'selected':'')+'>'+
+    (t.usuarios?.nombre||t.nombre||'--')+' — '+(t.especialidades?t.especialidades.join(', '):'Sin especialidad')+
+  '</option>').join('');
+
+  // Historial
+  let hist = '<div style="color:var(--muted);font-size:12px;">Sin historial</div>';
   try{
-    const h=await Ordenes.getHistorial(o.id);
-    if(h.length)hist=h.map(x=>'<div style="display:flex;gap:12px;padding:8px 0;border-bottom:1px solid var(--border);font-size:11px;"><div style="color:var(--muted);white-space:nowrap;">'+formatFechaCorta(x.created_at)+'</div><div style="color:var(--text);">'+x.campo_modificado+': <span style="color:var(--error);">'+(x.valor_anterior||'--')+'</span> &rarr; <span style="color:var(--success);">'+(x.valor_nuevo||'--')+'</span></div><div style="color:var(--muted);margin-left:auto;">'+(x.usuarios&&x.usuarios.nombre?x.usuarios.nombre:'--')+'</div></div>').join('');
+    const h = await Ordenes.getHistorial(o.id);
+    if(h.length) hist = h.map(x=>'<div style="display:flex;gap:12px;padding:8px 0;border-bottom:1px solid var(--border);font-size:11px;">' +
+      '<div style="color:var(--muted);white-space:nowrap;">'+formatFechaCorta(x.created_at)+'</div>' +
+      '<div style="color:var(--text);">'+x.campo_modificado+': <span style="color:var(--error);">'+(x.valor_anterior||'--')+'</span> &rarr; <span style="color:var(--success);">'+(x.valor_nuevo||'--')+'</span></div>' +
+      '<div style="color:var(--muted);margin-left:auto;">'+(x.usuarios?.nombre||'--')+'</div>' +
+    '</div>').join('');
   }catch(e){}
-  document.getElementById('modalBody').innerHTML='<div class="dsec"><div class="dsec-t">SOLICITANTE</div><div class="dgrid">'+d('NOMBRE',o.nombre)+d('EMPRESA',o.empresa)+d('TELEFONO',o.telefono)+d('CORREO',o.correo)+d('CIUDAD',o.ciudad)+'<div class="df full">'+d('DIRECCION',o.direccion)+'</div></div></div><div class="dsec"><div class="dsec-t">SERVICIO</div><div class="dgrid">'+d('TIPO',o.tipo_servicio)+d('AREA',o.area)+d('PRIORIDAD',(o.prioridad||'').toUpperCase())+d('FECHA REQ',o.fecha_requerida)+'<div class="df full">'+d('SINTOMA',o.sintoma)+'</div></div></div><div class="dsec"><div class="dsec-t">ASIGNAR TECNICO</div><select class="asel" id="selTec"><option value="">-- Sin asignar --</option>'+tecOpts+'</select><button class="btn btn-p btn-sm" id="btnAsignar">ASIGNAR</button></div><div class="dsec"><div class="dsec-t">CAMBIAR ESTADO</div><div class="sbtns">'+['borrador','pendiente','asignada','en_proceso','en_pausa','cerrada','cancelada'].map(s=>'<button class="sbtn'+(o.status===s?' active':'')+'" data-s="'+s+'">'+s.replace('_',' ').toUpperCase()+'</button>').join('')+'</div></div><div class="dsec"><div class="dsec-t">HISTORIAL</div>'+hist+'</div>';
-  document.getElementById('btnAsignar').addEventListener('click',asignarTecnico);
+
+  // Técnico asignado nombre
+  const tecNombre = _tecnicos.find(t=>t.id===o.tecnico_id)?.usuarios?.nombre || '—';
+
+  // Equipos
+  const equiposStr = Array.isArray(o.equipos) && o.equipos.length ? o.equipos.join(', ') : null;
+
+  // Prioridad badge color
+  const priColor = {baja:'var(--success)',media:'var(--warn)',alta:'var(--error)',critica:'var(--error)'}[o.prioridad]||'var(--muted)';
+
+  document.getElementById('modalBody').innerHTML =
+
+    // ── 1. SOLICITANTE ──
+    '<div class="dsec"><div class="dsec-t">SOLICITANTE</div><div class="dgrid">' +
+      d('NOMBRE',   o.nombre) +
+      d('EMPRESA',  o.empresa) +
+      d('TELEFONO', o.telefono) +
+      d('CORREO',   o.correo) +
+      d('CARGO',    o.cargo) +
+    '</div></div>' +
+
+    // ── 2. UBICACIÓN ──
+    '<div class="dsec"><div class="dsec-t">UBICACION</div><div class="dgrid">' +
+      d('CIUDAD',         o.ciudad) +
+      d('DEPARTAMENTO',   o.departamento) +
+      dFull('DIRECCION',  o.direccion) +
+      d('REFERENCIA',     o.referencia) +
+      d('PERSONA RECIBE', o.persona_recibe) +
+    '</div></div>' +
+
+    // ── 3. SERVICIO ──
+    '<div class="dsec"><div class="dsec-t">SERVICIO</div><div class="dgrid">' +
+      d('TIPO',       o.tipo_servicio) +
+      d('AREA',       o.area) +
+      '<div class="df"><div class="dl">PRIORIDAD</div><div class="dv"><span style="color:'+priColor+';font-weight:700;">'+(o.prioridad||'—').toUpperCase()+'</span></div></div>' +
+      d('FECHA REQ.', o.fecha_requerida) +
+      d('HORA PREF.', o.hora_preferida) +
+      d('DURACION',   o.duracion) +
+      d('VENTANA',    o.ventana) +
+      d('ACCESO',     o.acceso) +
+      dFull('SINTOMA / DESCRIPCION', o.sintoma) +
+    '</div></div>' +
+
+    // ── 4. EQUIPOS (si hay) ──
+    (o.marca||o.serie||equiposStr||o.obs_equipos ? '<div class="dsec"><div class="dsec-t">EQUIPOS</div><div class="dgrid">' +
+      d('MARCA / MODELO', o.marca) +
+      d('NO. SERIE',      o.serie) +
+      dFull('EQUIPOS',    equiposStr) +
+      dFull('OBSERVACIONES EQUIPO', o.obs_equipos) +
+    '</div></div>' : '') +
+
+    // ── 5. INFORMACIÓN ADICIONAL ──
+    (o.notas||o.antecedentes||o.contrato||o.centro_costo ? '<div class="dsec"><div class="dsec-t">INFORMACION ADICIONAL</div><div class="dgrid">' +
+      d('CONTRATO / OC',   o.contrato) +
+      d('CENTRO DE COSTO', o.centro_costo) +
+      dFull('ANTECEDENTES', o.antecedentes) +
+      dFull('NOTAS',        o.notas) +
+    '</div></div>' : '') +
+
+    // ── TÉCNICO ASIGNADO ──
+    '<div class="dsec"><div class="dsec-t">TECNICO ASIGNADO</div>' +
+    '<div class="dgrid">' +
+      '<div class="df"><div class="dl">ACTUAL</div><div class="dv" style="color:'+(o.tecnico_id?'var(--success)':'var(--warn)')+';">'+(o.tecnico_id?tecNombre:'⚠ Sin asignar')+'</div></div>' +
+    '</div>' +
+    '<div style="display:flex;gap:8px;align-items:center;margin-top:10px;">' +
+      '<select class="asel" id="selTec" style="flex:1;"><option value="">-- Sin asignar --</option>'+tecOpts+'</select>' +
+      '<button class="btn btn-p btn-sm" id="btnAsignar">ASIGNAR</button>' +
+    '</div></div>' +
+
+    // ── CAMBIAR ESTADO ──
+    '<div class="dsec"><div class="dsec-t">CAMBIAR ESTADO</div>' +
+    '<div class="sbtns">'+['borrador','pendiente','asignada','en_proceso','en_pausa','cerrada','cancelada']
+      .map(s=>'<button class="sbtn'+(o.status===s?' active':'')+'" data-s="'+s+'">'+s.replace(/_/g,' ').toUpperCase()+'</button>').join('')+
+    '</div></div>' +
+
+    // ── FIRMA (si tiene) ──
+    (o.firma_url ? '<div class="dsec"><div class="dsec-t">FIRMA DEL SOLICITANTE</div>' +
+      '<img src="'+o.firma_url+'" style="max-width:200px;border-radius:8px;border:1px solid var(--border);background:white;padding:4px;" alt="Firma">' +
+    '</div>' : '') +
+
+    // ── HISTORIAL ──
+    '<div class="dsec"><div class="dsec-t">HISTORIAL DE CAMBIOS</div>'+hist+'</div>';
+
+  document.getElementById('btnAsignar').addEventListener('click', asignarTecnico);
   document.querySelectorAll('.sbtn').forEach(b=>b.addEventListener('click',()=>cambiarStatus(b.dataset.s)));
   document.getElementById('modalOverlay').classList.add('open');
 }
