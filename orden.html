@@ -8,6 +8,93 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{--bg:#080b10;--surface:#0d1117;--surface2:#131820;--border:#1e2a38;--accent:#00d4ff;--accent2:#0077ff;--text:#e8f0f8;--muted:#4a6070;--success:#00e5a0;--error:#ff4560;--warn:#ffb700;}
+
+/* ══════════════════════════════════════════
+   TEMA CLARO — BLANCO PROFESIONAL
+   ══════════════════════════════════════════ */
+[data-theme="light"] {
+  --bg:      #ffffff;
+  --surface: #f5f7fa;
+  --surface2:#eef1f6;
+  --border:  #dde2ed;
+  --accent:  #0077ff;
+  --accent2: #0055cc;
+  --text:    #111827;
+  --muted:   #6b7280;
+  --success: #059669;
+  --error:   #dc2626;
+  --warn:    #d97706;
+  --purple:  #7c3aed;
+}
+[data-theme="light"] body::before {
+  background-image:
+    linear-gradient(rgba(0,85,204,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,85,204,0.04) 1px, transparent 1px);
+}
+[data-theme="light"] .topbar {
+  background: rgba(255,255,255,0.97);
+  box-shadow: 0 1px 12px rgba(0,0,0,0.08);
+}
+[data-theme="light"] .sidebar {
+  background: #f5f7fa;
+  box-shadow: 1px 0 12px rgba(0,0,0,0.05);
+}
+[data-theme="light"] input,
+[data-theme="light"] select,
+[data-theme="light"] textarea {
+  background: #ffffff;
+  color: #111827 !important;
+  border-color: #dde2ed;
+}
+[data-theme="light"] input:disabled,
+[data-theme="light"] select:disabled,
+[data-theme="light"] textarea:disabled {
+  background: #f5f7fa;
+  color: #374151 !important;
+}
+[data-theme="light"] input::placeholder,
+[data-theme="light"] textarea::placeholder { color: #9ca3af; }
+[data-theme="light"] select option { background: #ffffff; color: #111827; }
+[data-theme="light"] label { color: #4b5563; }
+[data-theme="light"] .sec-title { color: #111827; }
+[data-theme="light"] .eq-item { background: #f5f7fa; color: #374151; border-color: #dde2ed; }
+[data-theme="light"] .eq-item.sel { background: #dbeafe; border-color: #3b82f6; color: #1d4ed8; }
+[data-theme="light"] .pri-btn { background: #f5f7fa; color: #4b5563; border-color: #dde2ed; }
+[data-theme="light"] .terms-text { color: #374151; }
+[data-theme="light"] .prog-label { color: #4b5563; }
+[data-theme="light"] .modal,
+[data-theme="light"] .modal-overlay > .modal { background: #ffffff; }
+[data-theme="light"] .tw,
+[data-theme="light"] .stat-card,
+[data-theme="light"] .cot-card,
+[data-theme="light"] .proto-preview,
+[data-theme="light"] .res-card,
+[data-theme="light"] .card { background: #ffffff; }
+[data-theme="light"] tbody tr:hover { background: #f0f4ff; }
+[data-theme="light"] .nav-item.active { background: rgba(0,85,204,0.08); }
+[data-theme="light"] .nav-item:hover  { background: rgba(0,0,0,0.04); }
+[data-theme="light"] .badge.b-borrador { background: rgba(107,114,128,0.1); }
+[data-theme="light"] #themeToggle {
+  background: rgba(0,85,204,0.08);
+  border-color: rgba(0,85,204,0.2);
+}
+
+/* TOGGLE BUTTON BASE */
+#themeToggle {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#themeToggle:hover { opacity: 0.8; transform: scale(1.05); }
+
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:"DM Mono",monospace;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:80px;}
 body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.02) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
@@ -80,8 +167,18 @@ canvas.signed{border-color:rgba(0,229,160,0.4);}
 .prog-bar{height:4px;background:var(--surface2);border-radius:2px;overflow:hidden;}
 .prog-fill{height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));border-radius:2px;transition:width 0.4s;}
 
+/* NAVEGACION POR PASOS */
+.sec{display:none;}
+.sec.active{display:block;animation:slideIn 0.3s ease;}
+@keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* PASO INDICATOR */
+.paso-info{text-align:center;font-size:11px;color:var(--muted);margin-bottom:16px;letter-spacing:0.5px;}
+.paso-info strong{color:var(--text);}
+
 /* STICKY BOTTOM */
-.sticky-bar{position:fixed;bottom:0;left:0;right:0;background:rgba(8,11,16,0.97);border-top:1px solid var(--border);padding:12px 20px;display:flex;gap:10px;justify-content:flex-end;z-index:40;backdrop-filter:blur(10px);}
+.sticky-bar{position:fixed;bottom:0;left:0;right:0;background:rgba(8,11,16,0.97);border-top:1px solid var(--border);padding:12px 20px;display:flex;gap:10px;justify-content:space-between;align-items:center;z-index:40;backdrop-filter:blur(10px);}
+.nav-btns{display:flex;gap:8px;}
 .btn{padding:11px 22px;border-radius:8px;font-family:"Syne",sans-serif;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:0.5px;transition:all 0.2s;border:none;}
 .btn-p{background:linear-gradient(135deg,var(--accent2),var(--accent));color:#080b10;}
 .btn-p:hover:not(:disabled){opacity:0.9;transform:translateY(-1px);}
@@ -99,7 +196,30 @@ canvas.signed{border-color:rgba(0,229,160,0.4);}
 @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 .success-icon{width:80px;height:80px;background:rgba(0,229,160,0.1);border:2px solid var(--success);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:36px;}
 .success-os{font-family:"Syne",sans-serif;font-size:24px;font-weight:800;color:var(--accent);letter-spacing:3px;padding:12px;background:rgba(0,212,255,0.05);border:1px solid rgba(0,212,255,0.2);border-radius:8px;margin:14px 0;}
+
+/* TEMA CLARO — FORMULARIOS LEGIBLES */
+[data-theme="light"] input,
+[data-theme="light"] select,
+[data-theme="light"] textarea { color: #111827 !important; background: #ffffff; border-color: #d1d5db; }
+[data-theme="light"] input:disabled,
+[data-theme="light"] select:disabled { background: #f9fafb !important; color: #374151 !important; }
+[data-theme="light"] label { color: #374151; }
+[data-theme="light"] .muted,
+[data-theme="light"] [style*="color:var(--muted)"] { color: #6b7280; }
+[data-theme="light"] tbody td { color: #111827; }
+[data-theme="light"] .modal,
+[data-theme="light"] .modal-overlay > div { background: #ffffff !important; }
+[data-theme="light"] .msec-t { color: #111827; }
+[data-theme="light"] .item-row input { background: #ffffff; color: #111827; border-color: #d1d5db; }
+[data-theme="light"] .items-wrap { background: #f9fafb; border-color: #d1d5db; }
+[data-theme="light"] .items-head { color: #6b7280; background: #f3f4f6; }
+[data-theme="light"] .item-total { color: #059669; }
+[data-theme="light"] .tot-label { color: #6b7280; }
+[data-theme="light"] .tot-val { color: #111827; }
+[data-theme="light"] .sec-head .sec-title { color: #111827; }
+[data-theme="light"] .field label { color: #374151; }
 </style>
+<script src="assets/theme.js"></script>
 </head>
 <body>
 
@@ -119,7 +239,7 @@ canvas.signed{border-color:rgba(0,229,160,0.4);}
   </div>
 
   <!-- SEC 1: SOLICITANTE (pre-llenado, bloqueado) -->
-  <div class="sec">
+  <div class="sec" id="sec-1">
     <div class="sec-head"><div class="sec-num" id="n1">1</div><div class="sec-title">DATOS DEL SOLICITANTE</div></div>
     <div class="sec-body">
       <div class="row2">
@@ -133,7 +253,7 @@ canvas.signed{border-color:rgba(0,229,160,0.4);}
   </div>
 
   <!-- SEC 2: UBICACION -->
-  <div class="sec">
+  <div class="sec" id="sec-2">
     <div class="sec-head"><div class="sec-num" id="n2">2</div><div class="sec-title">UBICACION DEL SERVICIO</div></div>
     <div class="sec-body">
       <div class="row2">
@@ -149,7 +269,7 @@ canvas.signed{border-color:rgba(0,229,160,0.4);}
   </div>
 
   <!-- SEC 3: SERVICIO -->
-  <div class="sec">
+  <div class="sec" id="sec-3">
     <div class="sec-head"><div class="sec-num" id="n3">3</div><div class="sec-title">DESCRIPCION DEL SERVICIO</div></div>
     <div class="sec-body">
       <div class="row2">
@@ -200,7 +320,7 @@ canvas.signed{border-color:rgba(0,229,160,0.4);}
   </div>
 
   <!-- SEC 4: EQUIPOS -->
-  <div class="sec">
+  <div class="sec" id="sec-4">
     <div class="sec-head"><div class="sec-num" id="n4">4</div><div class="sec-title">EQUIPOS INVOLUCRADOS</div></div>
     <div class="sec-body">
       <div class="field">
@@ -216,7 +336,7 @@ canvas.signed{border-color:rgba(0,229,160,0.4);}
   </div>
 
   <!-- SEC 5: PROGRAMACION -->
-  <div class="sec">
+  <div class="sec" id="sec-5">
     <div class="sec-head"><div class="sec-num" id="n5">5</div><div class="sec-title">PROGRAMACION</div></div>
     <div class="sec-body">
       <div class="row3">
@@ -261,7 +381,7 @@ canvas.signed{border-color:rgba(0,229,160,0.4);}
   </div>
 
   <!-- SEC 6: ADICIONAL -->
-  <div class="sec">
+  <div class="sec" id="sec-6">
     <div class="sec-head"><div class="sec-num" id="n6">6</div><div class="sec-title">INFORMACION ADICIONAL</div></div>
     <div class="sec-body">
       <div class="field"><label>Antecedentes / Historial del Problema</label><textarea id="f_ant" placeholder="Intervenciones anteriores, frecuencia del fallo, ticket de referencia..."></textarea></div>
@@ -275,7 +395,7 @@ canvas.signed{border-color:rgba(0,229,160,0.4);}
   </div>
 
   <!-- SEC 7: FIRMA -->
-  <div class="sec">
+  <div class="sec" id="sec-7">
     <div class="sec-head"><div class="sec-num" id="n7">7</div><div class="sec-title">FIRMA DEL SOLICITANTE</div></div>
     <div class="sec-body">
       <div class="field">
@@ -314,11 +434,17 @@ canvas.signed{border-color:rgba(0,229,160,0.4);}
 
 <!-- STICKY BAR -->
 <div class="sticky-bar" id="stickyBar">
-  <span style="font-size:11px;color:var(--muted);" id="stickyInfo">Completa los campos requeridos (*)</span>
-  <button class="btn btn-p" id="btnEnviar" disabled>
-    <span class="btn-text">ENVIAR ORDEN →</span>
-    <div class="spin"></div>
-  </button>
+  <div class="nav-btns">
+    <button class="btn btn-o" id="btnAnterior" style="display:none;">← ANTERIOR</button>
+  </div>
+  <span style="font-size:11px;color:var(--muted);text-align:center;" id="stickyInfo">Completa los campos requeridos (*)</span>
+  <div class="nav-btns">
+    <button class="btn btn-p" id="btnSiguiente">SIGUIENTE →</button>
+    <button class="btn btn-p" id="btnEnviar" style="display:none;" disabled>
+      <span class="btn-text">ENVIAR ORDEN →</span>
+      <div class="spin"></div>
+    </button>
+  </div>
 </div>
 
 <script>
@@ -333,20 +459,86 @@ let _firma = '';
 let _prioridad = 'media';
 let _terminos = false;
 
-// ── CARGAR DATOS DESDE PARAMS ─────────────────────────────────
-(function init(){
+// ── CARGAR DATOS DESDE PARAMS + SUPABASE ─────────────────────
+let _ordenExistente = null;
+
+(async function init(){
   if(!ordenId){ document.getElementById('osPill').textContent = 'SIN ORDEN'; return; }
   document.getElementById('osPill').textContent = ordenId;
   document.title = 'IIT — ' + ordenId;
 
+  // Prioridad por defecto media
+  document.querySelector('.pri-btn[data-p="media"]').classList.add('p-media');
+
+  // Intentar cargar datos desde Supabase primero
+  try {
+    const {data:ord} = await db.from('ordenes')
+      .select('*')
+      .eq('orden_id', ordenId)
+      .single();
+
+    if (ord && ord.nombre) {
+      // Orden ya existe — cargar datos congelados
+      _ordenExistente = ord;
+      cargarDatosCongelados(ord);
+      return;
+    }
+  } catch(e) {}
+
+  // Si no existe en DB — cargar desde params del QR (primera vez)
   document.getElementById('f_nombre').value   = params.get('nombre')   || '';
   document.getElementById('f_telefono').value = params.get('telefono') || '';
   document.getElementById('f_correo').value   = params.get('correo')   || '';
   document.getElementById('f_empresa').value  = params.get('empresa')  || '';
-
-  // Prioridad por defecto media
-  document.querySelector('.pri-btn[data-p="media"]').classList.add('p-media');
 })();
+
+// Cargar datos existentes y congelarlos (no se pueden editar)
+function cargarDatosCongelados(ord) {
+  const campos = {
+    f_nombre:   ord.nombre,
+    f_telefono: ord.telefono,
+    f_correo:   ord.correo,
+    f_empresa:  ord.empresa,
+    f_cargo:    ord.cargo,
+    f_ciudad:   ord.ciudad,
+    f_dept:     ord.departamento,
+    f_dir:      ord.direccion,
+    f_ref:      ord.referencia,
+    f_recibe:   ord.persona_recibe,
+    f_tipo:     ord.tipo_servicio,
+    f_area:     ord.area,
+    f_fecha:    ord.fecha_requerida,
+    f_hora:     ord.hora_preferida,
+    f_sintoma:  ord.sintoma,
+    f_marca:    ord.marca,
+    f_serie:    ord.serie,
+    f_acceso:   ord.acceso,
+    f_antec:    ord.antecedentes,
+    f_notas:    ord.notas,
+  };
+  Object.entries(campos).forEach(([id, val]) => {
+    const el = document.getElementById(id);
+    if (el && val) { el.value = val; el.disabled = true; }
+  });
+  // Prioridad
+  if (ord.prioridad) {
+    document.querySelectorAll('.pri-btn').forEach(b => b.className = 'pri-btn');
+    const pb = document.querySelector('.pri-btn[data-p="'+ord.prioridad+'"]');
+    if (pb) { pb.classList.add('p-'+ord.prioridad); }
+    _prioridad = ord.prioridad;
+  }
+  // Equipos seleccionados
+  if (ord.equipos?.length) {
+    document.querySelectorAll('.eq-item').forEach(el => {
+      if (ord.equipos.includes(el.textContent)) el.classList.add('sel');
+    });
+  }
+  // Banner de orden existente
+  const banner = document.createElement('div');
+  banner.style.cssText = 'background:rgba(0,229,160,0.08);border:1px solid rgba(0,229,160,0.3);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--success);';
+  banner.innerHTML = '&#10003; Datos cargados de la orden <strong>'+ord.orden_id+'</strong> — Los campos bloqueados no se pueden modificar';
+  document.querySelector('.wrapper').insertBefore(banner, document.querySelector('.sec'));
+}
 
 // ── EQUIPOS ───────────────────────────────────────────────────
 const EQUIPOS = ['Servidor','Switch','Router','Firewall','UPS','Panel Solar',
@@ -541,6 +733,87 @@ document.getElementById('btnEnviar').addEventListener('click', async()=>{
     btn.classList.remove('loading'); btn.disabled=false;
   }
 });
+
+// ── NAVEGACION POR PASOS ─────────────────────────────────────
+const PASOS = [
+  { id:'sec-1', titulo:'Datos del Solicitante' },
+  { id:'sec-2', titulo:'Ubicación del Servicio' },
+  { id:'sec-3', titulo:'Descripción del Servicio' },
+  { id:'sec-4', titulo:'Equipos Involucrados' },
+  { id:'sec-5', titulo:'Programación' },
+  { id:'sec-6', titulo:'Información Adicional' },
+  { id:'sec-7', titulo:'Firma del Solicitante' },
+];
+let _pasoActual = 0;
+
+function mostrarPaso(n) {
+  _pasoActual = n;
+  // Ocultar todas las secciones
+  PASOS.forEach(p => {
+    const el = document.getElementById(p.id);
+    if(el) el.classList.remove('active');
+  });
+  // Mostrar sección actual
+  const actual = document.getElementById(PASOS[n].id);
+  if(actual) {
+    actual.classList.add('active');
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+  // Actualizar info de paso
+  document.getElementById('pasoInfo').innerHTML =
+    '<strong>Paso '+(n+1)+' de '+PASOS.length+'</strong> — '+PASOS[n].titulo;
+  // Botones
+  document.getElementById('btnAnterior').style.display = n > 0 ? 'inline-flex' : 'none';
+  document.getElementById('btnSiguiente').style.display = n < PASOS.length-1 ? 'inline-flex' : 'none';
+  document.getElementById('btnEnviar').style.display    = n === PASOS.length-1 ? 'inline-flex' : 'none';
+  // Barra de progreso
+  const pct = Math.round(((n+1)/PASOS.length)*100);
+  document.getElementById('progFill').style.width = pct+'%';
+  document.getElementById('progLabel').textContent = 'Paso '+(n+1)+' de '+PASOS.length+' — '+PASOS[n].titulo;
+  // Info sticky
+  document.getElementById('stickyInfo').textContent = (n+1)+' / '+PASOS.length;
+  updateProgress();
+}
+
+function validarPasoActual() {
+  const paso = _pasoActual;
+  if(paso === 1) { // Ubicación
+    if(!document.getElementById('f_ciudad').value.trim()) { toast('Completa la ciudad','error'); return false; }
+    if(!document.getElementById('f_dir').value.trim())    { toast('Completa la dirección','error'); return false; }
+  }
+  if(paso === 2) { // Servicio
+    if(!document.getElementById('f_tipo').value) { toast('Selecciona el tipo de servicio','error'); return false; }
+    if(!document.getElementById('f_area').value) { toast('Selecciona el área técnica','error'); return false; }
+    if(!document.getElementById('f_sintoma').value.trim()) { toast('Describe el problema','error'); return false; }
+  }
+  return true;
+}
+
+document.getElementById('btnSiguiente').addEventListener('click', () => {
+  if(!validarPasoActual()) return;
+  if(_pasoActual < PASOS.length-1) mostrarPaso(_pasoActual+1);
+});
+
+document.getElementById('btnAnterior').addEventListener('click', () => {
+  if(_pasoActual > 0) mostrarPaso(_pasoActual-1);
+});
+
+// Teclado — flechas arriba/abajo
+document.addEventListener('keydown', e => {
+  // Solo si no estamos escribiendo en un input
+  const tag = document.activeElement.tagName.toLowerCase();
+  if(['input','textarea','select'].includes(tag)) return;
+  if(e.key === 'ArrowDown' && _pasoActual < PASOS.length-1) {
+    if(!validarPasoActual()) return;
+    mostrarPaso(_pasoActual+1);
+  }
+  if(e.key === 'ArrowUp' && _pasoActual > 0) {
+    mostrarPaso(_pasoActual-1);
+  }
+});
+
+// Iniciar en paso 1
+mostrarPaso(0);
 
 function toast(msg,tipo='success'){
   const c={success:'var(--success)',error:'var(--error)',info:'var(--accent2)'};

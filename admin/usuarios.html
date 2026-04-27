@@ -8,6 +8,79 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{--bg:#080b10;--surface:#0d1117;--surface2:#131820;--border:#1e2a38;--accent:#00d4ff;--accent2:#0077ff;--text:#e8f0f8;--muted:#4a6070;--success:#00e5a0;--error:#ff4560;--warn:#ffb700;}
+
+/* ══════════════════════════════════════════
+   TEMA CLARO — BLANCO PROFESIONAL
+   ══════════════════════════════════════════ */
+[data-theme="light"] {
+  --bg:      #ffffff;
+  --surface: #f5f7fa;
+  --surface2:#eef1f6;
+  --border:  #dde2ed;
+  --accent:  #0077ff;
+  --accent2: #0055cc;
+  --text:    #111827;
+  --muted:   #6b7280;
+  --success: #059669;
+  --error:   #dc2626;
+  --warn:    #d97706;
+  --purple:  #7c3aed;
+}
+[data-theme="light"] body::before {
+  background-image:
+    linear-gradient(rgba(0,85,204,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,85,204,0.04) 1px, transparent 1px);
+}
+[data-theme="light"] .topbar {
+  background: rgba(255,255,255,0.97);
+  box-shadow: 0 1px 12px rgba(0,0,0,0.08);
+}
+[data-theme="light"] .sidebar {
+  background: #f5f7fa;
+  box-shadow: 1px 0 12px rgba(0,0,0,0.05);
+}
+[data-theme="light"] input,
+[data-theme="light"] select,
+[data-theme="light"] textarea {
+  background: #ffffff;
+  color: var(--text);
+}
+[data-theme="light"] input::placeholder,
+[data-theme="light"] textarea::placeholder { color: #9ca3af; }
+[data-theme="light"] select option { background: #ffffff; color: #111827; }
+[data-theme="light"] .modal,
+[data-theme="light"] .modal-overlay > .modal { background: #ffffff; }
+[data-theme="light"] .tw,
+[data-theme="light"] .stat-card,
+[data-theme="light"] .cot-card,
+[data-theme="light"] .proto-preview,
+[data-theme="light"] .res-card,
+[data-theme="light"] .card { background: #ffffff; }
+[data-theme="light"] tbody tr:hover { background: #f0f4ff; }
+[data-theme="light"] .nav-item.active { background: rgba(0,85,204,0.08); }
+[data-theme="light"] .nav-item:hover  { background: rgba(0,0,0,0.04); }
+[data-theme="light"] .badge.b-borrador { background: rgba(107,114,128,0.1); }
+[data-theme="light"] #themeToggle {
+  background: rgba(0,85,204,0.08);
+  border-color: rgba(0,85,204,0.2);
+}
+
+/* TOGGLE BUTTON BASE */
+#themeToggle {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#themeToggle:hover { opacity: 0.8; transform: scale(1.05); }
+
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:"DM Mono",monospace;background:var(--bg);color:var(--text);min-height:100vh;display:grid;grid-template-rows:60px 1fr;grid-template-columns:240px 1fr;}
 body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.02) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
@@ -75,6 +148,11 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
 .btn-o:hover{border-color:var(--accent2);color:var(--accent);}
 .btn-danger{background:none;border:1px solid rgba(255,69,96,0.3);color:var(--error);}
 .btn-danger:hover{background:rgba(255,69,96,0.1);}
+.btn-warn{background:rgba(255,183,0,0.08);border:1px solid rgba(255,183,0,0.3);color:var(--warn);}
+.btn-warn:hover{background:rgba(255,183,0,0.15);}
+.btn-success-sm{background:rgba(0,229,160,0.08);border:1px solid rgba(0,229,160,0.3);color:var(--success);}
+.btn-success-sm:hover{background:rgba(0,229,160,0.15);}
+.btn-danger:hover{background:rgba(255,69,96,0.1);}
 
 /* MODAL */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}
@@ -105,7 +183,30 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
 /* SEC HEAD */
 .sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
 .sec-title{font-family:"Syne",sans-serif;font-size:14px;font-weight:700;color:var(--text);}
+
+/* TEMA CLARO — FORMULARIOS LEGIBLES */
+[data-theme="light"] input,
+[data-theme="light"] select,
+[data-theme="light"] textarea { color: #111827 !important; background: #ffffff; border-color: #d1d5db; }
+[data-theme="light"] input:disabled,
+[data-theme="light"] select:disabled { background: #f9fafb !important; color: #374151 !important; }
+[data-theme="light"] label { color: #374151; }
+[data-theme="light"] .muted,
+[data-theme="light"] [style*="color:var(--muted)"] { color: #6b7280; }
+[data-theme="light"] tbody td { color: #111827; }
+[data-theme="light"] .modal,
+[data-theme="light"] .modal-overlay > div { background: #ffffff !important; }
+[data-theme="light"] .msec-t { color: #111827; }
+[data-theme="light"] .item-row input { background: #ffffff; color: #111827; border-color: #d1d5db; }
+[data-theme="light"] .items-wrap { background: #f9fafb; border-color: #d1d5db; }
+[data-theme="light"] .items-head { color: #6b7280; background: #f3f4f6; }
+[data-theme="light"] .item-total { color: #059669; }
+[data-theme="light"] .tot-label { color: #6b7280; }
+[data-theme="light"] .tot-val { color: #111827; }
+[data-theme="light"] .sec-head .sec-title { color: #111827; }
+[data-theme="light"] .field label { color: #374151; }
 </style>
+<script src="../assets/theme.js"></script>
 </head>
 <body>
 
@@ -517,7 +618,28 @@ async function toggleActivo(userId,activo){
     await db.from('usuarios').update({activo:!activo}).eq('id',userId);
     await loadUsuarios();
     toast('Usuario '+(activo?'desactivado':'activado'),'success');
-  }catch(e){toast('Error','error');}
+  }catch(e){toast('Error al cambiar estado: '+e.message,'error');}
+}
+
+async function eliminarUsuario(userId, nombre, rol){
+  if(!confirm('¿Eliminar a '+nombre+'? Esta acción no se puede deshacer.')) return;
+  try{
+    // Eliminar registros relacionados según el rol
+    if(rol==='cliente'){
+      await db.from('clientes').delete().eq('usuario_id',userId);
+    } else if(rol==='tecnico'){
+      await db.from('tecnicos').delete().eq('usuario_id',userId);
+    }
+    // Eliminar usuario de la tabla usuarios
+    await db.from('usuarios').delete().eq('id',userId);
+    // Eliminar de Auth (requiere admin)
+    await db.auth.admin?.deleteUser(userId).catch(()=>{});
+    await loadUsuarios();
+    toast('Usuario eliminado: '+nombre,'success');
+  }catch(e){
+    toast('Error al eliminar: '+e.message,'error');
+    console.error(e);
+  }
 }
 
 // REENVIAR CODIGO
