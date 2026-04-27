@@ -1,483 +1,431 @@
 // ════════════════════════════════════════════════════════════════
 //  IIT Órdenes de Servicio v2 — assets/pdf.js
-//  Exportación PDF para Admin, Técnico y Cliente
-//  Depende de: jsPDF (cdnjs)
+//  PDF profesional fondo blanco — legible al imprimir
 // ════════════════════════════════════════════════════════════════
 
-// ── CARGAR jsPDF DINÁMICAMENTE ────────────────────────────────────
 function cargarJsPDF() {
   return new Promise((resolve, reject) => {
     if (window.jspdf) { resolve(); return; }
     const s = document.createElement('script');
     s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-    s.onload = resolve;
-    s.onerror = reject;
+    s.onload = resolve; s.onerror = reject;
     document.head.appendChild(s);
   });
 }
 
-// ── PALETA IIT ────────────────────────────────────────────────────
+// ── PALETA PARA IMPRESIÓN (fondo blanco) ─────────────────────
 const C = {
-  bg:      [8,  11, 16],
-  surface: [13, 17, 23],
-  border:  [30, 42, 56],
-  accent:  [0,  212,255],
-  blue:    [0,  119,255],
-  text:    [232,240,248],
-  muted:   [74, 96, 112],
-  success: [0,  229,160],
-  warn:    [255,183,0],
-  error:   [255,69, 96],
-  white:   [255,255,255]
+  azul:    [0,  82,  155],   // azul IIT oscuro
+  azulL:   [0,  119, 255],   // azul acento
+  negro:   [20, 20,  30],    // texto principal
+  gris:    [80, 90,  110],   // texto secundario
+  grisL:   [180,188, 204],   // bordes y separadores
+  grisBG:  [245,247, 251],   // fondos alternados
+  blanco:  [255,255, 255],
+  verde:   [0,  130, 70],
+  rojo:    [200,30,  50],
+  naranja: [210,120, 0],
+  morado:  [100,40,  180],
 };
 
 const PDF_STATUS_COLOR = {
-  borrador:   C.muted,
-  pendiente:  C.warn,
-  asignada:   C.blue,
-  en_proceso: C.accent,
-  en_pausa:   [255,140,0],
-  cerrada:    C.success,
-  cancelada:  C.error
+  borrador:   C.gris,
+  pendiente:  C.naranja,
+  asignada:   C.azulL,
+  en_proceso: [0,150,180],
+  en_pausa:   [180,100,0],
+  cerrada:    C.verde,
+  cancelada:  C.rojo
 };
 
 const PDF_PRI_COLOR = {
-  baja:    C.success,
-  media:   C.warn,
-  alta:    C.error,
-  critica: C.error
+  baja:   C.verde,
+  media:  C.naranja,
+  alta:   C.rojo,
+  critica:C.rojo
 };
 
-// ── HELPERS ───────────────────────────────────────────────────────
 function fFecha(iso) {
   if (!iso) return '—';
-  return new Date(iso).toLocaleString('es-CO', {
-    day:'2-digit', month:'short', year:'numeric',
-    hour:'2-digit', minute:'2-digit'
-  });
+  return new Date(iso).toLocaleString('es-CO',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
 }
-
 function fFechaCorta(iso) {
   if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('es-CO', {
-    day:'2-digit', month:'short', year:'numeric'
-  });
+  return new Date(iso).toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'});
 }
-
 function wrap(doc, text, maxW) {
-  return doc.splitTextToSize(String(text || '—'), maxW);
+  return doc.splitTextToSize(String(text||'—'), maxW);
+}
+function chk(doc, y, h=10) {
+  if (y + h > 272) { doc.addPage(); return 18; }
+  return y;
 }
 
-// ── PDF INDIVIDUAL ────────────────────────────────────────────────
-async function exportarPDFOrden(orden, historial = [], protocolo = null, logoB64 = null) {
+// ── PDF ORDEN INDIVIDUAL ──────────────────────────────────────
+async function exportarPDFOrden(orden, historial=[], protocolo=null, logoB64=null) {
   await cargarJsPDF();
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ unit:'mm', format:'a4' });
-  const W = 210, M = 16;
-  let y = 0;
+  const {jsPDF} = window.jspdf;
+  const doc = new jsPDF({unit:'mm', format:'a4'});
+  const W=210, M=16, CW=W-M*2;
+  let y=0;
 
-  // ─ HEADER ─
-  doc.setFillColor(...C.bg);
-  doc.rect(0, 0, W, 38, 'F');
-  doc.setFillColor(...C.blue);
-  doc.rect(0, 0, W, 2, 'F');
+  // ── HEADER ──────────────────────────────────────────────────
+  // Franja azul superior
+  doc.setFillColor(...C.azul); doc.rect(0,0,W,46,'F');
+  doc.setFillColor(...C.azulL); doc.rect(0,0,4,46,'F');
 
   // Logo
   if (logoB64) {
-    try { doc.addImage(logoB64, 'PNG', M, 6, 22, 22); } catch {}
+    try { doc.addImage(logoB64,'PNG',M,6,26,26); } catch{}
+  } else {
+    // Logo IIT profesional — texto cuando no hay imagen
+    doc.setFillColor(...C.azul);
+    doc.roundedRect(M,7,28,28,4,4,'F');
+    doc.setFillColor(...C.azulL);
+    doc.roundedRect(M,7,28,4,2,2,'F');
+    doc.setFontSize(14); doc.setFont('helvetica','bold');
+    doc.setTextColor(...C.blanco);
+    doc.text('IIT',M+14,24,{align:'center'});
+    doc.setFontSize(5.5); doc.setFont('helvetica','normal');
+    doc.text('INFRA-IT',M+14,30,{align:'center'});
   }
 
   // Nombre empresa
-  doc.setTextColor(...C.text);
-  doc.setFontSize(13);
-  doc.setFont('helvetica','bold');
-  doc.text('Infraestructura-IT', M + 26, 14);
-  doc.setTextColor(...C.muted);
-  doc.setFontSize(7);
-  doc.setFont('helvetica','normal');
-  doc.text('SOPORTE & MANTENIMIENTO · BOGOTÁ, COLOMBIA', M + 26, 20);
-  doc.text('Sistema de Órdenes de Servicio v2.0', M + 26, 25);
+  doc.setFontSize(14); doc.setFont('helvetica','bold');
+  doc.setTextColor(...C.blanco);
+  doc.text('Infraestructura-IT', M+28, 16);
+  doc.setFontSize(7.5); doc.setFont('helvetica','normal');
+  doc.setTextColor(200,215,240);
+  doc.text('SOPORTE & MANTENIMIENTO · BOGOTÁ, COLOMBIA', M+28, 22);
+  doc.text('Sistema de Órdenes de Servicio v2.0', M+28, 27);
+  doc.text('Creada: '+fFecha(orden.created_at), M+28, 32);
 
-  // OS ID
-  doc.setTextColor(...C.accent);
-  doc.setFontSize(15);
-  doc.setFont('helvetica','bold');
-  doc.text(orden.orden_id || '—', W - M, 14, { align:'right' });
+  // ID Orden
+  doc.setFontSize(16); doc.setFont('helvetica','bold');
+  doc.setTextColor(...C.blanco);
+  doc.text(orden.orden_id||'—', W-M, 16, {align:'right'});
 
   // Status badge
-  const sc = PDF_STATUS_COLOR[orden.status] || C.muted;
-  doc.setFillColor(...sc);
-  doc.roundedRect(W - M - 30, 18, 30, 7, 1.5, 1.5, 'F');
-  doc.setTextColor(...C.bg);
-  doc.setFontSize(7);
-  doc.setFont('helvetica','bold');
-  doc.text((orden.status||'—').replace(/_/g,' ').toUpperCase(), W - M - 15, 22.5, { align:'center' });
+  const sc = PDF_STATUS_COLOR[orden.status]||C.gris;
+  doc.setFillColor(...sc.map(v=>Math.min(255,v+60)));
+  doc.roundedRect(W-M-32,20,32,8,2,2,'F');
+  doc.setFontSize(7.5); doc.setFont('helvetica','bold');
+  doc.setTextColor(...C.blanco);
+  doc.text((orden.status||'—').replace(/_/g,' ').toUpperCase(),W-M-16,25.5,{align:'center'});
 
-  // Fecha
-  doc.setTextColor(...C.muted);
-  doc.setFontSize(7);
-  doc.setFont('helvetica','normal');
-  doc.text('Creada: ' + fFecha(orden.created_at), M + 26, 30);
+  y = 54;
 
-  y = 46;
+  // ── KPIs resumen ────────────────────────────────────────────
+  doc.setFillColor(...C.grisBG);
+  doc.roundedRect(M,y,CW,18,2,2,'F');
+  doc.setDrawColor(...C.grisL); doc.setLineWidth(0.3);
+  doc.roundedRect(M,y,CW,18,2,2,'S');
 
-  // ─ FUNCIONES HELPER ─
-  const seccion = (titulo, color = C.blue) => {
-    if (y > 265) { doc.addPage(); y = 16; }
-    doc.setFillColor(...C.bg);
-    doc.rect(M, y, W - M*2, 7, 'F');
-    doc.setFillColor(...color);
-    doc.rect(M, y, 3, 7, 'F');
-    doc.setTextColor(...C.text);
-    doc.setFontSize(8);
-    doc.setFont('helvetica','bold');
-    doc.text(titulo, M + 6, y + 5);
-    y += 10;
+  const kpis = [
+    ['PRIORIDAD', (orden.prioridad||'—').toUpperCase(), PDF_PRI_COLOR[orden.prioridad]||C.gris],
+    ['ÁREA',      orden.area||orden.tipo_servicio||'—', C.azulL],
+    ['CIUDAD',    orden.ciudad||'—', C.negro],
+    ['TÉCNICO',   orden.tecnicos?.usuarios?.nombre||'Sin asignar', orden.tecnico_id?C.verde:C.naranja],
+  ];
+  const kw = CW/kpis.length;
+  kpis.forEach(([lbl,val,color],i)=>{
+    const x = M + i*kw + kw/2;
+    doc.setFontSize(7); doc.setFont('helvetica','normal'); doc.setTextColor(100,110,130);
+    doc.text(lbl, x, y+6, {align:'center'});
+    doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.setTextColor(...color);
+    doc.text(String(val).slice(0,18), x, y+13, {align:'center'});
+    if(i>0){doc.setDrawColor(...C.grisL);doc.line(M+i*kw,y+3,M+i*kw,y+15);}
+  });
+  y += 24;
+
+  // ── FUNCIÓN SECCIÓN ──────────────────────────────────────────
+  const secHeader = (num, titulo) => {
+    y = chk(doc, y, 12);
+    doc.setFillColor(...C.azul); doc.rect(M,y,CW,8,'F');
+    doc.setFillColor(...C.azulL); doc.rect(M,y,3,8,'F');
+    doc.setFontSize(8); doc.setFont('helvetica','bold');
+    doc.setTextColor(...C.blanco);
+    doc.text(num+'.  '+titulo.toUpperCase(), M+6, y+5.5);
+    y += 12;
   };
 
-  const campo = (label, val, fullW = false) => {
-    if (!val || val === '—') return;
-    const strVal = String(val);
-    if (y > 268) { doc.addPage(); y = 16; }
-    const ancho = fullW ? W - M*2 - 2 : W - M*2 - 46;
-    const lines = wrap(doc, strVal, ancho);
-    const h = Math.max(6, lines.length * 4.5);
-    doc.setTextColor(...C.muted);
-    doc.setFontSize(7);
-    doc.setFont('helvetica','normal');
-    doc.text(label.toUpperCase(), M + 2, y);
-    doc.setTextColor(...C.text);
-    doc.setFontSize(8.5);
-    doc.setFont('helvetica', lines.length > 1 ? 'normal' : 'bold');
-    doc.text(lines, fullW ? M + 2 : M + 44, y);
+  // ── FUNCIÓN CAMPO ────────────────────────────────────────────
+  const campo = (label, val, isAlt=false) => {
+    if (!val || val==='—') return;
+    const lines = wrap(doc, val, CW-55);
+    const h = Math.max(7, lines.length*4.5);
+    y = chk(doc, y, h);
+    if (isAlt) { doc.setFillColor(...C.grisBG); doc.rect(M,y-1,CW,h+1,'F'); }
+    // Label en gris oscuro
+    doc.setFontSize(7.5); doc.setFont('helvetica','bold'); doc.setTextColor(80,90,110);
+    doc.text(label, M+2, y+4);
+    // Valor en negro puro — legible al imprimir
+    doc.setFont('helvetica','normal'); doc.setTextColor(20,20,30);
+    doc.text(lines, M+52, y+4);
     y += h;
   };
 
-  const linea = () => {
-    doc.setDrawColor(...C.border);
-    doc.setLineWidth(0.3);
-    doc.line(M, y, W - M, y);
-    y += 4;
-  };
+  // ── 1. DATOS DEL SOLICITANTE ─────────────────────────────────
+  secHeader('1','Datos del Solicitante');
+  campo('NOMBRE',   orden.nombre, false);
+  campo('EMPRESA',  orden.empresa, true);
+  campo('CORREO',   orden.correo, false);
+  campo('TELÉFONO', orden.telefono, true);
+  campo('CARGO',    orden.cargo, false);
+  y += 4;
 
-  // ─ SECCIÓN 1: SOLICITANTE ─
-  seccion('1. DATOS DEL SOLICITANTE');
-  campo('Nombre',    orden.nombre);
-  campo('Empresa',   orden.empresa);
-  campo('Correo',    orden.correo);
-  campo('Teléfono',  orden.telefono);
-  campo('Cargo',     orden.cargo);
-  linea();
+  // ── 2. UBICACIÓN ─────────────────────────────────────────────
+  secHeader('2','Ubicación del Servicio');
+  campo('CIUDAD',         orden.ciudad, false);
+  campo('DEPARTAMENTO',   orden.departamento, true);
+  campo('DIRECCIÓN',      orden.direccion, false);
+  campo('REFERENCIA',     orden.referencia, true);
+  campo('PERSONA RECIBE', orden.persona_recibe, false);
+  y += 4;
 
-  // ─ SECCIÓN 2: UBICACIÓN ─
-  seccion('2. UBICACIÓN DEL SERVICIO');
-  campo('Ciudad',    orden.ciudad + (orden.departamento ? ', '+orden.departamento : ''));
-  campo('Dirección', orden.direccion);
-  campo('Referencia',orden.referencia);
-  campo('Recibe',    orden.persona_recibe);
-  linea();
+  // ── 3. DESCRIPCIÓN ───────────────────────────────────────────
+  secHeader('3','Descripción del Servicio');
+  campo('TIPO',        orden.tipo_servicio, false);
+  campo('ÁREA',        orden.area, true);
+  // Prioridad visual
+  y = chk(doc, y, 8);
+  doc.setFontSize(7.5); doc.setFont('helvetica','bold'); doc.setTextColor(...C.negro);
+  doc.text('PRIORIDAD', M+2, y+4);
+  const pc = PDF_PRI_COLOR[orden.prioridad]||C.gris;
+  doc.setFillColor(...pc); doc.roundedRect(M+52, y+0.5, 22, 5.5, 1,1,'F');
+  doc.setTextColor(...C.blanco); doc.setFontSize(7);
+  doc.text((orden.prioridad||'—').toUpperCase(), M+63, y+4.5, {align:'center'});
+  y += 7;
 
-  // ─ SECCIÓN 3: SERVICIO ─
-  seccion('3. DESCRIPCIÓN DEL SERVICIO');
-  campo('Tipo',     orden.tipo_servicio);
-  campo('Área',     orden.area);
-
-  // Prioridad con color
-  if (orden.prioridad) {
-    const pc = PDF_PRI_COLOR[orden.prioridad] || C.muted;
-    doc.setTextColor(...C.muted);
-    doc.setFontSize(7);
-    doc.text('PRIORIDAD', M + 2, y);
-    doc.setFillColor(...pc);
-    doc.roundedRect(M + 44, y - 4, 22, 6, 1, 1, 'F');
-    doc.setTextColor(...C.bg);
-    doc.setFontSize(7);
-    doc.setFont('helvetica','bold');
-    doc.text(orden.prioridad.toUpperCase(), M + 55, y, { align:'center' });
-    y += 7;
-  }
-
-  campo('Fecha req.', orden.fecha_requerida);
-  campo('Ventana',    orden.ventana);
-  campo('Duración',   orden.duracion);
-  campo('Acceso',     orden.acceso);
-
+  campo('FECHA REQ.',  fFechaCorta(orden.fecha_requerida), false);
+  // Síntoma en caja destacada
   if (orden.sintoma) {
-    if (y > 250) { doc.addPage(); y = 16; }
-    doc.setTextColor(...C.muted);
-    doc.setFontSize(7);
-    doc.setFont('helvetica','normal');
-    doc.text('SÍNTOMA', M + 2, y);
-    doc.setTextColor(...C.text);
-    doc.setFontSize(8);
-    const lines = wrap(doc, orden.sintoma, W - M*2 - 2);
-    doc.text(lines, M + 2, y + 5);
-    y += lines.length * 4.5 + 8;
-  }
-  linea();
-
-  // ─ SECCIÓN 4: EQUIPOS ─
-  const equipos = Array.isArray(orden.equipos) ? orden.equipos : [];
-  if (equipos.length || orden.marca) {
-    seccion('4. EQUIPOS INVOLUCRADOS', C.accent);
-    if (equipos.length) campo('Equipos', equipos.join(', '));
-    campo('Marca/Modelo', orden.marca);
-    campo('N° Serie',     orden.serie);
-    campo('Observaciones',orden.obs_equipos);
-    linea();
+    y = chk(doc, y, 16);
+    doc.setFontSize(7.5); doc.setFont('helvetica','bold'); doc.setTextColor(...C.negro);
+    doc.text('SÍNTOMA', M+2, y+4);
+    const sLines = wrap(doc, orden.sintoma, CW-8);
+    const sh = sLines.length*4.5+8;
+    y = chk(doc, y+6, sh);
+    doc.setFillColor(240,244,255);
+    doc.roundedRect(M,y,CW,sh,1,1,'F');
+    doc.setDrawColor(...C.grisL); doc.setLineWidth(0.2);
+    doc.roundedRect(M,y,CW,sh,1,1,'S');
+    doc.setFillColor(...C.azulL); doc.rect(M,y,2,sh,'F');
+    doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(20,20,30);
+    doc.text(sLines, M+5, y+5);
+    y += sh+4;
   }
 
-  // ─ SECCIÓN 5: ADICIONAL ─
-  if (orden.antecedentes || orden.contrato || orden.notas) {
-    seccion('5. INFORMACIÓN ADICIONAL', C.muted);
-    campo('Contrato',     orden.contrato);
-    campo('Centro Costo', orden.centro_costo);
-    campo('Antecedentes', orden.antecedentes);
-    campo('Notas',        orden.notas);
-    linea();
+  // ── 4. EQUIPOS ───────────────────────────────────────────────
+  if (orden.marca||orden.serie||orden.equipos?.length||orden.obs_equipos) {
+    secHeader('4','Equipos Involucrados');
+    campo('MARCA/MODELO', orden.marca, false);
+    campo('No. SERIE',    orden.serie, true);
+    if (orden.equipos?.length) {
+      campo('EQUIPOS', orden.equipos.join(', '), false);
+    }
+    campo('OBSERVACIONES', orden.obs_equipos, true);
+    y += 4;
   }
 
-  // ─ SECCIÓN 6: HISTORIAL ─
-  if (historial && historial.length) {
-    if (y > 220) { doc.addPage(); y = 16; }
-    seccion('6. HISTORIAL DE CAMBIOS', C.success);
-    historial.forEach(h => {
-      if (y > 265) { doc.addPage(); y = 16; }
-      doc.setTextColor(...C.muted);
-      doc.setFontSize(7);
-      doc.setFont('helvetica','normal');
-      doc.text(fFechaCorta(h.created_at), M + 2, y);
-      doc.setTextColor(...C.text);
-      doc.setFontSize(8);
-      const txt = h.campo_modificado + ': ' + (h.valor_anterior||'—') + ' → ' + (h.valor_nuevo||'—');
-      const lines = wrap(doc, txt, W - M*2 - 32);
-      doc.text(lines, M + 28, y);
-      y += Math.max(5, lines.length * 4) + 1;
+  // ── 5. INFORMACIÓN ADICIONAL ─────────────────────────────────
+  if (orden.notas||orden.antecedentes||orden.contrato) {
+    secHeader('5','Información Adicional');
+    campo('NOTAS',          orden.notas, false);
+    campo('ANTECEDENTES',   orden.antecedentes, true);
+    campo('CONTRATO/OC',    orden.contrato, false);
+    campo('CENTRO COSTO',   orden.centro_costo, true);
+    y += 4;
+  }
+
+  // ── 6. HISTORIAL ─────────────────────────────────────────────
+  if (historial?.length) {
+    secHeader('6','Historial de Cambios');
+    historial.slice(0,8).forEach((h,i)=>{
+      y = chk(doc, y, 7);
+      if(i%2===0){doc.setFillColor(...C.grisBG);doc.rect(M,y-1,CW,7,'F');}
+      doc.setFontSize(7); doc.setFont('helvetica','normal'); doc.setTextColor(80,90,110);
+      doc.text(fFechaCorta(h.created_at), M+2, y+4);
+      const detalle = (h.campo||'')+(h.valor_anterior?': '+h.valor_anterior+' → '+(h.valor_nuevo||''):' '+h.valor_nuevo||'');
+      doc.setTextColor(20,20,30);
+      doc.text(wrap(doc,detalle,CW-40)[0], M+38, y+4);
+      y+=7;
     });
-    linea();
+    y+=4;
   }
 
-  // ─ SECCIÓN 7: QR ─
-  if (y > 230) { doc.addPage(); y = 16; }
-  seccion('7. ACCESO RÁPIDO — QR', C.success);
-  const formUrl = 'https://infraestructura-it.github.io/iit-ordenes-servicio-v2/orden.html?orden=' +
-    encodeURIComponent(orden.orden_id||'') +
-    '&nombre=' + encodeURIComponent(orden.nombre||'') +
-    '&correo=' + encodeURIComponent(orden.correo||'') +
-    '&empresa=' + encodeURIComponent(orden.empresa||'') +
-    '&telefono=' + encodeURIComponent(orden.telefono||'');
-
-  const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' +
-    encodeURIComponent(formUrl) + '&bgcolor=ffffff&color=000000&margin=2';
+  // ── 7. QR ────────────────────────────────────────────────────
+  y = chk(doc, y, 44);
+  secHeader('7','Acceso Rápido — QR');
+  const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data='+
+    encodeURIComponent('https://infraestructura-it.github.io/iit-ordenes-servicio-v2/orden.html'+
+      '?orden='+(orden.orden_id||'')+
+      '&nombre='+(orden.nombre||'')+
+      '&correo='+(orden.correo||'')+
+      '&empresa='+(orden.empresa||'')+
+      '&telefono='+(orden.telefono||'')
+    )+'&color=00529b&bgcolor=ffffff&margin=2';
 
   try {
-    const qrImg = await cargarImagen(qrUrl);
-    doc.addImage(qrImg, 'PNG', M, y, 32, 32);
-  } catch {}
-
-  doc.setTextColor(...C.muted);
-  doc.setFontSize(7);
-  doc.text('Escanee para abrir el formulario completo', M + 36, y + 8);
-  doc.setTextColor(...C.accent);
-  const urlLines = wrap(doc, formUrl, W - M*2 - 38);
-  doc.text(urlLines, M + 36, y + 14);
-  y += 36;
-
-  // ─ FOOTER ─
-  const pages = doc.internal.getNumberOfPages();
-  for (let i = 1; i <= pages; i++) {
-    doc.setPage(i);
-    doc.setFillColor(...C.bg);
-    doc.rect(0, 284, W, 13, 'F');
-    doc.setDrawColor(...C.border);
-    doc.line(0, 284, W, 284);
-    doc.setTextColor(...C.muted);
-    doc.setFontSize(7);
-    doc.text('INFRAESTRUCTURA-IT · Sistema de Órdenes de Servicio v2.0 · Bogotá, Colombia', M, 290);
-    doc.text('Página ' + i + ' / ' + pages, W - M, 290, { align:'right' });
+    const qrImg = await new Promise((res,rej)=>{
+      const img=new Image(); img.crossOrigin='anonymous';
+      img.onload=()=>{
+        const cv=document.createElement('canvas');
+        cv.width=img.width; cv.height=img.height;
+        cv.getContext('2d').drawImage(img,0,0);
+        res(cv.toDataURL('image/png'));
+      };
+      img.onerror=rej; img.src=qrUrl;
+    });
+    doc.addImage(qrImg,'PNG',M,y,32,32);
+    doc.setFontSize(7.5); doc.setFont('helvetica','bold'); doc.setTextColor(...C.negro);
+    doc.text('Escanee para abrir el formulario completo', M+36, y+8);
+    doc.setFont('helvetica','normal'); doc.setTextColor(0,82,155);
+    const link='https://infraestructura-it.github.io/iit-ordenes-servicio-v2/orden.html?orden='+(orden.orden_id||'');
+    const lLines=wrap(doc,link,CW-40);
+    doc.text(lLines, M+36, y+14);
+    y+=36;
+  } catch {
+    y+=4;
   }
 
-  // ─ DESCARGAR ─
-  doc.save('OS-IIT-' + (orden.orden_id||'orden') + '-' + new Date().toISOString().slice(0,10) + '.pdf');
+  // ── FOOTER ───────────────────────────────────────────────────
+  const pages = doc.internal.getNumberOfPages();
+  for(let i=1;i<=pages;i++){
+    doc.setPage(i);
+    doc.setFillColor(...C.azul); doc.rect(0,285,W,12,'F');
+    doc.setFontSize(6.5); doc.setFont('helvetica','normal');
+    doc.setTextColor(200,215,240);
+    doc.text('INFRAESTRUCTURA-IT · Sistema de Órdenes de Servicio v2.0 · Bogotá, Colombia', M, 292);
+    doc.text('Página '+i+' / '+pages, W-M, 292, {align:'right'});
+  }
+
+  doc.save('OS-IIT-'+(orden.orden_id||'orden')+'-'+new Date().toISOString().slice(0,10)+'.pdf');
 }
 
-// ── PDF LISTADO ───────────────────────────────────────────────────
-async function exportarPDFListado(ordenes, titulo = 'Reporte de Órdenes', logoB64 = null) {
+// ── PDF LISTADO ───────────────────────────────────────────────
+async function exportarPDFListado(ordenes, titulo='Reporte de Órdenes', logoB64=null) {
   await cargarJsPDF();
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ unit:'mm', format:'a4', orientation:'landscape' });
-  const W = 297, M = 12;
-  let y = 0;
+  const {jsPDF} = window.jspdf;
+  const doc = new jsPDF({unit:'mm', format:'a4', orientation:'landscape'});
+  const W=297, M=14, CW=W-M*2;
+  let y=0;
 
   // Header
-  doc.setFillColor(...C.bg);
-  doc.rect(0, 0, W, 28, 'F');
-  doc.setFillColor(...C.blue);
-  doc.rect(0, 0, W, 2, 'F');
+  doc.setFillColor(...C.azul); doc.rect(0,0,W,32,'F');
+  doc.setFillColor(...C.azulL); doc.rect(0,0,4,32,'F');
 
-  if (logoB64) {
-    try { doc.addImage(logoB64, 'PNG', M, 5, 16, 16); } catch {}
+  if(logoB64){
+    try{ doc.addImage(logoB64,'PNG',M,4,20,20); }catch{}
+    doc.setFontSize(13); doc.setFont('helvetica','bold');
+    doc.setTextColor(...C.blanco);
+    doc.text('Infraestructura-IT', M+24, 14);
+    doc.setFontSize(7); doc.setFont('helvetica','normal');
+    doc.setTextColor(200,215,240);
+    doc.text('Sistema de Órdenes de Servicio v2.0', M+24, 20);
+  } else {
+    doc.setFontSize(13); doc.setFont('helvetica','bold');
+    doc.setTextColor(...C.blanco);
+    doc.text('Infraestructura-IT', M, 14);
+    doc.setFontSize(7); doc.setFont('helvetica','normal');
+    doc.setTextColor(200,215,240);
+    doc.text('Sistema de Órdenes de Servicio v2.0', M, 20);
   }
 
-  doc.setTextColor(...C.text);
-  doc.setFontSize(12);
-  doc.setFont('helvetica','bold');
-  doc.text('Infraestructura-IT — ' + titulo, M + 20, 12);
-  doc.setTextColor(...C.muted);
-  doc.setFontSize(7);
-  doc.setFont('helvetica','normal');
-  doc.text('Generado: ' + new Date().toLocaleString('es-CO') + '  |  Total: ' + ordenes.length + ' órdenes', M + 20, 18);
+  doc.setFontSize(10); doc.setFont('helvetica','bold');
+  doc.setTextColor(...C.blanco);
+  doc.text(titulo, W-M, 14, {align:'right'});
+  doc.setFontSize(7); doc.setFont('helvetica','normal');
+  doc.setTextColor(200,215,240);
+  doc.text(new Date().toLocaleString('es-CO'), W-M, 20, {align:'right'});
+  doc.text(ordenes.length+' órdenes', W-M, 25, {align:'right'});
+  y=38;
 
-  // KPIs
-  const stats = {
-    pendiente:  ordenes.filter(o=>o.status==='pendiente').length,
-    en_proceso: ordenes.filter(o=>o.status==='en_proceso').length,
-    cerrada:    ordenes.filter(o=>o.status==='cerrada').length,
-    critica:    ordenes.filter(o=>o.prioridad==='critica').length
-  };
-
-  const kpis = [
-    ['TOTAL', ordenes.length, C.accent],
-    ['PENDIENTES', stats.pendiente, C.warn],
-    ['EN PROCESO', stats.en_proceso, C.blue],
-    ['CERRADAS', stats.cerrada, C.success],
-    ['CRÍTICAS', stats.critica, C.error]
+  // Cabecera tabla
+  const cols=[
+    {t:'NO. ORDEN',  w:30},
+    {t:'EMPRESA',    w:42},
+    {t:'CONTACTO',   w:30},
+    {t:'ÁREA',       w:30},
+    {t:'PRIORIDAD',  w:22},
+    {t:'ESTADO',     w:26},
+    {t:'TÉCNICO',    w:36},
+    {t:'FECHA',      w:22},
   ];
 
-  kpis.forEach((k, i) => {
-    const x = W - M - (kpis.length - i) * 38;
-    doc.setFillColor(...C.surface);
-    doc.roundedRect(x, 5, 35, 18, 1.5, 1.5, 'F');
-    doc.setTextColor(...k[2]);
-    doc.setFontSize(16);
-    doc.setFont('helvetica','bold');
-    doc.text(String(k[1]), x + 17.5, 16, { align:'center' });
-    doc.setTextColor(...C.muted);
-    doc.setFontSize(6);
-    doc.setFont('helvetica','normal');
-    doc.text(k[0], x + 17.5, 21, { align:'center' });
+  doc.setFillColor(...C.azul); doc.rect(M,y,CW,8,'F');
+  let cx=M;
+  cols.forEach(col=>{
+    doc.setFontSize(7); doc.setFont('helvetica','bold');
+    doc.setTextColor(...C.blanco);
+    doc.text(col.t, cx+1, y+5.5);
+    cx+=col.w;
   });
+  y+=9;
 
-  y = 34;
+  ordenes.forEach((o,i)=>{
+    const colores=[8,7,7,7,7,7,7,7]; // alturas mín por fila
+    const h=8;
+    if(y+h>196){doc.addPage();y=16;}
+    if(i%2===0){doc.setFillColor(...C.grisBG);doc.rect(M,y-1,CW,h+1,'F');}
+    doc.setDrawColor(...C.grisL); doc.setLineWidth(0.1);
+    doc.line(M,y+h,M+CW,y+h);
 
-  // Tabla
-  const cols = [
-    { label:'NO. ORDEN',  w:28 },
-    { label:'FECHA',      w:22 },
-    { label:'EMPRESA',    w:32 },
-    { label:'CONTACTO',   w:24 },
-    { label:'SERVICIO',   w:28 },
-    { label:'ÁREA',       w:30 },
-    { label:'PRIORIDAD',  w:18 },
-    { label:'ESTADO',     w:20 },
-    { label:'TÉCNICO',    w:24 },
-    { label:'CIUDAD',     w:20 },
-    { label:'FECHA REQ.', w:20 }
-  ];
+    cx=M;
+    // No. Orden
+    doc.setFontSize(8); doc.setFont('helvetica','bold');
+    doc.setTextColor(...C.azulL);
+    doc.text(o.orden_id||'—', cx+1, y+5); cx+=cols[0].w;
 
-  // Header tabla
-  doc.setFillColor(...C.surface);
-  doc.rect(M, y, W - M*2, 7, 'F');
-  let x = M;
-  cols.forEach(col => {
-    doc.setTextColor(...C.muted);
-    doc.setFontSize(6.5);
-    doc.setFont('helvetica','bold');
-    doc.text(col.label, x + 1, y + 5);
-    x += col.w;
-  });
-  y += 8;
+    // Empresa
+    doc.setFont('helvetica','bold'); doc.setTextColor(...C.negro);
+    doc.text(wrap(doc,o.empresa||'—',cols[1].w-2)[0], cx+1, y+5); cx+=cols[1].w;
 
-  // Filas
-  ordenes.forEach((o, i) => {
-    if (y > 188) {
-      doc.addPage();
-      y = 16;
-      // Repetir header
-      doc.setFillColor(...C.surface);
-      doc.rect(M, y, W - M*2, 7, 'F');
-      let xh = M;
-      cols.forEach(col => {
-        doc.setTextColor(...C.muted);
-        doc.setFontSize(6.5);
-        doc.setFont('helvetica','bold');
-        doc.text(col.label, xh + 1, y + 5);
-        xh += col.w;
-      });
-      y += 8;
-    }
+    // Contacto
+    doc.setFont('helvetica','normal'); doc.setTextColor(...C.gris);
+    doc.text(wrap(doc,o.nombre||'—',cols[2].w-2)[0], cx+1, y+5); cx+=cols[2].w;
 
-    // Fondo alternado
-    if (i % 2 === 0) {
-      doc.setFillColor(13, 17, 23);
-      doc.rect(M, y - 1, W - M*2, 6.5, 'F');
-    }
+    // Área
+    doc.text(wrap(doc,o.area||o.tipo_servicio||'—',cols[3].w-2)[0], cx+1, y+5); cx+=cols[3].w;
 
-    const sc = PDF_STATUS_COLOR[o.status] || C.muted;
-    const pc = PDF_PRI_COLOR[o.prioridad] || C.muted;
-    const tec = o.tecnicos?.usuarios?.nombre || '—';
-    const vals = [
-      o.orden_id || '—',
-      o.created_at ? new Date(o.created_at).toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'2-digit'}) : '—',
-      o.empresa || '—',
-      o.nombre || '—',
-      o.tipo_servicio || '—',
-      o.area || '—',
-      (o.prioridad||'—').toUpperCase(),
-      (o.status||'—').replace(/_/g,' ').toUpperCase(),
-      tec,
-      o.ciudad || '—',
-      o.fecha_requerida || '—'
-    ];
+    // Prioridad
+    const pc=PDF_PRI_COLOR[o.prioridad]||C.gris;
+    doc.setFillColor(...pc); doc.roundedRect(cx+1,y+1.5,18,5,1,1,'F');
+    doc.setFontSize(6); doc.setFont('helvetica','bold'); doc.setTextColor(...C.blanco);
+    doc.text((o.prioridad||'—').toUpperCase().slice(0,6), cx+10, y+5.2, {align:'center'});
+    cx+=cols[4].w;
 
-    let xv = M;
-    vals.forEach((val, vi) => {
-      const col = cols[vi];
-      // Color especial para prioridad y estado
-      if (vi === 6) doc.setTextColor(...pc);
-      else if (vi === 7) doc.setTextColor(...sc);
-      else doc.setTextColor(...C.text);
+    // Estado
+    const sc=PDF_STATUS_COLOR[o.status]||C.gris;
+    doc.setFillColor(...sc.map(v=>Math.min(255,v+80)));
+    doc.roundedRect(cx+1,y+1.5,22,5,1,1,'F');
+    doc.setFontSize(6); doc.setFont('helvetica','bold'); doc.setTextColor(...sc.map(v=>Math.max(0,v-40)));
+    doc.text((o.status||'—').replace(/_/g,' ').toUpperCase().slice(0,10), cx+12, y+5.2, {align:'center'});
+    cx+=cols[5].w;
 
-      doc.setFontSize(7);
-      doc.setFont('helvetica', vi === 0 ? 'bold' : 'normal');
-      const txt = String(val).slice(0, Math.floor(col.w / 1.8));
-      doc.text(txt, xv + 1, y + 4);
-      xv += col.w;
-    });
+    // Técnico
+    doc.setFontSize(7); doc.setFont('helvetica','normal');
+    doc.setTextColor(o.tecnico_id?C.negro:C.naranja);
+    doc.text(wrap(doc,o.tecnicos?.usuarios?.nombre||'Sin asignar',cols[6].w-2)[0], cx+1, y+5);
+    cx+=cols[6].w;
 
-    doc.setDrawColor(...C.border);
-    doc.setLineWidth(0.2);
-    doc.line(M, y + 5.5, W - M, y + 5.5);
-    y += 6.5;
+    // Fecha
+    doc.setTextColor(...C.gris);
+    doc.text(fFechaCorta(o.created_at), cx+1, y+5);
+
+    y+=h;
   });
 
   // Footer
-  const pages = doc.internal.getNumberOfPages();
-  for (let i = 1; i <= pages; i++) {
+  const pages=doc.internal.getNumberOfPages();
+  for(let i=1;i<=pages;i++){
     doc.setPage(i);
-    doc.setFillColor(...C.bg);
-    doc.rect(0, 200, W, 8, 'F');
-    doc.setTextColor(...C.muted);
-    doc.setFontSize(6.5);
-    doc.text('INFRAESTRUCTURA-IT · Sistema de Órdenes de Servicio v2.0', M, 205);
-    doc.text('Página ' + i + ' / ' + pages, W - M, 205, { align:'right' });
+    doc.setFillColor(...C.azul); doc.rect(0,198,W,10,'F');
+    doc.setFontSize(6.5); doc.setFont('helvetica','normal');
+    doc.setTextColor(200,215,240);
+    doc.text('INFRAESTRUCTURA-IT · Bogotá, Colombia', M, 204);
+    doc.text('Página '+i+' / '+pages, W-M, 204, {align:'right'});
   }
 
-  doc.save('IIT-Listado-' + new Date().toISOString().slice(0,10) + '.pdf');
-}
-
-// ── CARGAR IMAGEN ─────────────────────────────────────────────────
-function cargarImagen(url) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
-      const cv = document.createElement('canvas');
-      cv.width = img.width; cv.height = img.height;
-      cv.getContext('2d').drawImage(img, 0, 0);
-      resolve(cv.toDataURL('image/png'));
-    };
-    img.onerror = reject;
-    img.src = url;
-  });
+  doc.save('IIT-Reporte-'+new Date().toISOString().slice(0,10)+'.pdf');
 }

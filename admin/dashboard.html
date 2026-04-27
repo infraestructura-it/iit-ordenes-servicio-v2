@@ -60,6 +60,18 @@
 [data-theme="light"] .nav-item.active { background: rgba(0,85,204,0.08); }
 [data-theme="light"] .nav-item:hover  { background: rgba(0,0,0,0.04); }
 [data-theme="light"] .badge.b-borrador { background: rgba(107,114,128,0.1); }
+[data-theme="light"] tbody td { color: #111827; }
+[data-theme="light"] tbody td .enm { color: #111827; font-weight: 600; }
+[data-theme="light"] tbody td .esub { color: #6b7280; }
+[data-theme="light"] tbody td .oid { color: #1d4ed8; }
+[data-theme="light"] .modal { background: #ffffff; }
+[data-theme="light"] .modal input,
+[data-theme="light"] .modal select,
+[data-theme="light"] .modal textarea { background: #ffffff; color: #111827; border-color: #dde2ed; }
+[data-theme="light"] .modal label { color: #4b5563; }
+[data-theme="light"] .modal .msec-t { color: #374151; }
+[data-theme="light"] .stat-card { background: #ffffff; }
+[data-theme="light"] .stat-val { color: inherit; }
 [data-theme="light"] #themeToggle {
   background: rgba(0,85,204,0.08);
   border-color: rgba(0,85,204,0.2);
@@ -184,6 +196,28 @@ td{padding:13px 16px;font-size:12px;vertical-align:middle;}
 .ni-t{font-size:12px;color:var(--text);margin-bottom:3px;}
 .ni-d{font-size:10px;color:var(--muted);}
 @keyframes sIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* TEMA CLARO — FORMULARIOS LEGIBLES */
+[data-theme="light"] input,
+[data-theme="light"] select,
+[data-theme="light"] textarea { color: #111827 !important; background: #ffffff; border-color: #d1d5db; }
+[data-theme="light"] input:disabled,
+[data-theme="light"] select:disabled { background: #f9fafb !important; color: #374151 !important; }
+[data-theme="light"] label { color: #374151; }
+[data-theme="light"] .muted,
+[data-theme="light"] [style*="color:var(--muted)"] { color: #6b7280; }
+[data-theme="light"] tbody td { color: #111827; }
+[data-theme="light"] .modal,
+[data-theme="light"] .modal-overlay > div { background: #ffffff !important; }
+[data-theme="light"] .msec-t { color: #111827; }
+[data-theme="light"] .item-row input { background: #ffffff; color: #111827; border-color: #d1d5db; }
+[data-theme="light"] .items-wrap { background: #f9fafb; border-color: #d1d5db; }
+[data-theme="light"] .items-head { color: #6b7280; background: #f3f4f6; }
+[data-theme="light"] .item-total { color: #059669; }
+[data-theme="light"] .tot-label { color: #6b7280; }
+[data-theme="light"] .tot-val { color: #111827; }
+[data-theme="light"] .sec-head .sec-title { color: #111827; }
+[data-theme="light"] .field label { color: #374151; }
 </style>
 <script src="../assets/theme.js"></script>
 </head>
@@ -374,7 +408,8 @@ function setupEvents(){
     if (!_ordenActual) return;
     toast('Generando PDF...','info');
     const hist = await Ordenes.getHistorial(_ordenActual.id).catch(()=>[]);
-    await exportarPDFOrden(_ordenActual, hist);
+    const logo = await cargarLogoPDF();
+    await exportarPDFOrden(_ordenActual, hist, null, logo);
   });
   document.getElementById('modalOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
   document.getElementById('notifBtn').addEventListener('click',()=>document.getElementById('notifPanel').classList.toggle('open'));
@@ -402,12 +437,13 @@ function setupEvents(){
 
 async function loadOrdenes(){
   try{
+    document.getElementById('tablaBody').innerHTML='<div class="empty"><p>Cargando ordenes...</p></div>';
     const {data:ordenes,error} = await db.from('ordenes')
       .select('*')
       .order('created_at',{ascending:false});
     if(error) throw error;
 
-    // Usar _tecnicos ya cargado — construir mapa por id
+    // Construir mapa de técnicos
     const tecMap={};
     _tecnicos.forEach(t => tecMap[t.id] = t);
 
@@ -416,9 +452,13 @@ async function loadOrdenes(){
       tecnicos: o.tecnico_id ? (tecMap[o.tecnico_id] || null) : null
     }));
 
+    console.log('Ordenes cargadas:', _ordenes.length);
     updateStats();
     renderTabla();
-  }catch(e){console.error(e);}
+  }catch(e){
+    console.error('Error loadOrdenes:', e);
+    document.getElementById('tablaBody').innerHTML='<div class="empty"><p>Error al cargar: '+e.message+'</p></div>';
+  }
 }
 
 async function loadTecnicos(){
@@ -719,6 +759,22 @@ function toast(msg,tipo='success'){
   t.style.cssText='position:fixed;bottom:24px;right:24px;z-index:9999;background:var(--surface);border:1px solid '+c[tipo]+';border-radius:10px;padding:12px 18px;box-shadow:0 8px 32px rgba(0,0,0,0.4);font-family:"DM Mono",monospace;font-size:12px;color:'+c[tipo]+';letter-spacing:0.5px;animation:sIn 0.3s ease;';
   t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3500);
 }
+
+// ── CARGAR LOGO PARA PDF ──────────────────────────────────────
+async function cargarLogoPDF() {
+  return new Promise((res) => {
+    const img = new Image(); img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const cv = document.createElement('canvas');
+      cv.width = img.width; cv.height = img.height;
+      cv.getContext('2d').drawImage(img, 0, 0);
+      res(cv.toDataURL('image/png'));
+    };
+    img.onerror = () => res(null);
+    img.src = 'https://infraestructura-it.github.io/iit-ordenes-servicio-v2/assets/logo512.png';
+  });
+}
+
 </script>
 </body>
 </html>
