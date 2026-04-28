@@ -205,6 +205,43 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
 [data-theme="light"] .tot-val { color: #111827; }
 [data-theme="light"] .sec-head .sec-title { color: #111827; }
 [data-theme="light"] .field label { color: #374151; }
+
+/* ══════════════════════════════════════════
+   RESPONSIVE MOVIL
+   ══════════════════════════════════════════ */
+.hamburger{display:none;background:none;border:none;cursor:pointer;padding:8px;flex-direction:column;gap:5px;}
+.hamburger span{display:block;width:22px;height:2px;background:var(--text);border-radius:2px;transition:all 0.3s;}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:19;backdrop-filter:blur(2px);}
+
+@media(max-width:768px){
+  body{grid-template-columns:1fr !important;}
+  .hamburger{display:flex;}
+  .sidebar{position:fixed !important;top:0;left:-280px;width:280px;height:100vh !important;z-index:20;transition:left 0.3s ease;box-shadow:4px 0 24px rgba(0,0,0,0.4);}
+  .sidebar.open{left:0;}
+  .sidebar-overlay.open{display:block;}
+  .main{padding:14px !important;}
+  .stats-row,.stats-grid{grid-template-columns:1fr 1fr !important;gap:10px !important;}
+  .row2,.row3,.row4{grid-template-columns:1fr !important;}
+  .filters{flex-direction:column !important;}
+  .modal{margin:10px auto !important;}
+  .modal-overlay{padding:8px !important;}
+  .dgrid{grid-template-columns:1fr !important;}
+  .df.full{grid-column:1 !important;}
+  .sbtns{flex-wrap:wrap !important;}
+  .sbtn{font-size:9px !important;padding:6px 8px !important;}
+  .items-head,.item-row{grid-template-columns:28px 1fr 60px 90px 36px !important;}
+  .items-head div:nth-child(2),.item-row .i-ref,
+  .items-head div:nth-child(6),.item-row .i-dpct,
+  .items-head div:nth-child(7),.item-row .i-iva{display:none !important;}
+}
+@media(max-width:480px){
+  .topbar{padding:0 12px !important;gap:8px !important;}
+  .logo-name{display:none;}
+  .stats-row,.stats-grid{grid-template-columns:1fr 1fr !important;}
+  .tab{font-size:10px !important;padding:8px 6px !important;}
+  .tab span:last-child{display:none;}
+}
+
 </style>
 <script src="../assets/theme.js"></script>
 </head>
@@ -215,6 +252,7 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
   <span class="logo-name">Infraestructura-IT</span>
   <span style="font-size:11px;color:var(--muted);letter-spacing:1.5px;">ADMINISTRADOR</span>
   <span style="font-size:10px;color:rgba(0,212,255,0.4);letter-spacing:1px;border:1px solid rgba(0,212,255,0.15);padding:3px 8px;border-radius:4px;">v2.0</span>
+  <button class="hamburger" id="btnHamburger"><span></span><span></span><span></span></button>
   <div class="topbar-sep"></div>
   <div id="userInfo"></div>
 </div>
@@ -238,6 +276,7 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
     <a class="nav-item" href="../index.html"><span class="nav-icon">&#43;</span>Nueva Orden</a>
   </div>
 </div>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <div class="main">
   <div class="sec-head">
@@ -716,6 +755,20 @@ function toast(msg,tipo='success'){
   t.style.cssText='position:fixed;bottom:24px;right:24px;z-index:9999;background:var(--surface);border:1px solid '+c[tipo]+';border-radius:10px;padding:12px 18px;box-shadow:0 8px 32px rgba(0,0,0,0.4);font-family:"DM Mono",monospace;font-size:12px;color:'+c[tipo]+';letter-spacing:0.5px;';
   t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3500);
 }
+
+// ── MENU HAMBURGUESA ──────────────────────────────────────────
+(function(){
+  const btn=document.getElementById('btnHamburger');
+  const sidebar=document.querySelector('.sidebar');
+  const overlay=document.getElementById('sidebarOverlay');
+  if(!btn||!sidebar) return;
+  const open=()=>{sidebar.classList.add('open');if(overlay)overlay.classList.add('open');};
+  const close=()=>{sidebar.classList.remove('open');if(overlay)overlay.classList.remove('open');};
+  btn.addEventListener('click',()=>sidebar.classList.contains('open')?close():open());
+  if(overlay) overlay.addEventListener('click',close);
+  document.querySelectorAll('.nav-item').forEach(a=>a.addEventListener('click',close));
+})();
+
 </script>
 </body>
 </html>

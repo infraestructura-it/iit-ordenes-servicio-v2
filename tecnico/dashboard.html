@@ -8,6 +8,79 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{--bg:#080b10;--surface:#0d1117;--surface2:#131820;--border:#1e2a38;--accent:#00d4ff;--accent2:#0077ff;--text:#e8f0f8;--muted:#4a6070;--success:#00e5a0;--error:#ff4560;--warn:#ffb700;}
+
+/* ══════════════════════════════════════════
+   TEMA CLARO — BLANCO PROFESIONAL
+   ══════════════════════════════════════════ */
+[data-theme="light"] {
+  --bg:      #ffffff;
+  --surface: #f5f7fa;
+  --surface2:#eef1f6;
+  --border:  #dde2ed;
+  --accent:  #0077ff;
+  --accent2: #0055cc;
+  --text:    #111827;
+  --muted:   #6b7280;
+  --success: #059669;
+  --error:   #dc2626;
+  --warn:    #d97706;
+  --purple:  #7c3aed;
+}
+[data-theme="light"] body::before {
+  background-image:
+    linear-gradient(rgba(0,85,204,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,85,204,0.04) 1px, transparent 1px);
+}
+[data-theme="light"] .topbar {
+  background: rgba(255,255,255,0.97);
+  box-shadow: 0 1px 12px rgba(0,0,0,0.08);
+}
+[data-theme="light"] .sidebar {
+  background: #f5f7fa;
+  box-shadow: 1px 0 12px rgba(0,0,0,0.05);
+}
+[data-theme="light"] input,
+[data-theme="light"] select,
+[data-theme="light"] textarea {
+  background: #ffffff;
+  color: var(--text);
+}
+[data-theme="light"] input::placeholder,
+[data-theme="light"] textarea::placeholder { color: #9ca3af; }
+[data-theme="light"] select option { background: #ffffff; color: #111827; }
+[data-theme="light"] .modal,
+[data-theme="light"] .modal-overlay > .modal { background: #ffffff; }
+[data-theme="light"] .tw,
+[data-theme="light"] .stat-card,
+[data-theme="light"] .cot-card,
+[data-theme="light"] .proto-preview,
+[data-theme="light"] .res-card,
+[data-theme="light"] .card { background: #ffffff; }
+[data-theme="light"] tbody tr:hover { background: #f0f4ff; }
+[data-theme="light"] .nav-item.active { background: rgba(0,85,204,0.08); }
+[data-theme="light"] .nav-item:hover  { background: rgba(0,0,0,0.04); }
+[data-theme="light"] .badge.b-borrador { background: rgba(107,114,128,0.1); }
+[data-theme="light"] #themeToggle {
+  background: rgba(0,85,204,0.08);
+  border-color: rgba(0,85,204,0.2);
+}
+
+/* TOGGLE BUTTON BASE */
+#themeToggle {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#themeToggle:hover { opacity: 0.8; transform: scale(1.05); }
+
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:"DM Mono",monospace;background:var(--bg);color:var(--text);min-height:100vh;display:grid;grid-template-rows:60px 1fr;grid-template-columns:220px 1fr;}
 body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.02) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
@@ -79,7 +152,67 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
 .btn{padding:8px 16px;border-radius:7px;font-family:"Syne",sans-serif;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:0.5px;transition:all 0.2s;border:none;}
 .btn-o{background:none;border:1px solid var(--border);color:var(--muted);}
 .btn-o:hover{border-color:var(--accent2);color:var(--accent);}
+
+/* TEMA CLARO — FORMULARIOS LEGIBLES */
+[data-theme="light"] input,
+[data-theme="light"] select,
+[data-theme="light"] textarea { color: #111827 !important; background: #ffffff; border-color: #d1d5db; }
+[data-theme="light"] input:disabled,
+[data-theme="light"] select:disabled { background: #f9fafb !important; color: #374151 !important; }
+[data-theme="light"] label { color: #374151; }
+[data-theme="light"] .muted,
+[data-theme="light"] [style*="color:var(--muted)"] { color: #6b7280; }
+[data-theme="light"] tbody td { color: #111827; }
+[data-theme="light"] .modal,
+[data-theme="light"] .modal-overlay > div { background: #ffffff !important; }
+[data-theme="light"] .msec-t { color: #111827; }
+[data-theme="light"] .item-row input { background: #ffffff; color: #111827; border-color: #d1d5db; }
+[data-theme="light"] .items-wrap { background: #f9fafb; border-color: #d1d5db; }
+[data-theme="light"] .items-head { color: #6b7280; background: #f3f4f6; }
+[data-theme="light"] .item-total { color: #059669; }
+[data-theme="light"] .tot-label { color: #6b7280; }
+[data-theme="light"] .tot-val { color: #111827; }
+[data-theme="light"] .sec-head .sec-title { color: #111827; }
+[data-theme="light"] .field label { color: #374151; }
+
+/* ══════════════════════════════════════════
+   RESPONSIVE MOVIL
+   ══════════════════════════════════════════ */
+.hamburger{display:none;background:none;border:none;cursor:pointer;padding:8px;flex-direction:column;gap:5px;}
+.hamburger span{display:block;width:22px;height:2px;background:var(--text);border-radius:2px;transition:all 0.3s;}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:19;backdrop-filter:blur(2px);}
+
+@media(max-width:768px){
+  body{grid-template-columns:1fr !important;}
+  .hamburger{display:flex;}
+  .sidebar{position:fixed !important;top:0;left:-280px;width:280px;height:100vh !important;z-index:20;transition:left 0.3s ease;box-shadow:4px 0 24px rgba(0,0,0,0.4);}
+  .sidebar.open{left:0;}
+  .sidebar-overlay.open{display:block;}
+  .main{padding:14px !important;}
+  .stats-row,.stats-grid{grid-template-columns:1fr 1fr !important;gap:10px !important;}
+  .row2,.row3,.row4{grid-template-columns:1fr !important;}
+  .filters{flex-direction:column !important;}
+  .modal{margin:10px auto !important;}
+  .modal-overlay{padding:8px !important;}
+  .dgrid{grid-template-columns:1fr !important;}
+  .df.full{grid-column:1 !important;}
+  .sbtns{flex-wrap:wrap !important;}
+  .sbtn{font-size:9px !important;padding:6px 8px !important;}
+  .items-head,.item-row{grid-template-columns:28px 1fr 60px 90px 36px !important;}
+  .items-head div:nth-child(2),.item-row .i-ref,
+  .items-head div:nth-child(6),.item-row .i-dpct,
+  .items-head div:nth-child(7),.item-row .i-iva{display:none !important;}
+}
+@media(max-width:480px){
+  .topbar{padding:0 12px !important;gap:8px !important;}
+  .logo-name{display:none;}
+  .stats-row,.stats-grid{grid-template-columns:1fr 1fr !important;}
+  .tab{font-size:10px !important;padding:8px 6px !important;}
+  .tab span:last-child{display:none;}
+}
+
 </style>
+<script src="../assets/theme.js"></script>
 </head>
 <body>
 
@@ -88,6 +221,7 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
   <span class="logo-name">Infraestructura-IT</span>
   <span style="font-size:11px;color:var(--accent2);letter-spacing:1.5px;">TECNICO</span>
   <span style="font-size:10px;color:rgba(0,212,255,0.4);letter-spacing:1px;border:1px solid rgba(0,212,255,0.15);padding:3px 8px;border-radius:4px;">v2.0</span>
+  <button class="hamburger" id="btnHamburger"><span></span><span></span><span></span></button>
   <div class="topbar-sep"></div>
   <div id="userInfo"></div>
 </div>
@@ -103,6 +237,7 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
     <button class="nav-item" id="btnPdfNav"><span class="nav-icon">&#128196;</span>Exportar PDF</button>
   </div>
 </div>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <div class="main">
   <!-- STATS -->
@@ -145,6 +280,8 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
 
 <script src="../assets/supabase.js"></script>
 <script src="../assets/auth.js"></script>
+<script src="../assets/excel.js"></script>
+<script src="../assets/pdf.js"></script>
 <script>
 let _user = null, _tecnico = null, _ordenes = [], _filtro = 'all';
 
@@ -230,8 +367,16 @@ function setupEvents() {
       renderOrdenes();
     });
   });
-  document.getElementById('btnExcelNav').addEventListener('click', () => toast('Excel — disponible proxima version','info'));
-  document.getElementById('btnPdfNav').addEventListener('click', () => toast('PDF — disponible proxima version','info'));
+  document.getElementById('btnExcelNav').addEventListener('click', async () => {
+    if (!_ordenes.length) { toast('No hay ordenes para exportar','error'); return; }
+    toast('Generando Excel...','info');
+    await exportarExcelOrdenes(_ordenes, 'tecnico');
+  });
+  document.getElementById('btnPdfNav').addEventListener('click', async () => {
+    if (!_ordenes.length) { toast('No hay ordenes para exportar','error'); return; }
+    toast('Generando PDF...','info');
+    await exportarPDFListado(_ordenes, 'Mis Ordenes Asignadas — ' + (_user?.nombre||'Tecnico'));
+  });
 }
 
 function toast(msg, tipo='success') {
@@ -240,6 +385,20 @@ function toast(msg, tipo='success') {
   t.style.cssText='position:fixed;bottom:24px;right:24px;z-index:9999;background:var(--surface);border:1px solid '+c[tipo]+';border-radius:10px;padding:12px 18px;box-shadow:0 8px 32px rgba(0,0,0,0.4);font-family:"DM Mono",monospace;font-size:12px;color:'+c[tipo]+';';
   t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3500);
 }
+
+// ── MENU HAMBURGUESA ──────────────────────────────────────────
+(function(){
+  const btn=document.getElementById('btnHamburger');
+  const sidebar=document.querySelector('.sidebar');
+  const overlay=document.getElementById('sidebarOverlay');
+  if(!btn||!sidebar) return;
+  const open=()=>{sidebar.classList.add('open');if(overlay)overlay.classList.add('open');};
+  const close=()=>{sidebar.classList.remove('open');if(overlay)overlay.classList.remove('open');};
+  btn.addEventListener('click',()=>sidebar.classList.contains('open')?close():open());
+  if(overlay) overlay.addEventListener('click',close);
+  document.querySelectorAll('.nav-item').forEach(a=>a.addEventListener('click',close));
+})();
+
 </script>
 </body>
 </html>
