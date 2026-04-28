@@ -481,7 +481,22 @@ function setupEvents(){
     toast('Generando PDF...','info');
     const hist = await Ordenes.getHistorial(_ordenActual.id).catch(()=>[]);
     const logo = await cargarLogoPDF();
-    await exportarPDFOrden(_ordenActual, hist, null, logo);
+    // Cargar protocolo ejecutado con respuestas
+    let protocoloData = null;
+    try {
+      const {data:ej} = await db.from('protocolo_ejecucion')
+        .select('*, protocolos(nombre,equipo_tipo,protocolo_campos(*))')
+        .eq('orden_id',_ordenActual.id)
+        .order('created_at',{ascending:false})
+        .limit(1)
+        .single();
+      if(ej) {
+        const {data:resps} = await db.from('protocolo_respuestas')
+          .select('*').eq('ejecucion_id',ej.id);
+        protocoloData = { ejecucion:ej, campos: ej.protocolos?.protocolo_campos||[], respuestas: resps||[] };
+      }
+    } catch(e){}
+    await exportarPDFOrden(_ordenActual, hist, protocoloData, logo);
   });
   document.getElementById('modalOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
   document.getElementById('notifBtn').addEventListener('click',()=>document.getElementById('notifPanel').classList.toggle('open'));
