@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IIT — Detalle Orden</title>
+<title>IIT — Mi Orden</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -84,81 +84,89 @@
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:"DM Mono",monospace;background:var(--bg);color:var(--text);min-height:100vh;}
 body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.02) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
-.topbar{background:rgba(8,11,16,0.97);border-bottom:1px solid var(--border);padding:0 24px;height:60px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:50;backdrop-filter:blur(12px);}
-.logo-img{width:32px;height:32px;object-fit:contain;}
+.topbar{background:rgba(8,11,16,0.97);border-bottom:1px solid var(--border);padding:0 20px;height:60px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:50;backdrop-filter:blur(12px);}
+.logo-img{width:30px;height:30px;object-fit:contain;}
 .logo-name{font-family:"Syne",sans-serif;font-size:13px;font-weight:700;color:var(--text);}
 .topbar-sep{flex:1;}
-.wrapper{max-width:800px;margin:0 auto;padding:28px 20px 80px;}
+.wrapper{max-width:760px;margin:0 auto;padding:24px 16px 60px;position:relative;z-index:1;}
+.btn{padding:8px 16px;border-radius:7px;font-family:"Syne",sans-serif;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:0.5px;transition:all 0.2s;border:none;text-decoration:none;display:inline-flex;align-items:center;gap:6px;}
+.btn-o{background:none;border:1px solid var(--border);color:var(--muted);}
+.btn-o:hover{border-color:var(--accent2);color:var(--accent);}
 
 /* HEADER ORDEN */
-.orden-header{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;}
-.oh-left{}
+.orden-header{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px;position:relative;overflow:hidden;}
+.orden-header::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent2),var(--accent));}
+.oh-top{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;}
 .oh-id{font-family:"Syne",sans-serif;font-size:22px;font-weight:800;color:var(--accent);letter-spacing:2px;}
-.oh-empresa{font-size:14px;color:var(--text);margin-top:4px;}
-.oh-meta{font-size:11px;color:var(--muted);margin-top:4px;}
-.badge{display:inline-flex;align-items:center;padding:5px 12px;border-radius:6px;font-size:10px;letter-spacing:1px;font-weight:700;border:1px solid;}
+.oh-empresa{font-size:13px;color:var(--text);margin-top:4px;}
+.oh-fecha{font-size:11px;color:var(--muted);margin-top:2px;}
+.badge{display:inline-flex;align-items:center;padding:6px 14px;border-radius:6px;font-size:10px;letter-spacing:1px;font-weight:700;border:1px solid;}
+.b-borrador,.b-pendiente{background:rgba(255,183,0,0.1);border-color:rgba(255,183,0,0.3);color:var(--warn);}
 .b-asignada{background:rgba(0,119,255,0.1);border-color:rgba(0,119,255,0.3);color:var(--accent2);}
 .b-en_proceso{background:rgba(0,212,255,0.1);border-color:rgba(0,212,255,0.3);color:var(--accent);}
 .b-en_pausa{background:rgba(255,140,0,0.1);border-color:rgba(255,140,0,0.3);color:#ff8c00;}
 .b-cerrada{background:rgba(0,229,160,0.1);border-color:rgba(0,229,160,0.3);color:var(--success);}
-.b-pendiente{background:rgba(255,183,0,0.1);border-color:rgba(255,183,0,0.3);color:var(--warn);}
+.b-cancelada{background:rgba(255,69,96,0.1);border-color:rgba(255,69,96,0.3);color:var(--error);}
+
+/* TIMELINE */
+.timeline{display:flex;align-items:flex-start;padding:4px 0;margin-top:4px;}
+.tl-step{display:flex;flex-direction:column;align-items:center;flex:1;position:relative;}
+.tl-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--border);background:var(--surface2);z-index:1;transition:all 0.3s;}
+.tl-dot.done{border-color:var(--success);background:var(--success);}
+.tl-dot.active{border-color:var(--accent2);background:var(--accent2);box-shadow:0 0 10px rgba(0,119,255,0.5);}
+.tl-label{font-size:9px;color:var(--muted);margin-top:6px;letter-spacing:0.5px;text-align:center;}
+.tl-label.active{color:var(--accent2);font-weight:700;}
+.tl-label.done{color:var(--success);}
+.tl-line{position:absolute;top:7px;left:50%;width:100%;height:2px;background:var(--border);z-index:0;}
+.tl-line.done{background:var(--success);}
+
+/* NAVEGACION POR PASOS */
+.sec{display:none;}
+.sec.active{display:block;animation:slideIn 0.3s ease;}
+@keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 
 /* SECCION */
-.sec{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:16px;overflow:hidden;}
+.sec{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:14px;overflow:hidden;}
 .sec-head{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;background:rgba(0,0,0,0.2);}
 .sec-num{width:22px;height:22px;background:linear-gradient(135deg,var(--accent2),var(--accent));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#080b10;flex-shrink:0;}
-.sec-title{font-family:"Syne",sans-serif;font-size:12px;font-weight:700;color:var(--text);letter-spacing:0.5px;}
+.sec-title{font-family:"Syne",sans-serif;font-size:12px;font-weight:700;color:var(--text);}
 .sec-body{padding:18px 20px;}
 .dgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media(max-width:500px){.dgrid{grid-template-columns:1fr;}}
 .df .dl{font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:3px;}
 .df .dv{font-size:13px;color:var(--text);}
-.full{grid-column:1/-1;}
 .sintoma-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;font-size:13px;color:var(--text);line-height:1.6;}
-.eq-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
-.eq-tag{padding:4px 10px;background:rgba(0,119,255,0.08);border:1px solid rgba(0,119,255,0.2);border-radius:4px;font-size:11px;color:var(--accent2);}
-.pri-badge{display:inline-block;padding:4px 12px;border-radius:6px;font-size:10px;font-weight:700;letter-spacing:1px;}
-.pri-baja{background:rgba(0,229,160,0.1);color:var(--success);}
-.pri-media{background:rgba(255,183,0,0.1);color:var(--warn);}
-.pri-alta{background:rgba(255,69,96,0.1);color:var(--error);}
-.pri-critica{background:rgba(255,69,96,0.15);color:var(--error);font-weight:900;}
-
-/* STATUS CONTROL */
-.status-btns{display:flex;gap:6px;flex-wrap:wrap;}
-.sbtn{padding:8px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;font-family:"DM Mono",monospace;font-size:10px;color:var(--muted);cursor:pointer;letter-spacing:0.5px;transition:all 0.2s;}
-.sbtn:hover{border-color:var(--accent2);color:var(--text);}
-.sbtn.active{background:rgba(0,119,255,0.1);border-color:var(--accent2);color:var(--accent);}
-
-/* NOTAS */
-.nota-item{padding:12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;}
-.nota-meta{font-size:10px;color:var(--muted);margin-bottom:6px;display:flex;justify-content:space-between;}
-.nota-text{font-size:13px;color:var(--text);line-height:1.5;}
-.nota-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px 14px;font-family:"DM Mono",monospace;font-size:13px;color:var(--text);outline:none;resize:vertical;min-height:80px;transition:border-color 0.2s;}
-.nota-input:focus{border-color:var(--accent2);}
-.nota-input::placeholder{color:var(--muted);opacity:0.5;}
+.eq-tag{display:inline-block;padding:4px 10px;background:rgba(0,119,255,0.08);border:1px solid rgba(0,119,255,0.2);border-radius:4px;font-size:11px;color:var(--accent2);margin:2px;}
 
 /* HISTORIAL */
-.hist-item{display:flex;gap:12px;padding:8px 0;border-bottom:1px solid var(--border);font-size:11px;}
+.hist-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);align-items:flex-start;}
 .hist-item:last-child{border-bottom:none;}
-.hist-fecha{color:var(--muted);white-space:nowrap;flex-shrink:0;}
-.hist-cambio{color:var(--text);}
+.hist-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;margin-top:1px;}
+.hist-icon-status{background:rgba(0,119,255,0.1);border:1px solid rgba(0,119,255,0.2);}
+.hist-icon-nota{background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.2);}
+.hist-body{flex:1;}
+.hist-titulo{font-size:12px;color:var(--text);margin-bottom:2px;}
+.hist-fecha{font-size:10px;color:var(--muted);}
 
-/* PROTOCOLO CARD */
-.proto-card{background:var(--surface2);border:1px solid rgba(0,119,255,0.2);border-radius:10px;padding:16px;margin-top:4px;}
-.proto-name{font-family:"Syne",sans-serif;font-size:13px;font-weight:700;color:var(--accent2);margin-bottom:4px;}
-.proto-status{font-size:10px;letter-spacing:1px;}
+/* PROTOCOLO RESULTADO */
+.proto-resultado{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;}
+.proto-campo{padding:10px 0;border-bottom:1px solid var(--border);display:grid;grid-template-columns:1fr 2fr;gap:12px;align-items:start;}
+.proto-campo:last-child{border-bottom:none;}
+.pc-label{font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
+.pc-val{font-size:13px;color:var(--text);}
+.pc-val.val-si{color:var(--success);}
+.pc-val.val-no{color:var(--error);}
+.pc-foto{max-width:200px;border-radius:8px;margin-top:4px;}
+.tipo-tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:9px;margin-right:4px;}
+.tipo-si_no{background:rgba(0,229,160,0.08);color:var(--success);}
+.tipo-numero{background:rgba(0,119,255,0.08);color:var(--accent2);}
+.tipo-texto{background:rgba(74,96,112,0.15);color:#8a9bb0;}
+.tipo-lista{background:rgba(255,183,0,0.08);color:var(--warn);}
+.tipo-rango{background:rgba(0,212,255,0.08);color:var(--accent);}
+.proto-completado{display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(0,229,160,0.05);border:1px solid rgba(0,229,160,0.2);border-radius:8px;margin-bottom:12px;font-size:12px;color:var(--success);}
 
-/* BTN */
-.btn{padding:10px 18px;border-radius:8px;font-family:"Syne",sans-serif;font-size:12px;font-weight:700;cursor:pointer;letter-spacing:0.5px;transition:all 0.2s;border:none;text-decoration:none;display:inline-flex;align-items:center;gap:6px;}
-.btn-p{background:linear-gradient(135deg,var(--accent2),var(--accent));color:#080b10;}
-.btn-p:hover{opacity:0.9;}
-.btn-o{background:none;border:1px solid var(--border);color:var(--muted);}
-.btn-o:hover{border-color:var(--accent2);color:var(--accent);}
-.btn-sm{padding:7px 12px;font-size:11px;}
-.btn-warn{background:none;border:1px solid rgba(255,183,0,0.3);color:var(--warn);}
-.btn-warn:hover{background:rgba(255,183,0,0.1);}
-
-/* STICKY BOTTOM */
-.sticky-bar{position:fixed;bottom:0;left:0;right:0;background:rgba(8,11,16,0.97);border-top:1px solid var(--border);padding:12px 24px;display:flex;gap:10px;justify-content:flex-end;z-index:40;backdrop-filter:blur(10px);}
+/* FIRMA VIEWER */
+.firma-img{max-width:300px;border-radius:8px;border:1px solid var(--border);background:white;padding:8px;}
 
 /* TEMA CLARO — FORMULARIOS LEGIBLES */
 [data-theme="light"] input,
@@ -218,32 +226,6 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
   .tab span:last-child{display:none;}
 }
 
-
-/* ── PROTOCOLO INLINE ───────────────────────────────────── */
-.proto-campo{padding:14px;margin-bottom:10px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;}
-.proto-campo-label{font-size:10px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
-.proto-campo-label .req{color:var(--error);font-size:12px;}
-.proto-input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:10px 14px;font-family:"DM Mono",monospace;font-size:13px;color:var(--text);outline:none;transition:border-color 0.2s;}
-.proto-input:focus{border-color:var(--accent2);}
-.proto-input[type=range]{padding:4px 0;accent-color:var(--accent2);}
-.proto-textarea{width:100%;min-height:80px;resize:vertical;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:10px 14px;font-family:"DM Mono",monospace;font-size:13px;color:var(--text);outline:none;}
-.proto-textarea:focus{border-color:var(--accent2);}
-.sino-btns{display:flex;gap:8px;}
-.sino-btn{flex:1;padding:10px;border-radius:7px;border:1px solid var(--border);font-family:"Syne",sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.2s;background:none;color:var(--muted);}
-.sino-btn.active-si{background:rgba(0,229,160,0.1);border-color:var(--success);color:var(--success);}
-.sino-btn.active-no{background:rgba(255,69,96,0.1);border-color:var(--error);color:var(--error);}
-.proto-foto-wrap{display:flex;flex-direction:column;gap:8px;}
-.proto-foto-preview{max-width:100%;max-height:200px;border-radius:8px;border:1px solid var(--border);display:none;}
-.proto-foto-preview.visible{display:block;}
-.proto-firma-wrap{position:relative;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--surface2);cursor:crosshair;}
-.proto-firma-wrap canvas{display:block;width:100%;height:120px;touch-action:none;}
-.proto-firma-ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--muted);pointer-events:none;letter-spacing:1px;}
-.proto-rango-val{font-size:13px;color:var(--accent2);font-weight:700;margin-left:10px;}
-.proto-select{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:10px 14px;font-family:"DM Mono",monospace;font-size:13px;color:var(--text);outline:none;}
-.btn-clear-firma{background:none;border:1px solid var(--border);border-radius:5px;padding:4px 10px;font-family:"DM Mono",monospace;font-size:10px;color:var(--muted);cursor:pointer;margin-top:4px;}
-.campo-completado{border-color:rgba(0,229,160,0.3) !important;background:rgba(0,229,160,0.03);}
-.campo-completado .proto-campo-label{color:var(--success);}
-
 </style>
 <script src="../assets/theme.js"></script>
 </head>
@@ -252,121 +234,77 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
 <div class="topbar">
   <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2ODAgNjAwIj4KCiAgPGRlZnM+CiAgICA8Y2xpcFBhdGggaWQ9ImNjIj4KICAgICAgPHJlY3QgeD0iMjI1IiB5PSIxODUiIHdpZHRoPSIyMzAiIGhlaWdodD0iMjMwIiByeD0iMjgiLz4KICAgIDwvY2xpcFBhdGg+CiAgPC9kZWZzPgogIDxsaW5lIHgxPSIyNzAiIHkxPSIxODUiIHgyPSIyNzAiIHkyPSIxMTIiIHN0cm9rZT0iIzFhNGZhMCIgc3Ryb2tlLXdpZHRoPSIzLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDxsaW5lIHgxPSIzMTAiIHkxPSIxODUiIHgyPSIzMTAiIHkyPSIxMTIiIHN0cm9rZT0iIzFhNGZhMCIgc3Ryb2tlLXdpZHRoPSIzLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDxsaW5lIHgxPSIzNzAiIHkxPSIxODUiIHgyPSIzNzAiIHkyPSIxMTIiIHN0cm9rZT0iIzFhNGZhMCIgc3Ryb2tlLXdpZHRoPSIzLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDxsaW5lIHgxPSI0MTAiIHkxPSIxODUiIHgyPSI0MTAiIHkyPSIxMTIiIHN0cm9rZT0iIzFhNGZhMCIgc3Ryb2tlLXdpZHRoPSIzLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDxsaW5lIHgxPSIyODUiIHkxPSI0MTUiIHgyPSIyODUiIHkyPSI0ODgiIHN0cm9rZT0iIzFhNGZhMCIgc3Ryb2tlLXdpZHRoPSIzLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDxsaW5lIHgxPSIzNDAiIHkxPSI0MTUiIHgyPSIzNDAiIHkyPSI0ODgiIHN0cm9rZT0iIzFhNGZhMCIgc3Ryb2tlLXdpZHRoPSIzLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDxsaW5lIHgxPSIzOTUiIHkxPSI0MTUiIHgyPSIzOTUiIHkyPSI0ODgiIHN0cm9rZT0iIzFhNGZhMCIgc3Ryb2tlLXdpZHRoPSIzLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDxsaW5lIHgxPSIyMjUiIHkxPSIyMzIiIHgyPSIxNTIiIHkyPSIyMzIiIHN0cm9rZT0iIzFhNGZhMCIgc3Ryb2tlLXdpZHRoPSIzLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDxsaW5lIHgxPSIyMjUiIHkxPSIzMDAiIHgyPSIxNTIiIHkyPSIzMDAiIHN0cm9rZT0iIzFhNGZhMCIgc3Ryb2tlLXdpZHRoPSIzLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDxsaW5lIHgxPSIyMjUiIHkxPSIzNjgiIHgyPSIxNTIiIHkyPSIzNjgiIHN0cm9rZT0iIzFhNGZhMCIgc3Ryb2tlLXdpZHRoPSIzLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDxsaW5lIHgxPSI0NTUiIHkxPSIyMzIiIHgyPSI1MjgiIHkyPSIyMzIiIHN0cm9rZT0iIzFhNGZhMCIgc3Ryb2tlLXdpZHRoPSIzLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDxsaW5lIHgxPSI0NTUiIHkxPSIzMDAiIHgyPSI1MjgiIHkyPSIzMDAiIHN0cm9rZT0iIzFhNGZhMCIgc3Ryb2tlLXdpZHRoPSIzLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDxsaW5lIHgxPSI0NTUiIHkxPSIzNjgiIHgyPSI1MjgiIHkyPSIzNjgiIHN0cm9rZT0iIzFhNGZhMCIgc3Ryb2tlLXdpZHRoPSIzLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDxyZWN0IHg9IjIyNSIgeT0iMTg1IiB3aWR0aD0iMjMwIiBoZWlnaHQ9IjIzMCIgcng9IjI4IiBmaWxsPSIjNGFjOGYwIiBzdHJva2U9IiMxYTRmYTAiIHN0cm9rZS13aWR0aD0iNSIvPgogIDxnIGNsaXAtcGF0aD0idXJsKCNjYykiIHN0cm9rZT0iIzFhNGZhMCIgc3Ryb2tlLXdpZHRoPSIyLjIiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCI+CiAgICA8bGluZSB4MT0iMjcwIiB5MT0iMTg1IiB4Mj0iMjcwIiB5Mj0iMjIwIi8+CiAgICA8bGluZSB4MT0iMzEwIiB5MT0iMTg1IiB4Mj0iMjcwIiB5Mj0iMjIwIi8+CiAgICA8bGluZSB4MT0iMzcwIiB5MT0iMTg1IiB4Mj0iNDEwIiB5Mj0iMjE1Ii8+CiAgICA8bGluZSB4MT0iNDEwIiB5MT0iMTg1IiB4Mj0iNDEwIiB5Mj0iMjE1Ii8+CiAgICA8bGluZSB4MT0iMjg1IiB5MT0iNDE1IiB4Mj0iMjk1IiB5Mj0iMzc1Ii8+CiAgICA8bGluZSB4MT0iMzQwIiB5MT0iNDE1IiB4Mj0iMjk1IiB5Mj0iMzc1Ii8+CiAgICA8bGluZSB4MT0iMzk1IiB5MT0iNDE1IiB4Mj0iNDA1IiB5Mj0iMzc4Ii8+CiAgICA8bGluZSB4MT0iMjI1IiB5MT0iMjMyIiB4Mj0iMjcwIiB5Mj0iMjIwIi8+CiAgICA8bGluZSB4MT0iMjI1IiB5MT0iMzAwIiB4Mj0iMjQ1IiB5Mj0iMzAwIi8+CiAgICA8bGluZSB4MT0iMjI1IiB5MT0iMzY4IiB4Mj0iMjk1IiB5Mj0iMzc1Ii8+CiAgICA8bGluZSB4MT0iNDU1IiB5MT0iMjMyIiB4Mj0iNDEwIiB5Mj0iMjE1Ii8+CiAgICA8bGluZSB4MT0iNDU1IiB5MT0iMzAwIiB4Mj0iNDMwIiB5Mj0iMzAwIi8+CiAgICA8bGluZSB4MT0iNDU1IiB5MT0iMzY4IiB4Mj0iNDA1IiB5Mj0iMzc4Ii8+CiAgICA8cGF0aCBkPSJNMjcwLDIyMCBDMjkwLDIzNSAzMTUsMjUyIDM0MCwyNjgiLz4KICAgIDxwYXRoIGQ9Ik00MTAsMjE1IEMzODUsMjM1IDM2MiwyNTIgMzQwLDI2OCIvPgogICAgPHBhdGggZD0iTTI3MCwyMjAgQzI1OCwyNTggMjUwLDI3OCAyNDUsMzAwIi8+CiAgICA8cGF0aCBkPSJNNDEwLDIxNSBDNDIyLDI0OCA0MjgsMjc0IDQzMCwzMDAiLz4KICAgIDxwYXRoIGQ9Ik0yNDUsMzAwIEMyODAsMjgyIDMxMCwyNzIgMzQwLDI2OCIvPgogICAgPHBhdGggZD0iTTM0MCwyNjggQzM3MiwyNzIgNDAwLDI4NSA0MzAsMzAwIi8+CiAgICA8cGF0aCBkPSJNMjQ1LDMwMCBDMjYwLDMzMiAyNzUsMzU1IDI5NSwzNzUiLz4KICAgIDxwYXRoIGQ9Ik0zNDAsMjY4IEMzMzAsMzEwIDMxNSwzNDggMjk1LDM3NSIvPgogICAgPHBhdGggZD0iTTM0MCwyNjggQzM1MiwzMTAgMzc1LDM0OCA0MDUsMzc4Ii8+CiAgICA8cGF0aCBkPSJNNDMwLDMwMCBDNDI1LDMzNSA0MTUsMzYwIDQwNSwzNzgiLz4KICAgIDxwYXRoIGQ9Ik0yOTUsMzc1IEMzMzUsMzg1IDM3NSwzODIgNDA1LDM3OCIvPgogICAgPHBhdGggZD0iTTI3MCwyMjAgQzMwMCwyMTUgMzcwLDIxNSA0MTAsMjE1Ii8+CiAgPC9nPgogIDxjaXJjbGUgY3g9IjI3MCIgY3k9IjIyMCIgcj0iOSIgZmlsbD0iIzdhYjhkMCIgc3Ryb2tlPSIjMWE0ZmEwIiBzdHJva2Utd2lkdGg9IjIuMiIvPgogIDxjaXJjbGUgY3g9IjQxMCIgY3k9IjIxNSIgcj0iOSIgZmlsbD0iIzdhYjhkMCIgc3Ryb2tlPSIjMWE0ZmEwIiBzdHJva2Utd2lkdGg9IjIuMiIvPgogIDxjaXJjbGUgY3g9IjI0NSIgY3k9IjMwMCIgcj0iOSIgZmlsbD0iIzdhYjhkMCIgc3Ryb2tlPSIjMWE0ZmEwIiBzdHJva2Utd2lkdGg9IjIuMiIvPgogIDxjaXJjbGUgY3g9IjM0MCIgY3k9IjI2OCIgcj0iOSIgZmlsbD0iIzdhYjhkMCIgc3Ryb2tlPSIjMWE0ZmEwIiBzdHJva2Utd2lkdGg9IjIuMiIvPgogIDxjaXJjbGUgY3g9IjQzMCIgY3k9IjMwMCIgcj0iOSIgZmlsbD0iIzdhYjhkMCIgc3Ryb2tlPSIjMWE0ZmEwIiBzdHJva2Utd2lkdGg9IjIuMiIvPgogIDxjaXJjbGUgY3g9IjI5NSIgY3k9IjM3NSIgcj0iOSIgZmlsbD0iIzdhYjhkMCIgc3Ryb2tlPSIjMWE0ZmEwIiBzdHJva2Utd2lkdGg9IjIuMiIvPgogIDxjaXJjbGUgY3g9IjQwNSIgY3k9IjM3OCIgcj0iOSIgZmlsbD0iIzdhYjhkMCIgc3Ryb2tlPSIjMWE0ZmEwIiBzdHJva2Utd2lkdGg9IjIuMiIvPgogIDxjaXJjbGUgY3g9IjI3MCIgY3k9IjE4NSIgcj0iNiIgZmlsbD0iIzFhNGZhMCIvPgogIDxjaXJjbGUgY3g9IjMxMCIgY3k9IjE4NSIgcj0iNiIgZmlsbD0iIzFhNGZhMCIvPgogIDxjaXJjbGUgY3g9IjM3MCIgY3k9IjE4NSIgcj0iNiIgZmlsbD0iIzFhNGZhMCIvPgogIDxjaXJjbGUgY3g9IjQxMCIgY3k9IjE4NSIgcj0iNiIgZmlsbD0iIzFhNGZhMCIvPgogIDxjaXJjbGUgY3g9IjI4NSIgY3k9IjQxNSIgcj0iNiIgZmlsbD0iIzFhNGZhMCIvPgogIDxjaXJjbGUgY3g9IjM0MCIgY3k9IjQxNSIgcj0iNiIgZmlsbD0iIzFhNGZhMCIvPgogIDxjaXJjbGUgY3g9IjM5NSIgY3k9IjQxNSIgcj0iNiIgZmlsbD0iIzFhNGZhMCIvPgogIDxjaXJjbGUgY3g9IjIyNSIgY3k9IjIzMiIgcj0iNiIgZmlsbD0iIzFhNGZhMCIvPgogIDxjaXJjbGUgY3g9IjIyNSIgY3k9IjMwMCIgcj0iNiIgZmlsbD0iIzFhNGZhMCIvPgogIDxjaXJjbGUgY3g9IjIyNSIgY3k9IjM2OCIgcj0iNiIgZmlsbD0iIzFhNGZhMCIvPgogIDxjaXJjbGUgY3g9IjQ1NSIgY3k9IjIzMiIgcj0iNiIgZmlsbD0iIzFhNGZhMCIvPgogIDxjaXJjbGUgY3g9IjQ1NSIgY3k9IjMwMCIgcj0iNiIgZmlsbD0iIzFhNGZhMCIvPgogIDxjaXJjbGUgY3g9IjQ1NSIgY3k9IjM2OCIgcj0iNiIgZmlsbD0iIzFhNGZhMCIvPgogIDxjaXJjbGUgY3g9IjI3MCIgY3k9IjEwOCIgcj0iMTAiIGZpbGw9IiMxYTRmYTAiLz4KICA8Y2lyY2xlIGN4PSIzMTAiIGN5PSIxMDgiIHI9IjEwIiBmaWxsPSIjMWE0ZmEwIi8+CiAgPGNpcmNsZSBjeD0iMzcwIiBjeT0iMTA4IiByPSIxMCIgZmlsbD0iIzFhNGZhMCIvPgogIDxjaXJjbGUgY3g9IjQxMCIgY3k9IjEwOCIgcj0iMTAiIGZpbGw9IiMxYTRmYTAiLz4KICA8Y2lyY2xlIGN4PSIyODUiIGN5PSI0OTIiIHI9IjEwIiBmaWxsPSIjMWE0ZmEwIi8+CiAgPGNpcmNsZSBjeD0iMzQwIiBjeT0iNDkyIiByPSIxMCIgZmlsbD0iIzFhNGZhMCIvPgogIDxjaXJjbGUgY3g9IjM5NSIgY3k9IjQ5MiIgcj0iMTAiIGZpbGw9IiMxYTRmYTAiLz4KICA8Y2lyY2xlIGN4PSIxNDgiIGN5PSIyMzIiIHI9IjEwIiBmaWxsPSIjMWE0ZmEwIi8+CiAgPGNpcmNsZSBjeD0iMTQ4IiBjeT0iMzAwIiByPSIxMCIgZmlsbD0iIzFhNGZhMCIvPgogIDxjaXJjbGUgY3g9IjE0OCIgY3k9IjM2OCIgcj0iMTAiIGZpbGw9IiMxYTRmYTAiLz4KICA8Y2lyY2xlIGN4PSI1MzIiIGN5PSIyMzIiIHI9IjEwIiBmaWxsPSIjMWE0ZmEwIi8+CiAgPGNpcmNsZSBjeD0iNTMyIiBjeT0iMzAwIiByPSIxMCIgZmlsbD0iIzFhNGZhMCIvPgogIDxjaXJjbGUgY3g9IjUzMiIgY3k9IjM2OCIgcj0iMTAiIGZpbGw9IiMxYTRmYTAiLz4KCgo8L3N2Zz4=" class="logo-img" alt="IIT">
   <span class="logo-name">Infraestructura-IT</span>
-  <span style="font-size:11px;color:var(--accent2);letter-spacing:1.5px;">TECNICO</span>
   <button class="hamburger" id="btnHamburger"><span></span><span></span><span></span></button>
   <div class="topbar-sep"></div>
-  <a href="dashboard.html" class="btn btn-o btn-sm">← MIS ORDENES</a>
+  <a href="dashboard.html" class="btn btn-o">← MIS ORDENES</a>
+  <button class="btn btn-o" id="btnPdfOrden" style="border-color:rgba(0,229,160,0.3);color:var(--success);">&#8659; PDF</button>
   <div id="userInfo"></div>
 </div>
 
 <div class="wrapper">
   <!-- HEADER -->
   <div class="orden-header" id="ordenHeader">
-    <div class="oh-left">
-      <div class="oh-id" id="ohId">Cargando...</div>
-      <div class="oh-empresa" id="ohEmpresa">—</div>
-      <div class="oh-meta" id="ohMeta">—</div>
-    </div>
-    <div id="ohBadge"></div>
-  </div>
-
-  <!-- 1. DATOS SOLICITANTE -->
-  <div class="sec">
-    <div class="sec-head"><div class="sec-num">1</div><div class="sec-title">DATOS DEL SOLICITANTE</div></div>
-    <div class="sec-body">
-      <div class="dgrid">
-        <div class="df"><div class="dl">NOMBRE</div><div class="dv" id="d_nombre">—</div></div>
-        <div class="df"><div class="dl">EMPRESA</div><div class="dv" id="d_empresa">—</div></div>
-        <div class="df"><div class="dl">TELEFONO</div><div class="dv" id="d_telefono">—</div></div>
-        <div class="df"><div class="dl">CORREO</div><div class="dv" id="d_correo">—</div></div>
-        <div class="df"><div class="dl">CIUDAD</div><div class="dv" id="d_ciudad">—</div></div>
-        <div class="df"><div class="dl">DIRECCION</div><div class="dv" id="d_direccion">—</div></div>
+    <div class="oh-top">
+      <div>
+        <div class="oh-id" id="ohId">Cargando...</div>
+        <div class="oh-empresa" id="ohEmpresa">—</div>
+        <div class="oh-fecha" id="ohFecha">—</div>
       </div>
+      <div id="ohBadge"></div>
     </div>
+    <div class="timeline" id="timeline"></div>
   </div>
 
-  <!-- 2. SERVICIO -->
-  <div class="sec">
-    <div class="sec-head"><div class="sec-num">2</div><div class="sec-title">DESCRIPCION DEL SERVICIO</div></div>
+  <!-- 1. DATOS DEL SERVICIO -->
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;">
+      <span style="font-size:10px;color:var(--muted);letter-spacing:1px;" id="cprogLabel">Paso 1 de 3</span>
+      <span style="font-size:10px;color:var(--accent2);font-weight:700;" id="cprogPct">33%</span>
+    </div>
+    <div style="height:3px;background:var(--border);">
+      <div id="cprogFill" style="height:100%;width:33%;background:linear-gradient(90deg,var(--accent2),var(--accent));transition:width 0.4s ease;"></div>
+    </div>
+  </div>
+  <div class="sec" id="csec-1">
+    <div class="sec-head"><div class="sec-num">1</div><div class="sec-title">DATOS DEL SERVICIO</div></div>
     <div class="sec-body">
       <div class="dgrid" style="margin-bottom:14px;">
-        <div class="df"><div class="dl">TIPO</div><div class="dv" id="d_tipo">—</div></div>
-        <div class="df"><div class="dl">AREA</div><div class="dv" id="d_area">—</div></div>
+        <div class="df"><div class="dl">TIPO DE SERVICIO</div><div class="dv" id="d_tipo">—</div></div>
+        <div class="df"><div class="dl">AREA TECNICA</div><div class="dv" id="d_area">—</div></div>
         <div class="df"><div class="dl">PRIORIDAD</div><div class="dv" id="d_prioridad">—</div></div>
         <div class="df"><div class="dl">FECHA REQUERIDA</div><div class="dv" id="d_fecha">—</div></div>
+        <div class="df"><div class="dl">CIUDAD</div><div class="dv" id="d_ciudad">—</div></div>
+        <div class="df"><div class="dl">DIRECCION</div><div class="dv" id="d_dir">—</div></div>
       </div>
-      <div class="dl" style="margin-bottom:8px;">SINTOMA / FALLA</div>
+      <div class="dl" style="margin-bottom:8px;">DESCRIPCION DEL PROBLEMA</div>
       <div class="sintoma-box" id="d_sintoma">—</div>
       <div style="margin-top:12px;">
         <div class="dl" style="margin-bottom:6px;">EQUIPOS REPORTADOS</div>
-        <div class="eq-tags" id="d_equipos"></div>
+        <div id="d_equipos"></div>
       </div>
     </div>
   </div>
 
-  <!-- 3. CAMBIAR ESTADO -->
-  <div class="sec">
-    <div class="sec-head"><div class="sec-num">3</div><div class="sec-title">ESTADO DE LA ORDEN</div></div>
-    <div class="sec-body">
-      <div class="status-btns" id="statusBtns">
-        <button class="sbtn" data-s="asignada">ASIGNADA</button>
-        <button class="sbtn" data-s="en_proceso">EN PROCESO</button>
-        <button class="sbtn" data-s="en_pausa">EN PAUSA</button>
-        <button class="sbtn" data-s="cerrada">CERRADA</button>
-      </div>
-      <div style="margin-top:12px;font-size:11px;color:var(--muted);" id="statusHint">Al cambiar el estado el cliente recibira una notificacion automatica.</div>
-    </div>
-  </div>
-
-  <!-- 4. PROTOCOLO INLINE -->
-  <div class="sec" id="secProtocolo">
-    <div class="sec-head">
-      <div class="sec-num">4</div>
-      <div class="sec-title">PROTOCOLO TÉCNICO</div>
-      <div id="protoStatusBadge" style="margin-left:auto;"></div>
-    </div>
-    <div class="sec-body" id="protoBody">
-      <div style="color:var(--muted);font-size:12px;">Sin protocolo asignado para esta orden.</div>
-    </div>
-    <!-- CAMPOS DEL PROTOCOLO -->
-    <div id="protoCamposWrap" style="display:none;padding:0 20px 20px;">
-      <div id="protoCamposList"></div>
-      <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;">
-        <button class="btn btn-p" id="btnGuardarProto" style="display:none;">
-          <span class="btn-text">&#10003; GUARDAR PROTOCOLO</span>
-          <div class="spin"></div>
-        </button>
-        <button class="btn btn-o btn-sm" id="btnCancelarProto" style="display:none;">Cancelar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 5. NOTAS INTERNAS -->
-  <div class="sec">
-    <div class="sec-head"><div class="sec-num">5</div><div class="sec-title">NOTAS INTERNAS</div></div>
-    <div class="sec-body">
-      <div id="notasList" style="margin-bottom:14px;"></div>
-      <textarea class="nota-input" id="notaInput" placeholder="Agrega una nota interna (no visible para el cliente)..."></textarea>
-      <div style="display:flex;gap:8px;margin-top:8px;">
-        <button class="btn btn-p btn-sm" id="btnAgregarNota">AGREGAR NOTA</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 6. HISTORIAL -->
-  <div class="sec">
-    <div class="sec-head"><div class="sec-num">6</div><div class="sec-title">HISTORIAL DE CAMBIOS</div></div>
+  <!-- 2. SEGUIMIENTO -->
+  <div class="sec" id="csec-2">
+    <div class="sec-head"><div class="sec-num">2</div><div class="sec-title">SEGUIMIENTO Y CAMBIOS</div></div>
     <div class="sec-body" id="historialBody">
-      <div style="color:var(--muted);font-size:12px;">Sin historial registrado.</div>
+      <div style="color:var(--muted);font-size:12px;">Sin actualizaciones aun.</div>
     </div>
+  </div>
+
+  <!-- 3. RESULTADO PROTOCOLO -->
+  <div class="sec" id="secProtocolo" style="display:none;">
+    <div class="sec-head"><div class="sec-num">3</div><div class="sec-title">RESULTADO DEL PROTOCOLO TECNICO</div></div>
+    <div class="sec-body" id="protoBody"></div>
   </div>
 </div>
 
-<!-- STICKY BAR -->
-<div class="sticky-bar">
-  <a href="dashboard.html" class="btn btn-o btn-sm">← VOLVER</a>
-  <button class="btn btn-o btn-sm" id="btnPdfOrden" style="border-color:rgba(0,229,160,0.3);color:var(--success);">&#8659; PDF</button>
-  <button class="btn btn-warn btn-sm" id="btnProtocolo" style="display:none;">&#128295; EJECUTAR PROTOCOLO</button>
+<!-- NAVEGACION BOTTOM -->
+<div style="position:fixed;bottom:0;left:0;right:0;background:rgba(8,11,16,0.97);border-top:1px solid var(--border);padding:12px 20px;display:flex;justify-content:space-between;align-items:center;z-index:40;backdrop-filter:blur(12px);">
+  <button id="cbtnAnterior" onclick="cNavegar(-1)" style="display:none;padding:10px 18px;background:none;border:1px solid var(--border);border-radius:8px;font-family:Syne,sans-serif;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;">← ANTERIOR</button>
+  <span id="cpasoInfo" style="font-size:11px;color:var(--muted);">1 / 3</span>
+  <button id="cbtnSiguiente" onclick="cNavegar(1)" style="padding:10px 18px;background:linear-gradient(135deg,var(--accent2),var(--accent));border:none;border-radius:8px;font-family:Syne,sans-serif;font-size:12px;font-weight:700;color:#080b10;cursor:pointer;">SIGUIENTE →</button>
 </div>
 
 <script src="../assets/supabase.js"></script>
@@ -374,66 +312,36 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
 <script src="../assets/excel.js"></script>
 <script src="../assets/pdf.js"></script>
 <script>
-let _user = null, _tecnico = null, _orden = null;
-
-// ── FLUJO DE ESTADOS PERMITIDOS ───────────────────────────────
-const FLUJO_TECNICO = {
-  asignada:   ['en_proceso'],
-  en_proceso: ['en_pausa','cerrada'],
-  en_pausa:   ['en_proceso','cerrada'],
-  cerrada:    [],
-  cancelada:  [],
-  borrador:   [],
-  pendiente:  []
-};
-
-function actualizarBotonesEstado(statusActual) {
-  const permitidos = FLUJO_TECNICO[statusActual] || [];
-  const bloqueado  = ['cerrada','cancelada'].includes(statusActual);
-
-  document.querySelectorAll('.sbtn').forEach(btn => {
-    const s = btn.dataset.s;
-    const esActual    = s === statusActual;
-    const esPermitido = permitidos.includes(s);
-    btn.classList.toggle('active', esActual);
-    if (bloqueado || (!esPermitido && !esActual)) {
-      btn.disabled = true;
-      btn.style.opacity = esActual ? '1' : '0.25';
-      btn.style.cursor  = 'not-allowed';
-    } else if (esActual) {
-      btn.disabled = true;
-      btn.style.opacity = '1';
-      btn.style.cursor  = 'default';
-    } else {
-      btn.disabled = false;
-      btn.style.opacity = '1';
-      btn.style.cursor  = 'pointer';
-    }
-  });
-
-  const hint = document.getElementById('statusHint');
-  if (bloqueado) {
-    hint.textContent = 'Orden ' + statusActual + '. Solo el administrador puede modificar el estado.';
-    hint.style.color = 'var(--error)';
-  } else {
-    hint.textContent = 'Al cambiar el estado el cliente recibira una notificacion automatica.';
-    hint.style.color = 'var(--muted)';
-  }
-}
-const params = new URLSearchParams(window.location.search);
+let _user = null, _orden = null;
+const params  = new URLSearchParams(window.location.search);
 const ordenId = params.get('id');
 
+const CLO_STATUS_STEPS = ['pendiente','asignada','en_proceso','cerrada'];
+const CLO_STATUS_LABEL = {
+  borrador:'Borrador', pendiente:'Pendiente', asignada:'Asignada',
+  en_proceso:'En Proceso', en_pausa:'En Pausa', cerrada:'Cerrada', cancelada:'Cancelada'
+};
+
 (async () => {
-  _user = await initAuth('tecnico');
+  _user = await initAuth('cliente');
   if (!_user) return;
-  const { data: tec } = await db.from('tecnicos').select('id').eq('usuario_id', _user.id).single();
-  _tecnico = tec;
   if (!ordenId) { window.location.href = 'dashboard.html'; return; }
   await loadOrden();
-  await loadNotas();
   await loadHistorial();
   await loadProtocolo();
-  setupEvents();
+
+  // PDF individual
+  document.getElementById('btnPdfOrden').addEventListener('click', async () => {
+    if (!_orden) return;
+    toast('Generando PDF...','info');
+    const hist = await db.from('historial_ordenes')
+      .select('*,usuarios(nombre)')
+      .eq('orden_id', ordenId)
+      .order('created_at',{ascending:true})
+      .then(r => r.data || []);
+    const logo = await cargarLogoPDF();
+    await exportarPDFOrden(_orden, hist, null, logo);
+  });
 })();
 
 async function loadOrden() {
@@ -441,26 +349,37 @@ async function loadOrden() {
   if (error || !data) { window.location.href = 'dashboard.html'; return; }
   _orden = data;
 
-  document.getElementById('ohId').textContent = data.orden_id || '—';
-  document.getElementById('ohEmpresa').textContent = data.empresa || '—';
-  document.getElementById('ohMeta').textContent = (data.tipo_servicio||'') + ' · ' + (data.ciudad||'');
+  // Header
+  document.getElementById('ohId').textContent      = data.orden_id || '—';
+  document.getElementById('ohEmpresa').textContent  = data.empresa || '—';
+  document.getElementById('ohFecha').textContent    = 'Creada: ' + (data.created_at ? new Date(data.created_at).toLocaleDateString('es-CO',{day:'2-digit',month:'long',year:'numeric'}) : '—');
   const badge = document.getElementById('ohBadge');
-  badge.innerHTML = '<span class="badge b-' + (data.status||'asignada') + '">' + (data.status||'asignada').replace('_',' ').toUpperCase() + '</span>';
+  badge.innerHTML = '<span class="badge b-' + (data.status||'pendiente') + '">' + (CLO_STATUS_LABEL[data.status]||'—').toUpperCase() + '</span>';
+
+  // Timeline
+  const steps = CLO_STATUS_STEPS;
+  const curIdx = steps.indexOf(data.status);
+  document.getElementById('timeline').innerHTML = steps.map((s,i) => {
+    const isDone   = curIdx > i;
+    const isActive = curIdx === i;
+    const isLast   = i === steps.length - 1;
+    return '<div class="tl-step">' +
+      (!isLast ? '<div class="tl-line' + (isDone ? ' done' : '') + '"></div>' : '') +
+      '<div class="tl-dot' + (isDone ? ' done' : isActive ? ' active' : '') + '"></div>' +
+      '<div class="tl-label' + (isDone ? ' done' : isActive ? ' active' : '') + '">' + CLO_STATUS_LABEL[s] + '</div>' +
+      '</div>';
+  }).join('');
 
   // Datos
-  document.getElementById('d_nombre').textContent    = data.nombre || '—';
-  document.getElementById('d_empresa').textContent   = data.empresa || '—';
-  document.getElementById('d_telefono').textContent  = data.telefono || '—';
-  document.getElementById('d_correo').textContent    = data.correo || '—';
-  document.getElementById('d_ciudad').textContent    = data.ciudad || '—';
-  document.getElementById('d_direccion').textContent = data.direccion || '—';
-  document.getElementById('d_tipo').textContent      = data.tipo_servicio || '—';
-  document.getElementById('d_area').textContent      = data.area || '—';
-  document.getElementById('d_fecha').textContent     = data.fecha_requerida || '—';
-  document.getElementById('d_sintoma').textContent   = data.sintoma || '—';
+  document.getElementById('d_tipo').textContent = data.tipo_servicio || '—';
+  document.getElementById('d_area').textContent = data.area || '—';
+  document.getElementById('d_fecha').textContent = data.fecha_requerida || '—';
+  document.getElementById('d_ciudad').textContent = data.ciudad || '—';
+  document.getElementById('d_dir').textContent = data.direccion || '—';
+  document.getElementById('d_sintoma').textContent = data.sintoma || '—';
 
-  const priEl = document.getElementById('d_prioridad');
-  priEl.innerHTML = '<span class="pri-badge pri-' + (data.prioridad||'media') + '">' + (data.prioridad||'media').toUpperCase() + '</span>';
+  const priColor = { baja:'var(--success)', media:'var(--warn)', alta:'var(--error)', critica:'var(--error)' }[data.prioridad] || 'var(--muted)';
+  document.getElementById('d_prioridad').innerHTML = '<span style="color:' + priColor + ';font-weight:700;">' + (data.prioridad||'—').toUpperCase() + '</span>';
 
   const eqEl = document.getElementById('d_equipos');
   (data.equipos || []).forEach(e => {
@@ -469,446 +388,126 @@ async function loadOrden() {
     eqEl.appendChild(span);
   });
   if (!(data.equipos||[]).length) eqEl.innerHTML = '<span style="color:var(--muted);font-size:12px;">No especificados</span>';
-
-  // Actualizar botones con flujo permitido
-  actualizarBotonesEstado(data.status || 'asignada');
-}
-
-async function loadNotas() {
-  const { data } = await db.from('notas_internas')
-    .select('*, usuarios(nombre)')
-    .eq('orden_id', ordenId)
-    .order('created_at', { ascending: false });
-  const list = document.getElementById('notasList');
-  if (!data || !data.length) { list.innerHTML = '<div style="color:var(--muted);font-size:12px;margin-bottom:8px;">Sin notas aun.</div>'; return; }
-  list.innerHTML = data.map(n => '<div class="nota-item">' +
-    '<div class="nota-meta"><span>' + (n.usuarios?.nombre||'Tecnico') + '</span><span>' + formatFechaCorta(n.created_at) + '</span></div>' +
-    '<div class="nota-text">' + n.nota + '</div>' +
-    '</div>').join('');
 }
 
 async function loadHistorial() {
   const { data } = await db.from('historial_ordenes')
-    .select('*, usuarios(nombre)')
+    .select('*,usuarios(nombre,rol)')
     .eq('orden_id', ordenId)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: true });
+
   const el = document.getElementById('historialBody');
-  if (!data || !data.length) { el.innerHTML = '<div style="color:var(--muted);font-size:12px;">Sin cambios registrados.</div>'; return; }
-  el.innerHTML = data.map(h => '<div class="hist-item">' +
-    '<div class="hist-fecha">' + formatFechaCorta(h.created_at) + '</div>' +
-    '<div class="hist-cambio"><strong>' + h.campo_modificado + '</strong>: ' +
-    '<span style="color:var(--error);">' + (h.valor_anterior||'—') + '</span> &rarr; ' +
-    '<span style="color:var(--success);">' + (h.valor_nuevo||'—') + '</span>' +
-    ' <span style="color:var(--muted);"> — ' + (h.usuarios?.nombre||'—') + '</span></div>' +
-    '</div>').join('');
-}
-
-// ── PROTOCOLO INLINE ─────────────────────────────────────────
-let _ejecucionId = null;
-let _firmasCanvas = {};
-let _fotosData = {};
-
-async function loadProtocolo() {
-  const body = document.getElementById('protoBody');
-  const btn  = document.getElementById('btnProtocolo');
-
-  // Primero buscar en orden_anexos
-  let protocolo = null;
-  try {
-    const {data:anexos} = await db.from('orden_anexos')
-      .select('protocolo_id, protocolos(id,nombre,equipo_tipo,descripcion,protocolo_campos(*))')
-      .eq('orden_id', _orden.id)
-      .eq('tipo','protocolo')
-      .order('created_at',{ascending:false})
-      .limit(1);
-    if(anexos?.length) protocolo = anexos[0].protocolos;
-  } catch(e){}
-
-  // Fallback: buscar en protocolo_ejecucion (sistema anterior)
-  let ejecucion = null;
-  if(!protocolo) {
-    const {data} = await db.from('protocolo_ejecucion')
-      .select('*, protocolos(id,nombre,equipo_tipo,protocolo_campos(*))')
-      .eq('orden_id', _orden.id)
-      .single();
-    if(data) { ejecucion = data; protocolo = data.protocolos; }
-  }
-
-  if(!protocolo) {
-    body.innerHTML = '<div style="color:var(--muted);font-size:12px;">Sin protocolo anexado a esta orden.<br><span style="font-size:11px;">El administrador debe anexar un protocolo desde el dashboard.</span></div>';
+  if (!data || !data.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:12px;">Sin actualizaciones registradas aun.</div>';
     return;
   }
 
-  const campos = (protocolo.protocolo_campos||[]).sort((a,b)=>a.orden-b.orden);
-  const statusColor = {pendiente:'var(--warn)',en_progreso:'var(--accent)',completado:'var(--success)'}[ejecucion?.status]||'var(--muted)';
+  el.innerHTML = data.map(h => {
+    const isStatus = h.campo_modificado === 'status';
+    return '<div class="hist-item">' +
+      '<div class="hist-icon ' + (isStatus ? 'hist-icon-status' : 'hist-icon-nota') + '">' +
+        (isStatus ? '&#128203;' : '&#128196;') +
+      '</div>' +
+      '<div class="hist-body">' +
+        '<div class="hist-titulo">' +
+          (isStatus
+            ? 'Estado actualizado: <strong style="color:var(--text);">' + (CLO_STATUS_LABEL[h.valor_nuevo]||h.valor_nuevo) + '</strong>'
+            : h.campo_modificado + ': ' + (h.valor_anterior||'—') + ' &rarr; ' + (h.valor_nuevo||'—')
+          ) +
+        '</div>' +
+        '<div class="hist-fecha">' + formatFecha(h.created_at) + '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
 
-  // Header del protocolo
+async function loadProtocolo() {
+  const { data: ejec } = await db.from('protocolo_ejecucion')
+    .select('*,protocolos(nombre,equipo_tipo),protocolo_respuestas(*,protocolo_campos(etiqueta,tipo,unidad))')
+    .eq('orden_id', ordenId)
+    .eq('status', 'completado')
+    .single();
+
+  if (!ejec) return;
+
+  const sec  = document.getElementById('secProtocolo');
+  const body = document.getElementById('protoBody');
+  sec.style.display = 'block';
+
+  const respuestas = (ejec.protocolo_respuestas || []).sort((a,b) => {
+    const oa = a.protocolo_campos?.orden || 0;
+    const ob = b.protocolo_campos?.orden || 0;
+    return oa - ob;
+  });
+
+  const tipoLabel = {texto:'Texto',numero:'Numero',si_no:'Si/No',lista:'Lista',rango:'Rango',fecha_hora:'Fecha',foto:'Foto',firma:'Firma'};
+
   body.innerHTML =
-    '<div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(0,119,255,0.05);border:1px solid rgba(0,119,255,0.15);border-radius:8px;">' +
-      '<div style="flex:1;">' +
-        '<div style="font-family:Syne,sans-serif;font-size:15px;font-weight:700;color:var(--text);">'+protocolo.nombre+'</div>' +
-        '<div style="font-size:11px;color:var(--muted);">'+(protocolo.equipo_tipo||'')+(protocolo.descripcion?' · '+protocolo.descripcion:'')+'</div>' +
-      '</div>' +
-      '<div style="font-size:11px;font-weight:700;color:'+statusColor+';">'+(ejecucion?ejecucion.status.replace(/_/g,' ').toUpperCase():'PENDIENTE')+'</div>' +
+    '<div class="proto-completado">&#10003; Protocolo completado: <strong>' + (ejec.protocolos?.nombre||'—') + '</strong>' +
+    ' · <span style="color:var(--muted);">' + (ejec.fecha_fin ? formatFechaCorta(ejec.fecha_fin) : '') + '</span></div>' +
+    '<div class="proto-resultado">' +
+    respuestas.map(r => {
+      const c = r.protocolo_campos;
+      if (!c) return '';
+      let val = '';
+      if (c.tipo === 'si_no')     val = '<span class="pc-val ' + (r.valor_boolean ? 'val-si' : 'val-no') + '">' + (r.valor_boolean ? '✓ SI' : '✗ NO') + '</span>';
+      else if (c.tipo === 'numero' || c.tipo === 'rango') val = '<span class="pc-val">' + (r.valor_numero ?? '—') + (c.unidad ? ' <span style="color:var(--muted);">' + c.unidad + '</span>' : '') + '</span>';
+      else if (c.tipo === 'lista') val = '<span class="pc-val">' + (r.valor_opcion||'—') + '</span>';
+      else if (c.tipo === 'fecha_hora') val = '<span class="pc-val">' + (r.valor_fecha ? formatFechaCorta(r.valor_fecha) : '—') + '</span>';
+      else if (c.tipo === 'foto' && r.archivo_url) val = '<img class="pc-foto" src="' + r.archivo_url + '" alt="Foto">';
+      else if (c.tipo === 'firma' && r.archivo_url) val = '<img class="firma-img" src="' + r.archivo_url + '" alt="Firma">';
+      else val = '<span class="pc-val">' + (r.valor_texto||'—') + '</span>';
+      return '<div class="proto-campo"><div class="pc-label">' + c.etiqueta + '</div><div>' + val + '</div></div>';
+    }).join('') +
     '</div>' +
-    '<div style="font-size:12px;color:var(--muted);margin-top:8px;">'+campos.length+' campos · Completa todos los campos y guarda al finalizar.</div>';
-
-  // Mostrar campos
-  const camposWrap = document.getElementById('protoCamposWrap');
-  const camposList = document.getElementById('protoCamposList');
-  camposWrap.style.display = 'block';
-
-  // Cargar respuestas existentes si hay ejecución
-  let respuestas = {};
-  if(ejecucion) {
-    _ejecucionId = ejecucion.id;
-    const {data:resps} = await db.from('protocolo_respuestas')
-      .select('*').eq('ejecucion_id',ejecucion.id);
-    (resps||[]).forEach(r=>{ respuestas[r.campo_id] = r.valor; });
-  }
-
-  // Renderizar campos
-  camposList.innerHTML = campos.map(campo => renderCampoProto(campo, respuestas[campo.id]||'')).join('');
-
-  // Setup eventos de campos
-  setupCamposProto(campos, ejecucion?.status === 'completado');
-
-  // Botones
-  if(ejecucion?.status !== 'completado') {
-    document.getElementById('btnGuardarProto').style.display = 'inline-flex';
-    document.getElementById('btnCancelarProto').style.display = 'none';
-    document.getElementById('btnGuardarProto').addEventListener('click', ()=>guardarProtocolo(protocolo, campos, ejecucion));
-  } else {
-    document.getElementById('btnGuardarProto').style.display = 'none';
-  }
-
-  if(btn) btn.style.display = 'none'; // Ocultar botón viejo
-}
-
-function renderCampoProto(campo, valorActual) {
-  const req = campo.requerido ? '<span class="req">*</span>' : '';
-  const unidad = campo.unidad ? ' ('+campo.unidad+')' : '';
-  const completado = valorActual ? ' campo-completado' : '';
-  let input = '';
-
-  switch(campo.tipo) {
-    case 'texto':
-      input = '<textarea class="proto-textarea proto-input-field" data-id="'+campo.id+'" data-tipo="texto" placeholder="Ingresa el valor...">'+valorActual+'</textarea>';
-      break;
-
-    case 'numero':
-      input = '<div style="display:flex;align-items:center;gap:8px;">' +
-        '<input type="number" class="proto-input proto-input-field" data-id="'+campo.id+'" data-tipo="numero" value="'+valorActual+'" placeholder="0" style="flex:1;">' +
-        (campo.unidad?'<span style="font-size:12px;color:var(--muted);">'+campo.unidad+'</span>':'') +
-        '</div>';
-      break;
-
-    case 'si_no':
-      input = '<div class="sino-btns">' +
-        '<button class="sino-btn proto-sino'+(valorActual==='si'?' active-si':'')+'" data-id="'+campo.id+'" data-val="si">✓ SÍ</button>' +
-        '<button class="sino-btn proto-sino'+(valorActual==='no'?' active-no':'')+'" data-id="'+campo.id+'" data-val="no">✗ NO</button>' +
-      '</div>';
-      break;
-
-    case 'lista':
-      const opciones = (campo.opciones||[]);
-      input = '<select class="proto-select proto-input-field" data-id="'+campo.id+'" data-tipo="lista">' +
-        '<option value="">— Seleccionar —</option>' +
-        opciones.map(op=>'<option value="'+op+'"'+(valorActual===op?' selected':'')+'>'+op+'</option>').join('') +
-      '</select>';
-      break;
-
-    case 'rango':
-      const min = campo.rango_min??0, max = campo.rango_max??100;
-      const valR = valorActual||min;
-      input = '<div style="display:flex;align-items:center;gap:10px;">' +
-        '<input type="range" class="proto-input proto-input-field" data-id="'+campo.id+'" data-tipo="rango" min="'+min+'" max="'+max+'" value="'+valR+'" style="flex:1;">' +
-        '<span class="proto-rango-val" id="rango-val-'+campo.id+'">'+valR+(campo.unidad?' '+campo.unidad:'')+'</span>' +
-      '</div>' +
-      '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:4px;"><span>'+min+'</span><span>'+max+'</span></div>';
-      break;
-
-    case 'foto':
-      input = '<div class="proto-foto-wrap">' +
-        '<label style="display:flex;align-items:center;gap:8px;padding:12px;background:rgba(0,119,255,0.05);border:2px dashed rgba(0,119,255,0.2);border-radius:8px;cursor:pointer;">' +
-          '<span style="font-size:24px;">📷</span>' +
-          '<div>' +
-            '<div style="font-size:13px;color:var(--accent2);">Tomar foto o seleccionar imagen</div>' +
-            '<div style="font-size:11px;color:var(--muted);">JPG, PNG — máx. 5MB</div>' +
-          '</div>' +
-          '<input type="file" accept="image/*" capture="environment" class="proto-foto-input" data-id="'+campo.id+'" style="display:none;">' +
-        '</label>' +
-        (valorActual?'<img src="'+valorActual+'" class="proto-foto-preview visible" id="foto-prev-'+campo.id+'">':
-          '<img class="proto-foto-preview" id="foto-prev-'+campo.id+'">') +
-        (valorActual?'<div style="font-size:11px;color:var(--success);">✓ Foto cargada</div>':'') +
-      '</div>';
-      break;
-
-    case 'firma':
-      input = '<div class="proto-firma-wrap" id="firma-wrap-'+campo.id+'">' +
-        '<canvas id="firma-canvas-'+campo.id+'" width="800" height="200"></canvas>' +
-        (valorActual?'':'<div class="proto-firma-ph" id="firma-ph-'+campo.id+'">✍ Firma aquí con el dedo o mouse</div>') +
-      '</div>' +
-      '<button class="btn-clear-firma" data-firma-id="'+campo.id+'">✕ Limpiar firma</button>' +
-      (valorActual?'<div style="font-size:11px;color:var(--success);margin-top:4px;">✓ Firma registrada</div>':'');
-      if(valorActual) {
-        // Si ya tiene firma, mostrarla como imagen
-        input = '<img src="'+valorActual+'" style="max-width:100%;border-radius:8px;border:1px solid var(--border);background:white;padding:8px;" alt="Firma">';
-      }
-      break;
-
-    case 'fecha_hora':
-      const ahora = new Date().toISOString().slice(0,16);
-      input = '<div style="display:flex;gap:8px;align-items:center;">' +
-        '<input type="datetime-local" class="proto-input proto-input-field" data-id="'+campo.id+'" data-tipo="fecha_hora" value="'+(valorActual||ahora)+'" style="flex:1;">' +
-        '<button class="btn btn-o btn-sm" onclick="this.previousElementSibling.value=new Date().toISOString().slice(0,16)">Ahora</button>' +
-      '</div>';
-      break;
-  }
-
-  return '<div class="proto-campo'+completado+'" id="campo-wrap-'+campo.id+'">' +
-    '<div class="proto-campo-label">'+req+campo.etiqueta+unidad+'</div>' +
-    input +
-  '</div>';
-}
-
-function setupCamposProto(campos, completado) {
-  // Rango - actualizar valor en tiempo real
-  document.querySelectorAll('input[type=range].proto-input-field').forEach(inp => {
-    const id = inp.dataset.id;
-    const campo = campos.find(c=>c.id===id);
-    inp.addEventListener('input', () => {
-      const valEl = document.getElementById('rango-val-'+id);
-      if(valEl) valEl.textContent = inp.value + (campo?.unidad?' '+campo.unidad:'');
-    });
-  });
-
-  // Si/No toggles
-  document.querySelectorAll('.proto-sino').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const id = btn.dataset.id;
-      document.querySelectorAll('.proto-sino[data-id="'+id+'"]').forEach(b => {
-        b.classList.remove('active-si','active-no');
-      });
-      btn.classList.add(btn.dataset.val==='si'?'active-si':'active-no');
-      marcarCampoCompleto(id, btn.dataset.val);
-    });
-  });
-
-  // Fotos
-  document.querySelectorAll('.proto-foto-input').forEach(inp => {
-    inp.addEventListener('change', () => {
-      const id = inp.dataset.id;
-      const file = inp.files[0];
-      if(!file) return;
-      const reader = new FileReader();
-      reader.onload = e => {
-        _fotosData[id] = e.target.result;
-        const prev = document.getElementById('foto-prev-'+id);
-        if(prev){ prev.src = e.target.result; prev.classList.add('visible'); }
-        marcarCampoCompleto(id, 'foto');
-      };
-      reader.readAsDataURL(file);
-    });
-  });
-
-  // Firmas canvas
-  campos.filter(c=>c.tipo==='firma').forEach(campo => {
-    const cv = document.getElementById('firma-canvas-'+campo.id);
-    if(!cv) return;
-    const ctx = cv.getContext('2d');
-    ctx.strokeStyle = '#0077ff'; ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    let drawing = false;
-    const gp = e => {
-      const r = cv.getBoundingClientRect();
-      const scaleX = cv.width / r.width;
-      const scaleY = cv.height / r.height;
-      const src = e.touches ? e.touches[0] : e;
-      return {x:(src.clientX-r.left)*scaleX, y:(src.clientY-r.top)*scaleY};
-    };
-    cv.addEventListener('mousedown', e=>{drawing=true;ctx.beginPath();const p=gp(e);ctx.moveTo(p.x,p.y);});
-    cv.addEventListener('mousemove', e=>{if(!drawing)return;const p=gp(e);ctx.lineTo(p.x,p.y);ctx.stroke();hidePh(campo.id);_firmasCanvas[campo.id]=cv.toDataURL();marcarCampoCompleto(campo.id,'firma');});
-    cv.addEventListener('mouseup', ()=>drawing=false);
-    cv.addEventListener('touchstart', e=>{e.preventDefault();drawing=true;ctx.beginPath();const p=gp(e);ctx.moveTo(p.x,p.y);},{passive:false});
-    cv.addEventListener('touchmove', e=>{e.preventDefault();if(!drawing)return;const p=gp(e);ctx.lineTo(p.x,p.y);ctx.stroke();hidePh(campo.id);_firmasCanvas[campo.id]=cv.toDataURL();marcarCampoCompleto(campo.id,'firma');},{passive:false});
-    cv.addEventListener('touchend', ()=>drawing=false);
-  });
-
-  // Limpiar firma
-  document.querySelectorAll('.btn-clear-firma').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const id = btn.dataset.firmaId;
-      const cv = document.getElementById('firma-canvas-'+id);
-      if(!cv) return;
-      cv.getContext('2d').clearRect(0,0,cv.width,cv.height);
-      delete _firmasCanvas[id];
-      const ph = document.getElementById('firma-ph-'+id);
-      if(ph) ph.style.display='';
-    });
-  });
-
-  // Marcar completado en inputs normales
-  document.querySelectorAll('.proto-input-field').forEach(inp => {
-    inp.addEventListener('input', ()=>marcarCampoCompleto(inp.dataset.id, inp.value));
-    inp.addEventListener('change', ()=>marcarCampoCompleto(inp.dataset.id, inp.value));
-  });
-}
-
-function hidePh(id) {
-  const ph = document.getElementById('firma-ph-'+id);
-  if(ph) ph.style.display='none';
-}
-
-function marcarCampoCompleto(id, val) {
-  const wrap = document.getElementById('campo-wrap-'+id);
-  if(!wrap) return;
-  if(val) wrap.classList.add('campo-completado');
-  else    wrap.classList.remove('campo-completado');
-}
-
-async function guardarProtocolo(protocolo, campos, ejecucion) {
-  const btn = document.getElementById('btnGuardarProto');
-  btn.classList.add('loading'); btn.disabled = true;
-
-  try {
-    // Recolectar respuestas
-    const respuestas = [];
-    let camposCompletos = 0;
-
-    for(const campo of campos) {
-      let valor = null;
-
-      switch(campo.tipo) {
-        case 'texto':
-        case 'numero':
-        case 'lista':
-        case 'rango':
-        case 'fecha_hora':
-          const inp = document.querySelector('.proto-input-field[data-id="'+campo.id+'"]');
-          valor = inp?.value?.trim()||null;
-          break;
-        case 'si_no':
-          const activo = document.querySelector('.proto-sino.active-si[data-id="'+campo.id+'"], .proto-sino.active-no[data-id="'+campo.id+'"]');
-          valor = activo?.dataset.val||null;
-          break;
-        case 'foto':
-          valor = _fotosData[campo.id]||null;
-          break;
-        case 'firma':
-          valor = _firmasCanvas[campo.id]||null;
-          break;
-      }
-
-      if(campo.requerido && !valor) {
-        toast('Campo requerido: '+campo.etiqueta, 'error');
-        btn.classList.remove('loading'); btn.disabled=false;
-        return;
-      }
-      if(valor) { camposCompletos++; respuestas.push({campo_id:campo.id,valor,tipo:campo.tipo}); }
-    }
-
-    // Crear o actualizar ejecución
-    let ejecucionId = _ejecucionId;
-    if(!ejecucionId) {
-      const {data:ej,error} = await db.from('protocolo_ejecucion').insert({
-        orden_id:    _orden.id,
-        protocolo_id:protocolo.id,
-        tecnico_id:  _tecnico?.id,
-        status:      'en_progreso',
-        fecha_inicio:new Date().toISOString()
-      }).select().single();
-      if(error) throw error;
-      ejecucionId = ej.id;
-      _ejecucionId = ej.id;
-    }
-
-    // Guardar respuestas
-    for(const r of respuestas) {
-      await db.from('protocolo_respuestas').upsert({
-        ejecucion_id: ejecucionId,
-        campo_id:     r.campo_id,
-        valor:        r.valor,
-        tipo:         r.tipo
-      }, {onConflict:'ejecucion_id,campo_id'});
-    }
-
-    // Si todos los campos requeridos completados → marcar como completado
-    const requeridosCompletos = campos.filter(c=>c.requerido).every(c=>
-      respuestas.find(r=>r.campo_id===c.id)
-    );
-    if(requeridosCompletos) {
-      await db.from('protocolo_ejecucion').update({
-        status:'completado', fecha_fin:new Date().toISOString()
-      }).eq('id',ejecucionId);
-      toast('✓ Protocolo completado — '+camposCompletos+' campos guardados','success');
-    } else {
-      await db.from('protocolo_ejecucion').update({status:'en_progreso'}).eq('id',ejecucionId);
-      toast('✓ Progreso guardado — '+camposCompletos+' campos','success');
-    }
-
-    await loadProtocolo();
-  } catch(e) {
-    toast('Error al guardar: '+e.message,'error');
-    console.error(e);
-  }
-  btn.classList.remove('loading'); btn.disabled=false;
-}
-
-function setupEvents() {
-  // Status
-  document.querySelectorAll('.sbtn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      if (!_orden) return;
-      const nuevo = btn.dataset.s;
-      try {
-        // Actualizar con historial
-        await Ordenes.actualizar(_orden.id, { status: nuevo }, _user.id);
-        // Notificar al cliente si hay
-        if (_orden.cliente_id) {
-          const { data: cl } = await db.from('clientes').select('usuario_id').eq('id', _orden.cliente_id).single();
-          if (cl) await Notificaciones.crear(cl.usuario_id, _orden.id, 'cambio_estado',
-            'Tu orden ' + _orden.orden_id + ' cambio a: ' + nuevo.replace('_',' ').toUpperCase(), '');
-        }
-        document.querySelectorAll('.sbtn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        _orden.status = nuevo;
-        const badge = document.getElementById('ohBadge');
-        badge.innerHTML = '<span class="badge b-' + nuevo + '">' + nuevo.replace('_',' ').toUpperCase() + '</span>';
-        actualizarBotonesEstado(nuevo);
-        toast('Estado actualizado: ' + nuevo.replace('_',' '), 'success');
-        await loadHistorial();
-      } catch(e) { toast('Error al cambiar estado','error'); }
-    });
-  });
-
-  // Nota
-  document.getElementById('btnAgregarNota').addEventListener('click', async () => {
-    const nota = document.getElementById('notaInput').value.trim();
-    if (!nota) { toast('Escribe una nota primero','error'); return; }
-    try {
-      await Notas.crear(ordenId, _user.id, nota, false);
-      document.getElementById('notaInput').value = '';
-      await loadNotas();
-      toast('Nota agregada','success');
-    } catch(e) { toast('Error al guardar nota','error'); }
-  });
-
-  // PDF individual
-  document.getElementById('btnPdfOrden').addEventListener('click', async () => {
-    if (!_orden) return;
-    toast('Generando PDF...','info');
-    const hist = await Ordenes.getHistorial(_orden.id).catch(()=>[]);
-    const logo = await cargarLogoPDF();
-    await exportarPDFOrden(_orden, hist, null, logo);
-  });
+    (ejec.firma_tecnico ? '<div style="margin-top:14px;"><div class="dl" style="margin-bottom:8px;font-size:9px;color:var(--muted);letter-spacing:1.5px;">FIRMA DEL TECNICO</div><img class="firma-img" src="' + ejec.firma_tecnico + '" alt="Firma tecnico"></div>' : '');
 }
 
 function toast(msg, tipo='success') {
   const c={success:'var(--success)',error:'var(--error)',info:'var(--accent2)'};
   const t=document.createElement('div');
-  t.style.cssText='position:fixed;bottom:80px;right:24px;z-index:9999;background:var(--surface);border:1px solid '+c[tipo]+';border-radius:10px;padding:12px 18px;box-shadow:0 8px 32px rgba(0,0,0,0.4);font-family:"DM Mono",monospace;font-size:12px;color:'+c[tipo]+';letter-spacing:0.5px;';
+  t.style.cssText='position:fixed;bottom:24px;right:24px;z-index:9999;background:var(--surface);border:1px solid '+c[tipo]+';border-radius:10px;padding:12px 18px;box-shadow:0 8px 32px rgba(0,0,0,0.4);font-family:"DM Mono",monospace;font-size:12px;color:'+c[tipo]+';letter-spacing:0.5px;';
   t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3500);
 }
+
+// ── NAVEGACION ────────────────────────────────────────────────
+const C_PASOS = [
+  { id:'csec-1', titulo:'Datos del Servicio' },
+  { id:'csec-2', titulo:'Seguimiento y Cambios' },
+  { id:'csec-3', titulo:'Resultado del Protocolo' },
+];
+let _cPaso = 0;
+
+function cMostrarPaso(n) {
+  _cPaso = n;
+  C_PASOS.forEach(p => {
+    const el = document.getElementById(p.id);
+    if(el) el.classList.remove('active');
+  });
+  const el = document.getElementById(C_PASOS[n].id);
+  if(el) { el.classList.add('active'); window.scrollTo({top:0,behavior:'smooth'}); }
+  const pct = Math.round(((n+1)/C_PASOS.length)*100);
+  document.getElementById('cprogFill').style.width = pct+'%';
+  document.getElementById('cprogPct').textContent = pct+'%';
+  document.getElementById('cprogLabel').textContent = 'Paso '+(n+1)+' de '+C_PASOS.length+' — '+C_PASOS[n].titulo;
+  document.getElementById('cpasoInfo').textContent = (n+1)+' / '+C_PASOS.length;
+  document.getElementById('cbtnAnterior').style.display = n > 0 ? 'inline-flex' : 'none';
+  document.getElementById('cbtnSiguiente').style.display = n < C_PASOS.length-1 ? 'inline-flex' : 'none';
+}
+
+function cNavegar(dir) {
+  const nuevo = _cPaso + dir;
+  if(nuevo >= 0 && nuevo < C_PASOS.length) cMostrarPaso(nuevo);
+}
+
+document.addEventListener('keydown', e => {
+  const tag = document.activeElement.tagName.toLowerCase();
+  if(['input','textarea','select'].includes(tag)) return;
+  if(e.key === 'ArrowDown') cNavegar(1);
+  if(e.key === 'ArrowUp') cNavegar(-1);
+});
+
+cMostrarPaso(0);
 
 // ── CARGAR LOGO PARA PDF ──────────────────────────────────────
 async function cargarLogoPDF() {
