@@ -839,6 +839,7 @@ async function cargarProtocoloModal(ordenId) {
   const btn = document.getElementById('btnEjecutarGuardar');
   if(ejecucion?.status !== 'completado') {
     btn.style.display='inline-flex';
+    btn.onclick = null; // limpiar primero
     btn.onclick = ()=>guardarProtocoloModal(protocolo, campList, ejecucion, ordenId);
   } else {
     btn.style.display='none';
@@ -983,7 +984,11 @@ function marcarMCCompleto(id,val){
   w.style.borderColor=val?'rgba(0,229,160,0.3)':'var(--border)';
 }
 
+let _guardandoProto = false;
+
 async function guardarProtocoloModal(protocolo, campos, ejecucion, ordenId) {
+  if(_guardandoProto) return;
+  _guardandoProto = true;
   const btn=document.getElementById('btnEjecutarGuardar');
   btn.classList.add('loading');btn.disabled=true;
   try{
@@ -998,44 +1003,57 @@ async function guardarProtocoloModal(protocolo, campos, ejecucion, ordenId) {
         case 'foto':  valor=_modalFotos[campo.id]||null;  break;
         case 'firma': valor=_modalFirmas[campo.id]||null; break;
       }
-      if(campo.requerido&&!valor){toast('Campo requerido: '+campo.etiqueta,'error');btn.classList.remove('loading');btn.disabled=false;return;}
+      if(campo.requerido&&!valor){toast('Campo requerido: '+campo.etiqueta,'error');_guardandoProto=false;btn.classList.remove('loading');btn.disabled=false;return;}
       if(valor) respuestas.push({campo_id:campo.id,valor,tipo:campo.tipo});
     }
 
-    let ejId=_modalEjecucionId;
+    // Obtener o crear ejecución — siempre buscar primero
+    let ejId = _modalEjecucionId;
     if(!ejId){
-      // Buscar de nuevo por si acaso
-      const {data:ejExist}=await db.from('protocolo_ejecucion')
-        .select('id').eq('orden_id',ordenId).eq('protocolo_id',protocolo.id).limit(1);
-      if(ejExist?.[0]) {
-        ejId=ejExist[0].id;
+      const {data:ejArr} = await db.from('protocolo_ejecucion')
+        .select('id')
+        .eq('orden_id', ordenId)
+        .eq('protocolo_id', protocolo.id)
+        .limit(1);
+
+      if(ejArr?.[0]) {
+        ejId = ejArr[0].id;
       } else {
-        const {data:ej,error}=await db.from('protocolo_ejecucion').insert({
-          orden_id:ordenId,protocolo_id:protocolo.id,
-          tecnico_id:_user.id,status:'en_progreso',fecha_inicio:new Date().toISOString()
-        }).select().single();
+        const {data:ej, error} = await db.from('protocolo_ejecucion')
+          .insert({
+            orden_id:    ordenId,
+            protocolo_id:protocolo.id,
+            tecnico_id:  _user.id,
+            status:      'en_progreso',
+            fecha_inicio:new Date().toISOString()
+          }).select('id').single();
         if(error) throw error;
-        ejId=ej.id;
+        ejId = ej.id;
       }
-      _modalEjecucionId=ejId;
+      _modalEjecucionId = ejId;
     }
 
+    // Guardar respuestas
     for(const r of respuestas){
       await db.from('protocolo_respuestas').upsert({
-        ejecucion_id:ejId,campo_id:r.campo_id,valor:r.valor,tipo:r.tipo
+        ejecucion_id:ejId, campo_id:r.campo_id, valor:r.valor, tipo:r.tipo
       },{onConflict:'ejecucion_id,campo_id'});
     }
 
-    const todosReq=campos.filter(c=>c.requerido).every(c=>respuestas.find(r=>r.campo_id===c.id));
+    const todosReq = campos.filter(c=>c.requerido).every(c=>respuestas.find(r=>r.campo_id===c.id));
     await db.from('protocolo_ejecucion').update({
-      status:todosReq?'completado':'en_progreso',
-      ...(todosReq?{fecha_fin:new Date().toISOString()}:{})
-    }).eq('id',ejId);
+      status:    todosReq ? 'completado' : 'en_progreso',
+      fecha_fin: todosReq ? new Date().toISOString() : null
+    }).eq('id', ejId);
 
-    toast('✓ Protocolo '+(todosReq?'completado':'guardado')+' — '+respuestas.length+' campos','success');
+    toast('✓ Protocolo '+(todosReq?'completado':'guardado')+' — '+respuestas.length+' campos', 'success');
     await cargarProtocoloModal(ordenId);
-  }catch(e){toast('Error: '+e.message,'error');}
-  btn.classList.remove('loading');btn.disabled=false;
+  } catch(e) {
+    toast('Error: '+e.message, 'error');
+    console.error('guardarProtocoloModal:', e);
+  }
+  _guardandoProto = false;
+  btn.classList.remove('loading'); btn.disabled=false;
 }
 
 // ── ANEXOS ────────────────────────────────────────────────────
