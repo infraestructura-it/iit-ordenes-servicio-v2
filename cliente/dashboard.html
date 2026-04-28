@@ -312,7 +312,7 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
 <script>
 let _user = null, _cliente = null, _ordenes = [], _filtro = 'all';
 
-const STATUS_STEPS = ['pendiente','asignada','en_proceso','cerrada'];
+const CL_STATUS_STEPS = ['pendiente','asignada','en_proceso','cerrada'];
 const CL_STATUS_LABEL = {
   borrador:'Borrador', pendiente:'Pendiente', asignada:'Asignada',
   en_proceso:'En Proceso', en_pausa:'En Pausa', cerrada:'Cerrada', cancelada:'Cancelada'
@@ -400,7 +400,7 @@ function renderOrdenes() {
     const fechaReq = o.fecha_requerida ? new Date(o.fecha_requerida).toLocaleDateString('es-CO',{day:'2-digit',month:'short'}) : '—';
 
     // Timeline de estado
-    const steps = STATUS_STEPS;
+    const steps = CL_STATUS_STEPS;
     const curIdx = steps.indexOf(o.status);
     const timelineHtml = '<div class="status-timeline">' +
       steps.map((s, i) => {
