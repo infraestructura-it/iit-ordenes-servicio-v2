@@ -218,6 +218,74 @@ td{padding:13px 16px;font-size:12px;vertical-align:middle;}
 [data-theme="light"] .tot-val { color: #111827; }
 [data-theme="light"] .sec-head .sec-title { color: #111827; }
 [data-theme="light"] .field label { color: #374151; }
+
+/* ══════════════════════════════════════════
+   RESPONSIVE MOVIL
+   ══════════════════════════════════════════ */
+.hamburger{display:none;background:none;border:none;cursor:pointer;padding:8px;flex-direction:column;gap:5px;}
+.hamburger span{display:block;width:22px;height:2px;background:var(--text);border-radius:2px;transition:all 0.3s;}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:19;backdrop-filter:blur(2px);}
+
+@media (max-width: 768px) {
+  body{grid-template-columns:1fr !important;}
+  
+  .hamburger{display:flex;}
+  
+  .sidebar{
+    position:fixed !important;
+    top:0; left:-280px;
+    width:280px;
+    height:100vh !important;
+    z-index:20;
+    transition:left 0.3s ease;
+    padding-top:20px;
+    box-shadow:4px 0 24px rgba(0,0,0,0.4);
+  }
+  .sidebar.open{left:0;}
+  .sidebar-overlay.open{display:block;}
+  
+  .main{padding:14px !important;}
+  
+  .stats-grid{grid-template-columns:1fr 1fr !important;gap:10px !important;}
+  
+  .filters{flex-direction:column !important;}
+  .filters input,.filters select{width:100% !important;min-width:unset !important;}
+  
+  .tw table{font-size:11px;}
+  .tw thead th{padding:8px 8px !important;font-size:8px !important;}
+  .tw tbody td{padding:8px 8px !important;}
+  
+  /* Modal full screen en móvil */
+  .modal{margin:10px auto !important;border-radius:12px !important;}
+  .modal-overlay{padding:10px !important;}
+  
+  /* Stats cards */
+  .stat-val{font-size:24px !important;}
+  
+  /* Ocultar columnas menos importantes en tabla */
+  .tw table th:nth-child(3),
+  .tw table td:nth-child(3),
+  .tw table th:nth-child(6),
+  .tw table td:nth-child(6){ display:none; }
+  
+  /* Modal grid una columna */
+  .dgrid{grid-template-columns:1fr !important;}
+  .df.full{grid-column:1 !important;}
+  
+  /* Stats grid encabezado quick info */
+  [style*="grid-template-columns:1fr 1fr 1fr"]{grid-template-columns:1fr !important;}
+  
+  /* Botones estado en modal */
+  .sbtns{flex-wrap:wrap !important;gap:5px !important;}
+  .sbtn{font-size:9px !important;padding:6px 8px !important;}
+}
+
+@media (max-width: 480px) {
+  .stats-grid{grid-template-columns:1fr 1fr !important;}
+  .topbar{padding:0 14px !important;}
+  .logo-name{font-size:11px !important;}
+}
+
 </style>
 <script src="../assets/theme.js"></script>
 </head>
@@ -227,6 +295,9 @@ td{padding:13px 16px;font-size:12px;vertical-align:middle;}
   <span class="logo-name">Infraestructura-IT</span>
   <span style="font-size:11px;color:var(--muted);letter-spacing:1.5px;">ADMINISTRADOR</span>
   <span style="font-size:10px;color:rgba(0,212,255,0.4);letter-spacing:1px;border:1px solid rgba(0,212,255,0.15);padding:3px 8px;border-radius:4px;">v2.0</span>
+  <button class="hamburger" id="btnHamburger" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
   <div class="topbar-sep"></div>
   <div style="position:relative;">
     <button class="notif-btn" id="notifBtn">&#128276;
@@ -263,6 +334,7 @@ td{padding:13px 16px;font-size:12px;vertical-align:middle;}
     <a class="nav-item" href="../index.html"><span class="nav-icon">&#43;</span>Nueva Orden</a>
   </div>
 </div>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <div class="main">
   <div class="stats-grid">
@@ -640,11 +712,142 @@ async function openModal(id){
     '</div>' : '') +
 
     // ── HISTORIAL ──
-    '<div class="dsec"><div class="dsec-t">HISTORIAL DE CAMBIOS</div>'+hist+'</div>';
+    '<div class="dsec"><div class="dsec-t">HISTORIAL DE CAMBIOS</div>'+hist+'</div>' +
+
+    // ── ANEXOS ──
+    '<div class="dsec" id="anexosWrap">' +
+      '<div class="dsec-t">PROTOCOLOS Y COTIZACIONES ANEXADOS</div>' +
+      '<div id="anexosList" style="margin-bottom:14px;"></div>' +
+      // Anexar protocolo
+      '<div style="display:flex;gap:8px;margin-bottom:10px;align-items:center;">' +
+        '<select id="selProtocolo" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-family:DM Mono,monospace;font-size:12px;color:var(--text);outline:none;">' +
+          '<option value="">📋 Seleccionar protocolo...</option>' +
+        '</select>' +
+        '<button class="btn btn-o btn-sm" id="btnAnexarProto" style="white-space:nowrap;">+ Anexar</button>' +
+      '</div>' +
+      // Anexar cotización
+      '<div style="display:flex;gap:8px;align-items:center;">' +
+        '<select id="selCotizacion" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-family:DM Mono,monospace;font-size:12px;color:var(--text);outline:none;">' +
+          '<option value="">💰 Seleccionar cotización...</option>' +
+        '</select>' +
+        '<button class="btn btn-o btn-sm" id="btnAnexarCot" style="white-space:nowrap;">+ Anexar</button>' +
+      '</div>' +
+    '</div>';
 
   document.getElementById('btnAsignar').addEventListener('click', asignarTecnico);
   document.querySelectorAll('.sbtn').forEach(b=>b.addEventListener('click',()=>cambiarStatus(b.dataset.s)));
   document.getElementById('modalOverlay').classList.add('open');
+
+  // Cargar selectores y anexos existentes
+  cargarSelectoresAnexos(o.id);
+  cargarAnexos(o.id);
+  document.getElementById('btnAnexarProto').addEventListener('click', ()=>anexar(o.id,'protocolo'));
+  document.getElementById('btnAnexarCot').addEventListener('click',   ()=>anexar(o.id,'cotizacion'));
+}
+
+// ── ANEXOS ────────────────────────────────────────────────────
+async function cargarSelectoresAnexos(ordenId) {
+  // Protocolos
+  const {data:protos} = await db.from('protocolos').select('id,nombre,equipo_tipo').eq('activo',true).order('nombre');
+  const selP = document.getElementById('selProtocolo');
+  if(selP && protos) {
+    protos.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.id;
+      opt.textContent = '📋 ' + p.nombre + (p.equipo_tipo ? ' — '+p.equipo_tipo : '');
+      selP.appendChild(opt);
+    });
+  }
+  // Cotizaciones
+  const {data:cots} = await db.from('cotizaciones').select('id,cotizacion_id,empresa,total_final').order('created_at',{ascending:false}).limit(50);
+  const selC = document.getElementById('selCotizacion');
+  if(selC && cots) {
+    cots.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      opt.textContent = '💰 ' + (c.cotizacion_id||'—') + (c.empresa ? ' — '+c.empresa : '') + (c.total_final ? ' ($'+Math.round(c.total_final).toLocaleString('es-CO')+')' : '');
+      selC.appendChild(opt);
+    });
+  }
+}
+
+async function cargarAnexos(ordenId) {
+  const lista = document.getElementById('anexosList');
+  if(!lista) return;
+  try {
+    const {data:anexos} = await db.from('orden_anexos')
+      .select('*,protocolos(nombre,equipo_tipo),cotizaciones(cotizacion_id,empresa,total_final)')
+      .eq('orden_id', ordenId)
+      .order('created_at',{ascending:false});
+
+    if(!anexos?.length) {
+      lista.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:8px 0;">Sin protocolos ni cotizaciones anexados</div>';
+      return;
+    }
+
+    lista.innerHTML = anexos.map(a => {
+      const esProto = a.tipo === 'protocolo';
+      const icono   = esProto ? '📋' : '💰';
+      const nombre  = esProto
+        ? (a.protocolos?.nombre || '—') + (a.protocolos?.equipo_tipo ? ' — '+a.protocolos.equipo_tipo : '')
+        : (a.cotizaciones?.cotizacion_id || '—') + (a.cotizaciones?.empresa ? ' — '+a.cotizaciones.empresa : '');
+      const total   = !esProto && a.cotizaciones?.total_final
+        ? ' · $'+Math.round(a.cotizaciones.total_final).toLocaleString('es-CO')
+        : '';
+      const fecha   = a.created_at ? new Date(a.created_at).toLocaleDateString('es-CO',{day:'2-digit',month:'short'}) : '';
+
+      return '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(0,229,160,0.05);border:1px solid rgba(0,229,160,0.15);border-radius:8px;margin-bottom:6px;">' +
+        '<span style="font-size:16px;">' + icono + '</span>' +
+        '<div style="flex:1;">' +
+          '<div style="font-size:12px;color:var(--text);font-weight:600;">' + nombre + total + '</div>' +
+          '<div style="font-size:10px;color:var(--muted);">' + (esProto?'Protocolo':'Cotización') + ' · ' + fecha + '</div>' +
+        '</div>' +
+        '<button onclick="eliminarAnexo(\''+a.id+'\',\''+ordenId+'\')" style="background:none;border:none;color:var(--error);cursor:pointer;font-size:14px;padding:4px;">✕</button>' +
+      '</div>';
+    }).join('');
+  } catch(e) {
+    console.error('cargarAnexos:', e);
+  }
+}
+
+async function anexar(ordenId, tipo) {
+  const sel = tipo === 'protocolo'
+    ? document.getElementById('selProtocolo')
+    : document.getElementById('selCotizacion');
+  if(!sel?.value) {
+    toast('Selecciona un '+(tipo==='protocolo'?'protocolo':'cotización'),'error');
+    return;
+  }
+  try {
+    const payload = { orden_id: ordenId, tipo, creado_por: _user.id };
+    if(tipo === 'protocolo') payload.protocolo_id  = sel.value;
+    else                     payload.cotizacion_id = sel.value;
+
+    const {error} = await db.from('orden_anexos').insert(payload);
+    if(error) throw error;
+
+    // Si es cotización, también actualizar cotizacion.orden_id
+    if(tipo === 'cotizacion') {
+      await db.from('cotizaciones').update({orden_id: ordenId}).eq('id', sel.value);
+    }
+
+    sel.value = '';
+    await cargarAnexos(ordenId);
+    toast((tipo==='protocolo'?'Protocolo':'Cotización')+' anexado correctamente','success');
+  } catch(e) {
+    toast('Error al anexar: '+e.message,'error');
+  }
+}
+
+async function eliminarAnexo(anexoId, ordenId) {
+  if(!confirm('¿Quitar este anexo de la orden?')) return;
+  try {
+    await db.from('orden_anexos').delete().eq('id', anexoId);
+    await cargarAnexos(ordenId);
+    toast('Anexo eliminado','success');
+  } catch(e) {
+    toast('Error: '+e.message,'error');
+  }
 }
 
 function closeModal(){document.getElementById('modalOverlay').classList.remove('open');_ordenActual=null;}
@@ -891,6 +1094,21 @@ async function cargarLogoPDF() {
     img.src = 'https://infraestructura-it.github.io/iit-ordenes-servicio-v2/assets/logo512.png';
   });
 }
+
+
+// ── MENU HAMBURGUESA MOVIL ────────────────────────────────────
+(function(){
+  const btn      = document.getElementById('btnHamburger');
+  const sidebar  = document.querySelector('.sidebar');
+  const overlay  = document.getElementById('sidebarOverlay');
+  if(!btn) return;
+  function open(){ sidebar.classList.add('open'); overlay.classList.add('open'); }
+  function close(){ sidebar.classList.remove('open'); overlay.classList.remove('open'); }
+  btn.addEventListener('click', ()=> sidebar.classList.contains('open') ? close() : open());
+  overlay.addEventListener('click', close);
+  // Cerrar al navegar
+  document.querySelectorAll('.nav-item').forEach(a=> a.addEventListener('click', close));
+})();
 
 </script>
 </body>
