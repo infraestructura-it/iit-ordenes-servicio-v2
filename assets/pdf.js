@@ -13,6 +13,10 @@ function cargarJsPDF() {
   });
 }
 
+// Helpers globales PDF
+function fNum(n){ return Math.round(n||0).toLocaleString('es-CO'); }
+function fFecha(iso){ if(!iso) return '—'; return new Date(iso).toLocaleString('es-CO',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
+
 // ── PALETA PARA IMPRESIÓN (fondo blanco) ─────────────────────
 const C = {
   azul:    [0,  82,  155],   // azul IIT oscuro
