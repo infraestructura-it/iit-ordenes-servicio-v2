@@ -443,7 +443,6 @@ td{padding:13px 16px;font-size:12px;vertical-align:middle;}
       <h2 id="modalTitle">OS-000000</h2>
       <div style="display:flex;gap:8px;align-items:center;">
         <span id="modalBadge" class="badge"></span>
-        <button class="btn btn-o btn-sm" id="btnPdfOrden" style="border-color:rgba(0,229,160,0.3);color:var(--success);">&#8659; PDF</button>
         <button class="btn btn-o btn-sm" id="btnCloseModal">CERRAR</button>
       </div>
     </div>
@@ -476,30 +475,6 @@ function setupEvents(){
   document.getElementById('btnRefresh').addEventListener('click',loadOrdenes);
   document.getElementById('btnLimpiarFiltros').addEventListener('click',limpiarFiltros);
   document.getElementById('btnCloseModal').addEventListener('click',closeModal);
-  document.getElementById('btnPdfOrden').addEventListener('click', async () => {
-    if (!_ordenActual) return;
-    toast('Generando PDF...','info');
-    const hist = await Ordenes.getHistorial(_ordenActual.id).catch(()=>[]);
-    const logo = await cargarLogoPDF();
-    // Cargar protocolo ejecutado con respuestas
-    let protocoloData = null;
-    try {
-      const {data:ejArr} = await db.from('protocolo_ejecucion')
-        .select('*, protocolos(nombre,equipo_tipo,protocolo_campos(*))')
-        .eq('orden_id', _ordenActual.id)
-        .order('created_at',{ascending:false})
-        .limit(1);
-      const ej = ejArr?.[0];
-      if(ej) {
-        const {data:resps} = await db.from('protocolo_respuestas')
-          .select('*').eq('ejecucion_id', ej.id);
-        const campos = (ej.protocolos?.protocolo_campos||[]).sort((a,b)=>a.orden-b.orden);
-        protocoloData = { ejecucion:ej, campos, respuestas: resps||[] };
-        console.log('Protocolo para PDF:', campos.length, 'campos,', resps?.length, 'respuestas');
-      }
-    } catch(e){ console.error('Error cargando protocolo:', e); }
-    await exportarPDFOrden(_ordenActual, hist, protocoloData, logo);
-  });
   document.getElementById('modalOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
   document.getElementById('notifBtn').addEventListener('click',()=>document.getElementById('notifPanel').classList.toggle('open'));
   document.getElementById('markAllBtn').addEventListener('click',marcarTodasLeidas);
@@ -1172,7 +1147,33 @@ async function guardarProtocoloModal(protocolo, campos, ejecucion, ordenId) {
     }).eq('id', ejId);
 
     toast('✓ Protocolo '+(todosReq?'completado':'guardado')+' — '+respuestas.length+' campos', 'success');
-    await cargarProtocoloModal(ordenId);
+
+    // Colapsar el formulario y mostrar resumen
+    const camposEl = document.getElementById('protoEjecucionCampos');
+    const btnEl    = document.getElementById('btnEjecutarGuardar');
+    if(camposEl) {
+      camposEl.innerHTML = '';
+      camposEl.style.display = 'none';
+    }
+    if(btnEl) btnEl.style.display = 'none';
+
+    // Mostrar resumen compacto
+    const headerEl = document.getElementById('protoEjecucionHeader');
+    if(headerEl) {
+      const st  = todosReq ? 'COMPLETADO' : 'EN PROGRESO';
+      const clr = todosReq ? 'var(--success)' : 'var(--accent2)';
+      headerEl.innerHTML =
+        '<div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(0,229,160,0.06);border:1px solid rgba(0,229,160,0.2);border-radius:8px;">' +
+          '<span style="font-size:20px;">'+(todosReq?'✅':'⏳')+'</span>' +
+          '<div style="flex:1;">' +
+            '<div style="font-family:Syne,sans-serif;font-weight:700;color:var(--text);">Protocolo '+st+'</div>' +
+            '<div style="font-size:11px;color:var(--muted);">'+respuestas.length+' campos guardados · '+new Date().toLocaleString('es-CO')+'</div>' +
+          '</div>' +
+          '<button onclick="cargarProtocoloModal(\''+ordenId+'\')" style="background:none;border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-size:11px;color:var(--muted);cursor:pointer;font-family:DM Mono,monospace;">✏ Editar</button>' +
+        '</div>';
+    }
+    const statusEl = document.getElementById('protoEjecucionStatus');
+    if(statusEl) statusEl.innerHTML = '<span style="color:'+(todosReq?'var(--success)':'var(--accent2)')+';font-weight:700;">'+(todosReq?'COMPLETADO':'EN PROGRESO')+'</span>';
   } catch(e) {
     toast('Error: '+e.message, 'error');
     console.error('guardarProtocoloModal:', e);
