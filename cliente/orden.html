@@ -121,8 +121,8 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
 .tl-line.done{background:var(--success);}
 
 /* NAVEGACION POR PASOS */
-.sec{display:none;}
-.sec.active{display:block;animation:slideIn 0.3s ease;}
+.sec{display:block;}
+
 @keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 
 /* SECCION */
@@ -256,16 +256,8 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
   </div>
 
   <!-- 1. DATOS DEL SERVICIO -->
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:16px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;">
-      <span style="font-size:10px;color:var(--muted);letter-spacing:1px;" id="cprogLabel">Paso 1 de 3</span>
-      <span style="font-size:10px;color:var(--accent2);font-weight:700;" id="cprogPct">33%</span>
-    </div>
-    <div style="height:3px;background:var(--border);">
-      <div id="cprogFill" style="height:100%;width:33%;background:linear-gradient(90deg,var(--accent2),var(--accent));transition:width 0.4s ease;"></div>
-    </div>
-  </div>
-  <div class="sec" id="csec-1">
+  
+  <div class="sec" id="csec-1" style="display:block;">
     <div class="sec-head"><div class="sec-num">1</div><div class="sec-title">DATOS DEL SERVICIO</div></div>
     <div class="sec-body">
       <div class="dgrid" style="margin-bottom:14px;">
@@ -286,7 +278,7 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
   </div>
 
   <!-- 2. SEGUIMIENTO -->
-  <div class="sec" id="csec-2">
+  <div class="sec" id="csec-2" style="display:block;">
     <div class="sec-head"><div class="sec-num">2</div><div class="sec-title">SEGUIMIENTO Y CAMBIOS</div></div>
     <div class="sec-body" id="historialBody">
       <div style="color:var(--muted);font-size:12px;">Sin actualizaciones aun.</div>
@@ -300,12 +292,7 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
   </div>
 </div>
 
-<!-- NAVEGACION BOTTOM -->
-<div style="position:fixed;bottom:0;left:0;right:0;background:rgba(8,11,16,0.97);border-top:1px solid var(--border);padding:12px 20px;display:flex;justify-content:space-between;align-items:center;z-index:40;backdrop-filter:blur(12px);">
-  <button id="cbtnAnterior" onclick="cNavegar(-1)" style="display:none;padding:10px 18px;background:none;border:1px solid var(--border);border-radius:8px;font-family:Syne,sans-serif;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;">← ANTERIOR</button>
-  <span id="cpasoInfo" style="font-size:11px;color:var(--muted);">1 / 3</span>
-  <button id="cbtnSiguiente" onclick="cNavegar(1)" style="padding:10px 18px;background:linear-gradient(135deg,var(--accent2),var(--accent));border:none;border-radius:8px;font-family:Syne,sans-serif;font-size:12px;font-weight:700;color:#080b10;cursor:pointer;">SIGUIENTE →</button>
-</div>
+
 
 <script src="../assets/supabase.js"></script>
 <script src="../assets/auth.js"></script>
@@ -316,8 +303,8 @@ let _user = null, _orden = null;
 const params  = new URLSearchParams(window.location.search);
 const ordenId = params.get('id');
 
-const CLO_CLO_STATUS_STEPS = ['pendiente','asignada','en_proceso','cerrada'];
-const CLO_CLO_STATUS_LABEL = {
+const CLO_STATUS_STEPS = ['pendiente','asignada','en_proceso','cerrada'];
+const CLO_STATUS_LABEL = {
   borrador:'Borrador', pendiente:'Pendiente', asignada:'Asignada',
   en_proceso:'En Proceso', en_pausa:'En Pausa', cerrada:'Cerrada', cancelada:'Cancelada'
 };
@@ -470,44 +457,7 @@ function toast(msg, tipo='success') {
   t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3500);
 }
 
-// ── NAVEGACION ────────────────────────────────────────────────
-const C_PASOS = [
-  { id:'csec-1', titulo:'Datos del Servicio' },
-  { id:'csec-2', titulo:'Seguimiento y Cambios' },
-  { id:'csec-3', titulo:'Resultado del Protocolo' },
-];
-let _cPaso = 0;
 
-function cMostrarPaso(n) {
-  _cPaso = n;
-  C_PASOS.forEach(p => {
-    const el = document.getElementById(p.id);
-    if(el) el.classList.remove('active');
-  });
-  const el = document.getElementById(C_PASOS[n].id);
-  if(el) { el.classList.add('active'); window.scrollTo({top:0,behavior:'smooth'}); }
-  const pct = Math.round(((n+1)/C_PASOS.length)*100);
-  document.getElementById('cprogFill').style.width = pct+'%';
-  document.getElementById('cprogPct').textContent = pct+'%';
-  document.getElementById('cprogLabel').textContent = 'Paso '+(n+1)+' de '+C_PASOS.length+' — '+C_PASOS[n].titulo;
-  document.getElementById('cpasoInfo').textContent = (n+1)+' / '+C_PASOS.length;
-  document.getElementById('cbtnAnterior').style.display = n > 0 ? 'inline-flex' : 'none';
-  document.getElementById('cbtnSiguiente').style.display = n < C_PASOS.length-1 ? 'inline-flex' : 'none';
-}
-
-function cNavegar(dir) {
-  const nuevo = _cPaso + dir;
-  if(nuevo >= 0 && nuevo < C_PASOS.length) cMostrarPaso(nuevo);
-}
-
-document.addEventListener('keydown', e => {
-  const tag = document.activeElement.tagName.toLowerCase();
-  if(['input','textarea','select'].includes(tag)) return;
-  if(e.key === 'ArrowDown') cNavegar(1);
-  if(e.key === 'ArrowUp') cNavegar(-1);
-});
-
-cMostrarPaso(0);
 
 // ── CARGAR LOGO PARA PDF ──────────────────────────────────────
 async function cargarLogoPDF() {

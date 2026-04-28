@@ -293,7 +293,7 @@ let _user = null, _tecnico = null, _ordenes = [], _filtro = 'all';
   const { data: tec } = await db.from('tecnicos').select('id,especialidades').eq('usuario_id', _user.id).maybeSingle();
   _tecnico = tec;
   if(!_tecnico) {
-    document.getElementById('tablaBody').innerHTML = '<div class="empty"><p style="color:var(--warn);">⚠ Tu cuenta no tiene perfil de técnico configurado.<br>Contacta al administrador.</p></div>';
+    document.getElementById('ordenesList').innerHTML = '<div class="empty"><p style="color:var(--warn);">⚠ Tu cuenta no tiene perfil de técnico configurado.<br>Contacta al administrador.</p></div>';
     console.warn('No se encontró registro en tabla tecnicos para usuario:', _user.id);
   }
   await loadOrdenes();
@@ -301,9 +301,9 @@ let _user = null, _tecnico = null, _ordenes = [], _filtro = 'all';
 })();
 
 async function loadOrdenes() {
-  const tbody = document.getElementById('tablaBody');
+  const tbody = document.getElementById('ordenesList');
   if (!_tecnico && !_user) { 
-    tbody.innerHTML='<div class="empty"><p>Sin perfil de técnico</p></div>';
+    if(tbody) tbody.innerHTML='<div class="empty"><p>Sin perfil de técnico</p></div>';
     return; 
   }
   try {
