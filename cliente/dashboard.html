@@ -313,7 +313,7 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
 let _user = null, _cliente = null, _ordenes = [], _filtro = 'all';
 
 const STATUS_STEPS = ['pendiente','asignada','en_proceso','cerrada'];
-const STATUS_LABEL = {
+const CL_STATUS_LABEL = {
   borrador:'Borrador', pendiente:'Pendiente', asignada:'Asignada',
   en_proceso:'En Proceso', en_pausa:'En Pausa', cerrada:'Cerrada', cancelada:'Cancelada'
 };
@@ -325,10 +325,7 @@ const STATUS_LABEL = {
   // Cargar datos del cliente
   const { data: cl } = await db.from('clientes').select('*').eq('usuario_id', _user.id).maybeSingle();
   _cliente = cl;
-  if (!_cliente) {
-    // Buscar por email en ordenes directamente
-    console.warn('Cliente sin registro en tabla clientes, buscando por email');
-  }
+  console.log('Cliente:', cl?.id, cl?.empresa, '| User:', _user.id, _user.email);
 
   document.getElementById('welcomeName').textContent = 'Hola, ' + _user.nombre.split(' ')[0];
   document.getElementById('welcomeEmpresa').textContent = (cl?.empresa || '') + ' · ' + (cl?.ciudad || '');
@@ -340,23 +337,42 @@ const STATUS_LABEL = {
 
 async function loadOrdenes() {
   try {
-    let query = db.from('ordenes').select('*').order('created_at', { ascending: false });
+    let ordenes = [];
+
+    // Método 1: por cliente_id
     if (_cliente?.id) {
-      // Buscar por cliente_id
-      const { data, error } = await db.from('ordenes')
-        .select('*')
-        .eq('cliente_id', _cliente.id)
-        .order('created_at', { ascending: false });
-      if (!error) { _ordenes = data || []; updateStats(); renderOrdenes(); return; }
+      const {data} = await db.from('ordenes')
+        .select('*').eq('cliente_id', _cliente.id)
+        .order('created_at',{ascending:false});
+      ordenes = data || [];
+      console.log('Por cliente_id:', ordenes.length);
     }
-    // Fallback: buscar por correo
-    if (_user?.email) {
-      const { data } = await db.from('ordenes')
-        .select('*')
-        .eq('correo', _user.email)
-        .order('created_at', { ascending: false });
-      _ordenes = data || [];
+
+    // Método 2: por correo si no hay resultados
+    if (!ordenes.length && _user?.email) {
+      const {data} = await db.from('ordenes')
+        .select('*').eq('correo', _user.email)
+        .order('created_at',{ascending:false});
+      ordenes = data || [];
+      console.log('Por email:', ordenes.length);
     }
+
+    // Método 3: buscar en supabase.js getAll
+    if (!ordenes.length) {
+      const {data} = await db.from('ordenes')
+        .select('*')
+        .order('created_at',{ascending:false})
+        .limit(50);
+      // Filtrar las que pertenecen a este cliente
+      ordenes = (data||[]).filter(o =>
+        (_cliente?.id && o.cliente_id === _cliente.id) ||
+        (_user?.email && o.correo === _user.email)
+      );
+      console.log('Filtrado total:', ordenes.length, 'de', data?.length);
+    }
+
+    _ordenes = ordenes;
+    console.log('Órdenes finales:', _ordenes.length);
     updateStats();
     renderOrdenes();
   } catch(e) { console.error('loadOrdenes:', e); }
@@ -394,7 +410,7 @@ function renderOrdenes() {
         return '<div class="st-step">' +
           (!isLast ? '<div class="st-line' + (isDone ? ' done' : '') + '"></div>' : '') +
           '<div class="st-dot' + (isDone ? ' done' : isActive ? ' active' : '') + '"></div>' +
-          '<div class="st-label' + (isDone ? ' done' : isActive ? ' active' : '') + '">' + STATUS_LABEL[s] + '</div>' +
+          '<div class="st-label' + (isDone ? ' done' : isActive ? ' active' : '') + '">' + CL_STATUS_LABEL[s] + '</div>' +
           '</div>';
       }).join('') +
     '</div>';
@@ -405,7 +421,7 @@ function renderOrdenes() {
           '<div class="oc-id">' + (o.orden_id||'—') + '</div>' +
           '<div class="oc-fecha">Creada: ' + fecha + '</div>' +
         '</div>' +
-        '<span class="badge b-' + (o.status||'pendiente') + '">' + (STATUS_LABEL[o.status]||'—').toUpperCase() + '</span>' +
+        '<span class="badge b-' + (o.status||'pendiente') + '">' + (CL_STATUS_LABEL[o.status]||'—').toUpperCase() + '</span>' +
       '</div>' +
       '<div class="oc-desc">' + (o.sintoma || o.tipo_servicio || 'Sin descripcion') + '</div>' +
       '<div class="oc-meta">' +
