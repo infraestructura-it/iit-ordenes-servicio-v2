@@ -804,11 +804,12 @@ async function cargarProtocoloModal(ordenId) {
   wrap.style.display = 'block';
   const campList = (protocolo.protocolo_campos||[]).sort((a,b)=>a.orden-b.orden);
 
-  // Buscar ejecución existente
+  // Buscar ejecución existente — sin .single() para evitar 406
   let ejecucion = null;
-  const {data:ej} = await db.from('protocolo_ejecucion')
-    .select('*').eq('orden_id',ordenId).eq('protocolo_id',protocolo.id).single();
-  ejecucion = ej;
+  const {data:ejArr} = await db.from('protocolo_ejecucion')
+    .select('*').eq('orden_id',ordenId).eq('protocolo_id',protocolo.id)
+    .order('created_at',{ascending:false}).limit(1);
+  ejecucion = ejArr?.[0] || null;
   _modalEjecucionId = ejecucion?.id || null;
 
   // Status badge
@@ -1003,10 +1004,11 @@ async function guardarProtocoloModal(protocolo, campos, ejecucion, ordenId) {
 
     let ejId=_modalEjecucionId;
     if(!ejId){
-      const {data:ej,error}=await db.from('protocolo_ejecucion').insert({
+      // Usar upsert para evitar conflicto si ya existe
+      const {data:ej,error}=await db.from('protocolo_ejecucion').upsert({
         orden_id:ordenId,protocolo_id:protocolo.id,
         tecnico_id:_user.id,status:'en_progreso',fecha_inicio:new Date().toISOString()
-      }).select().single();
+      },{onConflict:'orden_id,protocolo_id',ignoreDuplicates:false}).select().single();
       if(error) throw error;
       ejId=ej.id; _modalEjecucionId=ejId;
     }
