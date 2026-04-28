@@ -62,7 +62,7 @@ function chk(doc, y, h=10) {
 }
 
 // ── PDF ORDEN INDIVIDUAL ──────────────────────────────────────
-async function exportarPDFOrden(orden, historial=[], protocolo=null, logoB64=null) {
+async function exportarPDFOrden(orden, historial=[], protocolo=null, logoB64=null, cotizacion=null) {
   await cargarJsPDF();
   const {jsPDF} = window.jspdf;
   const doc = new jsPDF({unit:'mm', format:'a4'});
@@ -361,36 +361,36 @@ async function exportarPDFOrden(orden, historial=[], protocolo=null, logoB64=nul
       if (valor) {
         if (tipo === 'foto') {
           try {
-            doc.addImage(valor, 'PNG', M+12, y+8, 50, 35);
-            y += 8;
+            doc.addImage(valor, 'PNG', M+12, y+7, 45, 30);
+            y += 30;
           } catch(e) {}
         } else if (tipo === 'firma') {
           try {
-            doc.addImage(valor, 'PNG', M+12, y+8, 60, 18);
-            y += 8;
+            doc.addImage(valor, 'PNG', M+12, y+7, 55, 15);
+            y += 15;
           } catch(e) {}
         } else if (tipo === 'si_no') {
           const siColor = valor==='si'?[0,140,80]:[200,30,50];
           doc.setFillColor(...siColor.map(v=>Math.min(255,v+140)));
-          doc.roundedRect(M+12, y+7, 18, 5, 1, 1, 'F');
-          doc.setFontSize(7); doc.setFont('helvetica','bold');
+          doc.roundedRect(M+12, y+5, 16, 5, 1, 1, 'F');
+          doc.setFontSize(6.5); doc.setFont('helvetica','bold');
           doc.setTextColor(...siColor.map(v=>Math.max(0,v-60)));
-          doc.text(valor.toUpperCase(), M+21, y+10.5, {align:'center'});
-          y += 6;
+          doc.text(valor.toUpperCase(), M+20, y+8.5, {align:'center'});
+          y += 3;
         } else {
-          doc.setFontSize(8); doc.setFont('helvetica','normal');
-          doc.setTextColor(60, 80, 120);
-          const vLines = wrap(doc, String(valor), CW-16);
-          doc.text(vLines, M+12, y+10);
+          doc.setFontSize(8.5); doc.setFont('helvetica','bold');
+          doc.setTextColor(20, 40, 100);
+          const vLines = wrap(doc, String(valor), CW-14);
+          doc.text(vLines, M+10, y+8);
           y += vLines.length * 4.5;
         }
       } else {
-        doc.setFontSize(7.5); doc.setFont('helvetica','normal');
-        doc.setTextColor(180, 100, 0);
-        doc.text('Sin respuesta', M+12, y+10);
-        y += 4;
+        doc.setFontSize(7); doc.setFont('helvetica','italic');
+        doc.setTextColor(180, 140, 0);
+        doc.text('— sin respuesta —', M+10, y+8);
+        y += 3;
       }
-      y += 6;
+      y += 4;
     });
 
     // Fecha ejecución
@@ -402,6 +402,104 @@ async function exportarPDFOrden(orden, historial=[], protocolo=null, logoB64=nul
       y += 8;
     }
     y += 4;
+  }
+
+  // ── COTIZACIÓN ───────────────────────────────────────────────
+  if (cotizacion) {
+    y = chk(doc, y, 14);
+    // Header
+    doc.setFillColor(0, 130, 60);
+    doc.rect(M, y, CW, 9, 'F');
+    doc.setFillColor(0, 160, 80);
+    doc.rect(M, y, 3, 9, 'F');
+    doc.setFontSize(8.5); doc.setFont('helvetica','bold');
+    doc.setTextColor(255,255,255);
+    doc.text('COTIZACIÓN: '+(cotizacion.cotizacion_id||'—'), M+6, y+6);
+    const stC = {enviada:[0,119,255],aceptada:[0,140,80],rechazada:[200,30,50],vencida:[200,140,0]}[cotizacion.status]||[100,110,130];
+    doc.setFillColor(...stC.map(v=>Math.min(255,v+80)));
+    doc.roundedRect(W-M-28, y+1.5, 28, 6, 1, 1, 'F');
+    doc.setFontSize(6.5); doc.setFont('helvetica','bold'); doc.setTextColor(255,255,255);
+    doc.text((cotizacion.status||'').replace(/_/g,' ').toUpperCase(), W-M-14, y+5.5, {align:'center'});
+    y += 13;
+
+    // Info cliente + condiciones en 2 columnas
+    const midX = M + CW/2 + 2;
+    doc.setFontSize(7.5); doc.setFont('helvetica','normal');
+    [
+      [M, ['Empresa: '+(cotizacion.empresa||'—'), 'Contacto: '+(cotizacion.nombre||'—'), 'NIT: '+(cotizacion.nit||'—')]],
+      [midX, ['Pago: '+(cotizacion.forma_pago||'—'), 'Plazo: '+(cotizacion.plazo_entrega||'—'), 'Garantía: '+(cotizacion.garantia||'—')]]
+    ].forEach(([x, lines]) => {
+      lines.forEach((line, i) => {
+        doc.setTextColor(i===0?20:100, i===0?20:110, i===0?30:130);
+        doc.setFont('helvetica', i===0?'bold':'normal');
+        y = chk(doc, y, 5);
+        doc.text(line, x, y); y += 5;
+      });
+    });
+    y += 4;
+
+    // Tabla items
+    y = chk(doc, y, 10);
+    const colW = [CW-70, 15, 25, 15, 15];
+    const colX = [M, M+colW[0], M+colW[0]+colW[1], M+colW[0]+colW[1]+colW[2], M+colW[0]+colW[1]+colW[2]+colW[3]];
+    const headers = ['DESCRIPCIÓN','CANT','V.UNIT','DESC%','TOTAL'];
+
+    doc.setFillColor(0,82,155); doc.rect(M,y,CW,7,'F');
+    headers.forEach((h,i)=>{
+      doc.setFontSize(6.5); doc.setFont('helvetica','bold'); doc.setTextColor(255,255,255);
+      doc.text(h, i===0?colX[i]+1:colX[i]+colW[i]-1, y+5, {align:i===0?'left':'right'});
+    });
+    y+=8;
+
+    const items = (cotizacion.cotizacion_items||[]).sort((a,b)=>a.orden-b.orden);
+    items.forEach((it,idx)=>{
+      y = chk(doc, y, 7);
+      if(idx%2===0){ doc.setFillColor(248,249,252); doc.rect(M,y-1,CW,7,'F'); }
+      const vals = [
+        it.descripcion||'—',
+        String(it.cantidad||1),
+        '$'+fNum(it.valor_unitario||0),
+        (it.descuento_pct||0)+'%',
+        '$'+fNum(it.valor_total||0)
+      ];
+      vals.forEach((v,i)=>{
+        doc.setFontSize(7.5); doc.setFont('helvetica', i===4?'bold':'normal');
+        doc.setTextColor(i===4?0:60, i===4?140:70, i===4?80:90);
+        const lns = i===0?doc.splitTextToSize(v,colW[0]-2):[v];
+        doc.text(lns, i===0?colX[i]+1:colX[i]+colW[i]-1, y+4, {align:i===0?'left':'right'});
+      });
+      y+=7;
+    });
+
+    // Totales
+    y+=3;
+    const totRows = [
+      ['Subtotal', cotizacion.subtotal||0, false],
+      ['IVA Total', cotizacion.total_iva||0, false],
+      ['TOTAL A PAGAR', cotizacion.total_final||0, true]
+    ];
+    totRows.forEach(([lbl,val,bold])=>{
+      y = chk(doc,y,7);
+      if(bold){
+        doc.setFillColor(0,82,155); doc.rect(W-M-65,y-1,65,8,'F');
+        doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.setTextColor(255,255,255);
+      } else {
+        doc.setFontSize(7.5); doc.setFont('helvetica','normal'); doc.setTextColor(100,110,130);
+      }
+      doc.text(lbl+':', W-M-64, y+5);
+      doc.setFont('helvetica','bold');
+      doc.text('$'+fNum(val), W-M-1, y+5, {align:'right'});
+      y+=bold?9:6;
+    });
+
+    // Firma cliente si existe
+    if(cotizacion.firma_cliente) {
+      y = chk(doc,y,26); y+=4;
+      doc.setFontSize(7.5); doc.setFont('helvetica','bold'); doc.setTextColor(0,140,80);
+      doc.text('✓ Aceptada por el cliente', M, y); y+=4;
+      try{ doc.addImage(cotizacion.firma_cliente,'PNG',M,y,55,18); y+=22; }catch(e){}
+    }
+    y+=6;
   }
 
   // ── FOOTER ───────────────────────────────────────────────────

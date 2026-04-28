@@ -763,18 +763,112 @@ async function openModal(id){
           '<div class="spin"></div>' +
         '</button>' +
       '</div>' +
+    '</div>' +
+
+    // ── COTIZACIÓN INLINE ──
+    '<div class="dsec" id="cotizacionInlineWrap" style="display:none;">' +
+      '<div class="dsec-t">💰 COTIZACIÓN ASOCIADA</div>' +
+      '<div id="cotizacionInlineBody"></div>' +
+    '</div>' +
+
+    // ── BOTÓN PDF COMPLETO ──
+    '<div class="dsec" style="border:2px solid rgba(0,119,255,0.3);border-radius:10px;background:rgba(0,119,255,0.04);">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">' +
+        '<div>' +
+          '<div style="font-family:Syne,sans-serif;font-weight:700;color:var(--text);margin-bottom:3px;">📄 Generar Informe Completo</div>' +
+          '<div style="font-size:11px;color:var(--muted);">Orden + Protocolo ejecutado + Cotización</div>' +
+        '</div>' +
+        '<button class="btn btn-p" id="btnPdfCompleto">&#8659; PDF COMPLETO</button>' +
+      '</div>' +
     '</div>';
 
   document.getElementById('btnAsignar').addEventListener('click', asignarTecnico);
   document.querySelectorAll('.sbtn').forEach(b=>b.addEventListener('click',()=>cambiarStatus(b.dataset.s)));
   document.getElementById('modalOverlay').classList.add('open');
 
-  // Cargar selectores, anexos y protocolo
+  // Cargar selectores, anexos, protocolo y cotización
   cargarSelectoresAnexos(o.id);
   cargarAnexos(o.id);
   cargarProtocoloModal(o.id);
+  cargarCotizacionModal(o.id);
   document.getElementById('btnAnexarProto').addEventListener('click', async ()=>{ await anexar(o.id,'protocolo'); cargarProtocoloModal(o.id); });
-  document.getElementById('btnAnexarCot').addEventListener('click',   ()=>anexar(o.id,'cotizacion'));
+  document.getElementById('btnAnexarCot').addEventListener('click', async ()=>{ await anexar(o.id,'cotizacion'); cargarCotizacionModal(o.id); });
+
+  // PDF Completo
+  document.getElementById('btnPdfCompleto').addEventListener('click', async () => {
+    toast('Generando PDF completo...','info');
+    const hist  = await Ordenes.getHistorial(o.id).catch(()=>[]);
+    const logo  = await cargarLogoPDF();
+    // Protocolo
+    let protocoloData = null;
+    try {
+      const {data:ejArr} = await db.from('protocolo_ejecucion')
+        .select('*, protocolos(nombre,equipo_tipo,protocolo_campos(*))')
+        .eq('orden_id', o.id).order('created_at',{ascending:false}).limit(1);
+      const ej = ejArr?.[0];
+      if(ej) {
+        const {data:resps} = await db.from('protocolo_respuestas').select('*').eq('ejecucion_id',ej.id);
+        protocoloData = { ejecucion:ej, campos:(ej.protocolos?.protocolo_campos||[]).sort((a,b)=>a.orden-b.orden), respuestas:resps||[] };
+      }
+    } catch(e){}
+    // Cotización
+    let cotizacionData = null;
+    try {
+      const {data:cots} = await db.from('cotizaciones')
+        .select('*,cotizacion_items(*)')
+        .eq('orden_id', o.id).limit(1);
+      if(cots?.[0]) cotizacionData = cots[0];
+    } catch(e){}
+    await exportarPDFOrden(o, hist, protocoloData, logo, cotizacionData);
+  });
+
+// ── COTIZACIÓN EN MODAL ───────────────────────────────────────
+async function cargarCotizacionModal(ordenId) {
+  const wrap = document.getElementById('cotizacionInlineWrap');
+  const body = document.getElementById('cotizacionInlineBody');
+  if(!wrap) return;
+
+  try {
+    const {data:cots} = await db.from('cotizaciones')
+      .select('*,cotizacion_items(*)')
+      .eq('orden_id', ordenId).limit(1);
+    const cot = cots?.[0];
+    if(!cot){ wrap.style.display='none'; return; }
+
+    wrap.style.display = 'block';
+    const items = (cot.cotizacion_items||[]).sort((a,b)=>a.orden-b.orden);
+    const stColor = {borrador:'var(--muted)',enviada:'var(--accent2)',aceptada:'var(--success)',rechazada:'var(--error)',vencida:'var(--warn)'}[cot.status]||'var(--muted)';
+
+    body.innerHTML =
+      '<div style="padding:12px;background:rgba(0,119,255,0.04);border:1px solid rgba(0,119,255,0.12);border-radius:8px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">' +
+        '<div>' +
+          '<div style="font-family:Syne,sans-serif;font-weight:700;color:var(--text);">'+(cot.cotizacion_id||'—')+'</div>' +
+          '<div style="font-size:11px;color:var(--muted);">'+(cot.empresa||'')+(cot.forma_pago?' · '+cot.forma_pago:'')+'</div>' +
+        '</div>' +
+        '<div style="text-align:right;">' +
+          '<div style="font-size:9px;color:'+stColor+';font-weight:700;letter-spacing:1px;">'+(cot.status||'').toUpperCase()+'</div>' +
+          '<div style="font-family:Syne,sans-serif;font-size:16px;font-weight:800;color:var(--success);">$'+Math.round(cot.total_final||0).toLocaleString('es-CO')+'</div>' +
+        '</div>' +
+      '</div>' +
+      // Tabla items
+      '<table style="width:100%;border-collapse:collapse;font-size:11px;">' +
+        '<thead><tr style="background:rgba(0,0,0,0.15);">' +
+          '<th style="padding:6px 8px;text-align:left;color:var(--muted);font-size:9px;letter-spacing:1px;border-bottom:1px solid var(--border);">DESCRIPCIÓN</th>' +
+          '<th style="padding:6px 8px;text-align:center;color:var(--muted);font-size:9px;border-bottom:1px solid var(--border);">CANT</th>' +
+          '<th style="padding:6px 8px;text-align:right;color:var(--muted);font-size:9px;border-bottom:1px solid var(--border);">TOTAL</th>' +
+        '</tr></thead><tbody>' +
+        items.map((it,i)=>'<tr style="border-bottom:1px solid var(--border);'+(i%2?'background:rgba(0,0,0,0.05);':'')+'">'+
+          '<td style="padding:6px 8px;color:var(--text);">'+(it.descripcion||'—')+'</td>'+
+          '<td style="padding:6px 8px;text-align:center;color:var(--muted);">'+it.cantidad+'</td>'+
+          '<td style="padding:6px 8px;text-align:right;color:var(--success);font-weight:600;">$'+Math.round(it.valor_total||0).toLocaleString('es-CO')+'</td>'+
+        '</tr>').join('') +
+        '</tbody></table>' +
+      '<div style="display:flex;justify-content:flex-end;gap:20px;padding:8px;border-top:1px solid var(--border);margin-top:4px;">' +
+        '<span style="font-size:11px;color:var(--muted);">Subtotal: $'+Math.round(cot.subtotal||0).toLocaleString('es-CO')+'</span>' +
+        '<span style="font-size:11px;color:var(--muted);">IVA: $'+Math.round(cot.total_iva||0).toLocaleString('es-CO')+'</span>' +
+        '<span style="font-family:Syne,sans-serif;font-weight:700;color:var(--success);">TOTAL: $'+Math.round(cot.total_final||0).toLocaleString('es-CO')+'</span>' +
+      '</div>';
+  } catch(e){ console.error('cargarCotizacionModal:', e); }
 }
 
 // ── PROTOCOLO EN MODAL ADMIN ──────────────────────────────────
@@ -1007,14 +1101,18 @@ async function guardarProtocoloModal(protocolo, campos, ejecucion, ordenId) {
       let valor=null;
       switch(campo.tipo){
         case 'texto':
-        case 'numero':
         case 'lista':
-        case 'rango':
         case 'fecha_hora': {
           const el = document.querySelector('.mc-field[data-id="'+campo.id+'"]');
           valor = el?.value?.trim()||null;
-          // Si no hay input visible, buscar valor en _modalRespuestasActuales
           if(!valor && _modalRespuestasActuales[campo.id]) valor = _modalRespuestasActuales[campo.id];
+          break;
+        }
+        case 'numero':
+        case 'rango': {
+          const el = document.querySelector('.mc-field[data-id="'+campo.id+'"]');
+          // Número puede ser 0 — usar !== undefined
+          valor = (el && el.value !== '') ? el.value : (_modalRespuestasActuales[campo.id]||null);
           break;
         }
         case 'si_no': {
