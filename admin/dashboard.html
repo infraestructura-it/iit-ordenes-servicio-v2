@@ -1023,7 +1023,7 @@ async function guardarProtocoloModal(protocolo, campos, ejecucion, ordenId) {
           .insert({
             orden_id:    ordenId,
             protocolo_id:protocolo.id,
-            tecnico_id:  _user.id,
+            tecnico_id:  null,
             status:      'en_progreso',
             fecha_inicio:new Date().toISOString()
           }).select('id').single();
