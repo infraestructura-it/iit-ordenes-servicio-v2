@@ -80,42 +80,39 @@ async function exportarPDFOrden(orden, historial=[], protocolo=null, logoB64=nul
   };
 
   // ── HEADER ───────────────────────────────────────────────────
-  doc.setFillColor(...AZ); doc.rect(0,0,W,34,'F');
+  doc.setFillColor(...AZ); doc.rect(0,0,W,36,'F');
   doc.setFillColor(...AZL); doc.rect(0,0,2,34,'F');
 
-  // Logo
-  const logo = logoB64 || LOGO_B64;
-  try{ doc.addImage('data:image/png;base64,'+logo,'PNG',M,4,24,24); }catch(e){}
-
-  // Empresa
-  doc.setFontSize(11); doc.setFont('helvetica','bold'); doc.setTextColor(...BL);
-  doc.text('Infraestructura-IT',M+27,13);
-  doc.setFontSize(6.5); doc.setFont('helvetica','normal'); doc.setTextColor(180,205,240);
-  doc.text('SOPORTE & MANTENIMIENTO · BOGOTÁ, COLOMBIA',M+27,18);
-  doc.text('Creada: '+fFechaCorta(orden.created_at),M+27,23);
-
-  // ID orden y status — derecha
+  // ── HEADER: Texto izquierda + QR derecha ──
   doc.setFontSize(14); doc.setFont('helvetica','bold'); doc.setTextColor(...BL);
-  doc.text(orden.orden_id||'—',W-M,13,{align:'right'});
-  const sc=PDF_STATUS_COLOR[orden.status]||GR;
-  doc.setFillColor(...sc); doc.roundedRect(W-M-26,17,26,7,1.5,1.5,'F');
-  doc.setFontSize(6.5); doc.setFont('helvetica','bold'); doc.setTextColor(...BL);
-  doc.text((orden.status||'').replace(/_/g,' ').toUpperCase(),W-M-13,22,{align:'center'});
+  doc.text('Infraestructura-IT',M,15);
+  doc.setFontSize(7); doc.setFont('helvetica','normal'); doc.setTextColor(180,205,240);
+  doc.text('SOPORTE & MANTENIMIENTO · BOGOTÁ, COLOMBIA',M,20);
+  doc.text('Creada: '+fFechaCorta(orden.created_at),M,25);
 
-  // QR en el encabezado (esquina inferior derecha del header)
+  // ID y status
+  doc.setFontSize(16); doc.setFont('helvetica','bold'); doc.setTextColor(...BL);
+  doc.text(orden.orden_id||'—',W-M-32,13,{align:'right'});
+  const sc=PDF_STATUS_COLOR[orden.status]||GR;
+  doc.setFillColor(...sc); doc.roundedRect(W-M-50,17,30,7,1.5,1.5,'F');
+  doc.setFontSize(6.5); doc.setFont('helvetica','bold'); doc.setTextColor(...BL);
+  doc.text((orden.status||'').replace(/_/g,' ').toUpperCase(),W-M-35,22,{align:'center'});
+
+  // QR grande centrado en el lado derecho del header
   if(orden.orden_id){
     try{
-      const qrUrl='https://api.qrserver.com/v1/create-qr-code/?size=120x120&data='+
+      const qrUrl='https://api.qrserver.com/v1/create-qr-code/?size=200x200&data='+
         encodeURIComponent('https://infraestructura-it.github.io/iit-ordenes-servicio-v2/orden.html?orden='+orden.orden_id)+
-        '&bgcolor=00529b&color=ffffff&margin=1';
+        '&bgcolor=00529b&color=ffffff&margin=2';
       const qrImg=await cargarImgPDF(qrUrl);
-      doc.addImage(qrImg,'PNG',W-M-14,2,13,13);
-      doc.setFontSize(5); doc.setFont('helvetica','normal'); doc.setTextColor(180,205,240);
-      doc.text('QR',W-M-7.5,16.5,{align:'center'});
+      // QR a la derecha del header, centrado verticalmente
+      doc.addImage(qrImg,'PNG',W-M-28,3,26,26);
+      doc.setFontSize(5.5); doc.setFont('helvetica','normal'); doc.setTextColor(180,205,240);
+      doc.text('ESCANEAR',W-M-15,30.5,{align:'center'});
     }catch(e){}
   }
 
-  y=38;
+  y=40;
 
   // Barra resumen
   doc.setFillColor(230,240,255); doc.rect(M,y,CW,8,'F');
@@ -404,7 +401,7 @@ async function exportarPDFListado(ordenes, titulo='Reporte de Órdenes', logoB64
   doc.setTextColor(200,215,240);
   doc.text(new Date().toLocaleString('es-CO'), W-M, 20, {align:'right'});
   doc.text(ordenes.length+' órdenes', W-M, 25, {align:'right'});
-  y=38;
+  y=40;
 
   // Cabecera tabla
   const cols=[

@@ -501,7 +501,7 @@ document.getElementById('btnVerificar').addEventListener('click', async () => {
       .single();
 
     if (error || !data) throw new Error('no encontrado');
-    if (data.codigo_usado) throw new Error('ya usado');
+    // Código reutilizable — el cliente puede crear múltiples órdenes
 
     _cliente = data;
     cInput.className = 'codigo-input valid';
