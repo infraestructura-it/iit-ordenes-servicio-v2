@@ -781,6 +781,7 @@ async function openModal(id){
 let _modalEjecucionId = null;
 let _modalFirmas = {};
 let _modalFotos  = {};
+let _modalRespuestasActuales = {};
 
 async function cargarProtocoloModal(ordenId) {
   const wrap   = document.getElementById('protoEjecucionWrap');
@@ -804,6 +805,9 @@ async function cargarProtocoloModal(ordenId) {
   if(!protocolo) { wrap.style.display='none'; return; }
 
   wrap.style.display = 'block';
+  _modalFirmas = {};
+  _modalFotos  = {};
+  _guardandoProto = false;
   const campList = (protocolo.protocolo_campos||[]).sort((a,b)=>a.orden-b.orden);
 
   // Buscar ejecución existente — sin .single() para evitar 406
@@ -828,23 +832,27 @@ async function cargarProtocoloModal(ordenId) {
 
   // Cargar respuestas existentes
   let respuestas = {};
+  _modalRespuestasActuales = {};
   if(ejecucion) {
     const {data:resps} = await db.from('protocolo_respuestas').select('*').eq('ejecucion_id',ejecucion.id);
-    (resps||[]).forEach(r=>{ respuestas[r.campo_id]=r.valor; });
+    (resps||[]).forEach(r=>{ respuestas[r.campo_id]=r.valor; _modalRespuestasActuales[r.campo_id]=r.valor; });
   }
 
   // Renderizar campos (reutiliza función del técnico)
   campos.innerHTML = campList.map(c=>renderCampoModal(c, respuestas[c.id]||'')).join('');
   setupCamposModal(campList, ejecucion?.status==='completado');
 
-  // Botón guardar
+  // Botón guardar — siempre visible si hay campos
   const btn = document.getElementById('btnEjecutarGuardar');
-  if(ejecucion?.status !== 'completado') {
-    btn.style.display='inline-flex';
-    btn.onclick = null; // limpiar primero
-    btn.onclick = ()=>guardarProtocoloModal(protocolo, campList, ejecucion, ordenId);
+  btn.style.display = 'inline-flex';
+  btn.onclick = null;
+  btn.onclick = ()=>guardarProtocoloModal(protocolo, campList, ejecucion, ordenId);
+
+  // Si completado — agregar botón para editar de nuevo
+  if(ejecucion?.status === 'completado') {
+    btn.querySelector('.btn-text').textContent = '↻ RE-GUARDAR PROTOCOLO';
   } else {
-    btn.style.display='none';
+    btn.querySelector('.btn-text').textContent = '✓ GUARDAR PROTOCOLO';
   }
 }
 
@@ -998,12 +1006,28 @@ async function guardarProtocoloModal(protocolo, campos, ejecucion, ordenId) {
     for(const campo of campos){
       let valor=null;
       switch(campo.tipo){
-        case 'texto':case 'numero':case 'lista':case 'rango':case 'fecha_hora':
-          valor=document.querySelector('.mc-field[data-id="'+campo.id+'"]')?.value?.trim()||null; break;
-        case 'si_no':
-          valor=document.querySelector('.mc-sino.active-si[data-id="'+campo.id+'"],.mc-sino.active-no[data-id="'+campo.id+'"]')?.dataset.val||null; break;
-        case 'foto':  valor=_modalFotos[campo.id]||null;  break;
-        case 'firma': valor=_modalFirmas[campo.id]||null; break;
+        case 'texto':
+        case 'numero':
+        case 'lista':
+        case 'rango':
+        case 'fecha_hora': {
+          const el = document.querySelector('.mc-field[data-id="'+campo.id+'"]');
+          valor = el?.value?.trim()||null;
+          // Si no hay input visible, buscar valor en _modalRespuestasActuales
+          if(!valor && _modalRespuestasActuales[campo.id]) valor = _modalRespuestasActuales[campo.id];
+          break;
+        }
+        case 'si_no': {
+          const activo = document.querySelector('.mc-sino.active-si[data-id="'+campo.id+'"],.mc-sino.active-no[data-id="'+campo.id+'"]');
+          valor = activo?.dataset.val || _modalRespuestasActuales[campo.id] || null;
+          break;
+        }
+        case 'foto':
+          valor = _modalFotos[campo.id] || _modalRespuestasActuales[campo.id] || null;
+          break;
+        case 'firma':
+          valor = _modalFirmas[campo.id] || _modalRespuestasActuales[campo.id] || null;
+          break;
       }
       if(campo.requerido&&!valor){toast('Campo requerido: '+campo.etiqueta,'error');_guardandoProto=false;btn.classList.remove('loading');btn.disabled=false;return;}
       if(valor) respuestas.push({campo_id:campo.id,valor,tipo:campo.tipo});
