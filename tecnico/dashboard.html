@@ -289,9 +289,14 @@ let _user = null, _tecnico = null, _ordenes = [], _filtro = 'all';
   _user = await initAuth('tecnico');
   if (!_user) return;
 
-  // Obtener tecnico_id
-  const { data: tec } = await db.from('tecnicos').select('id,especialidades').eq('usuario_id', _user.id).maybeSingle();
-  _tecnico = tec;
+  // Obtener tecnico_id — tomar el primero si hay duplicados
+  const { data: tecs } = await db.from('tecnicos')
+    .select('id,especialidades')
+    .eq('usuario_id', _user.id)
+    .order('created_at', {ascending:true})
+    .limit(1);
+  _tecnico = tecs?.[0] || null;
+  console.log('Técnico encontrado:', _tecnico?.id);
   if(!_tecnico) {
     const el = document.getElementById('ordenesList');
     if(el) el.innerHTML = '<div class="empty"><p style="color:var(--warn);">⚠ Tu cuenta no tiene perfil de técnico configurado.<br>Contacta al administrador.</p></div>';
