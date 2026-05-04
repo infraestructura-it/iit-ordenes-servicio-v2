@@ -836,14 +836,25 @@ async function guardarProtocolo(protocolo, campos, ejecucion) {
       _ejecucionId = ejecucionId;
     }
 
-    // Guardar respuestas
-    for(const r of respuestas) {
-      await db.from('protocolo_respuestas').upsert({
-        ejecucion_id: ejecucionId,
-        campo_id:     r.campo_id,
-        valor:        r.valor,
-        tipo:         r.tipo
-      }, {onConflict:'ejecucion_id,campo_id'});
+    // Guardar respuestas — delete + insert para evitar problemas de constraint
+    if(respuestas.length) {
+      // Eliminar respuestas anteriores de este campo
+      for(const r of respuestas) {
+        await db.from('protocolo_respuestas')
+          .delete()
+          .eq('ejecucion_id', ejecucionId)
+          .eq('campo_id', r.campo_id);
+      }
+      // Insertar nuevas
+      const {error:errR} = await db.from('protocolo_respuestas').insert(
+        respuestas.map(r=>({
+          ejecucion_id: ejecucionId,
+          campo_id:     r.campo_id,
+          valor:        r.valor,
+          tipo:         r.tipo
+        }))
+      );
+      if(errR) console.warn('Error respuestas:', errR.message);
     }
 
     // Si todos los campos requeridos completados → marcar como completado
