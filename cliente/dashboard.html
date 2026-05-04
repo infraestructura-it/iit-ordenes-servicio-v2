@@ -327,8 +327,8 @@ const CL_STATUS_LABEL = {
   _cliente = cl;
   console.log('Cliente:', cl?.id, cl?.empresa, '| User:', _user.id, _user.email);
 
-  document.getElementById('welcomeName').textContent = 'Hola, ' + _user.nombre.split(' ')[0];
-  document.getElementById('welcomeEmpresa').textContent = (cl?.empresa || '') + ' · ' + (cl?.ciudad || '');
+  document.getElementById('welcomeName').textContent = 'Hola, ' + (_user.nombre||_user.email||'').split(' ')[0];
+  document.getElementById('welcomeEmpresa').textContent = (cl?.empresa || '') + (cl?.ciudad?' · '+cl.ciudad:'');
 
   await loadOrdenes();
   setupEvents();
