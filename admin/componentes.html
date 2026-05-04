@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IIT — Componentes</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#080b10;--surface:#0d1117;--surface2:#131820;--border:#1e2a38;--accent:#00d4ff;--accent2:#0077ff;--text:#e8f0f8;--muted:#4a6070;--success:#00e5a0;--error:#ff4560;--warn:#ffb700;}
+[data-theme="light"]{--bg:#f0f4fa;--surface:#ffffff;--surface2:#f5f7fa;--border:#dde2ed;--accent2:#0055cc;--text:#111827;--muted:#6b7280;--success:#059669;--error:#dc2626;--warn:#d97706;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:"DM Mono",monospace;background:var(--bg);color:var(--text);display:grid;grid-template-columns:220px 1fr;min-height:100vh;}
+
+.topbar{grid-column:1/-1;height:56px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:14px;position:sticky;top:0;z-index:30;}
+.logo-img{width:32px;height:32px;border-radius:6px;object-fit:contain;background:var(--surface2);}
+.logo-name{font-family:"Syne",sans-serif;font-size:13px;font-weight:700;}
+.topbar-sep{flex:1;}
+.theme-btn{background:none;border:1px solid var(--border);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:14px;}
+.hamburger{display:none;background:none;border:none;cursor:pointer;padding:8px;flex-direction:column;gap:5px;}
+.hamburger span{display:block;width:22px;height:2px;background:var(--text);border-radius:2px;}
+
+.sidebar{background:var(--surface);border-right:1px solid var(--border);padding:20px 0;display:flex;flex-direction:column;gap:2px;height:calc(100vh - 56px);position:sticky;top:56px;overflow-y:auto;}
+.nav-section{font-size:9px;letter-spacing:2px;color:var(--muted);padding:12px 18px 6px;text-transform:uppercase;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 18px;font-size:12px;color:var(--muted);text-decoration:none;transition:all 0.2s;}
+.nav-item:hover{background:rgba(0,119,255,0.06);color:var(--text);}
+.nav-item.active{background:rgba(0,119,255,0.1);color:var(--accent2);border-right:2px solid var(--accent2);}
+.nav-icon{width:18px;text-align:center;font-size:14px;}
+
+.main{padding:24px;overflow-y:auto;}
+
+/* CATEGORÍAS */
+.cat-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;}
+.cat-tab{padding:8px 16px;border-radius:20px;border:1px solid var(--border);background:none;font-family:"DM Mono",monospace;font-size:11px;color:var(--muted);cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:6px;}
+.cat-tab:hover{border-color:var(--accent2);color:var(--accent2);}
+.cat-tab.active{background:var(--accent2);border-color:var(--accent2);color:#fff;}
+.cat-tab .cat-count{background:rgba(255,255,255,0.2);border-radius:10px;padding:1px 6px;font-size:9px;}
+
+/* GRID */
+.comp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;}
+.comp-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;cursor:pointer;transition:all 0.2s;position:relative;}
+.comp-card:hover{border-color:var(--accent2);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,119,255,0.1);}
+.comp-cat-badge{position:absolute;top:12px;right:12px;padding:3px 8px;border-radius:8px;font-size:9px;font-weight:700;letter-spacing:1px;}
+.comp-codigo{font-size:10px;color:var(--muted);margin-bottom:6px;letter-spacing:1px;}
+.comp-nombre{font-family:"Syne",sans-serif;font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;line-height:1.3;}
+.comp-marca{font-size:11px;color:var(--muted);margin-bottom:10px;}
+.comp-footer{display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1px solid var(--border);}
+.comp-precio{font-family:"Syne",sans-serif;font-size:15px;font-weight:800;color:var(--success);}
+.comp-stock{font-size:11px;padding:4px 8px;border-radius:6px;}
+.stock-ok{background:rgba(0,229,160,0.1);color:var(--success);}
+.stock-low{background:rgba(255,183,0,0.1);color:var(--warn);}
+.stock-out{background:rgba(255,69,96,0.1);color:var(--error);}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:200;overflow-y:auto;padding:20px;}
+.modal-overlay.open{display:block;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;width:100%;max-width:620px;margin:20px auto;}
+.mhead{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface);border-radius:16px 16px 0 0;z-index:1;}
+.mhead h2{font-family:"Syne",sans-serif;font-size:15px;color:var(--accent2);letter-spacing:1px;}
+.mbody{padding:22px;}
+
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+.form-grid.full{grid-template-columns:1fr;}
+.fld{display:flex;flex-direction:column;gap:5px;}
+.fld label{font-size:9px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;}
+.fld input,.fld select,.fld textarea{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-family:"DM Mono",monospace;font-size:12px;color:var(--text);outline:none;transition:border-color 0.2s;}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--accent2);}
+.fld textarea{min-height:70px;resize:vertical;}
+
+/* CONTROLES */
+.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:18px;}
+.search-input{flex:1;min-width:200px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 14px;font-family:"DM Mono",monospace;font-size:12px;color:var(--text);outline:none;}
+.search-input:focus{border-color:var(--accent2);}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-family:"DM Mono",monospace;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.2s;border:none;}
+.btn-p{background:linear-gradient(135deg,var(--accent2),#0055cc);color:#fff;}
+.btn-p:hover{opacity:0.9;}
+.btn-o{background:none;border:1px solid var(--border);color:var(--muted);}
+.btn-o:hover{border-color:var(--accent2);color:var(--accent2);}
+.btn-danger{background:none;border:1px solid rgba(255,69,96,0.3);color:var(--error);}
+.btn-danger:hover{background:rgba(255,69,96,0.08);}
+.btn-sm{padding:6px 12px;font-size:10px;}
+
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;}
+.stat-val{font-family:"Syne",sans-serif;font-size:22px;font-weight:800;color:var(--accent2);}
+.stat-lbl{font-size:9px;letter-spacing:1.5px;color:var(--muted);margin-top:3px;}
+
+.empty{text-align:center;padding:60px 20px;color:var(--muted);}
+
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:19;}
+@media(max-width:768px){
+  body{grid-template-columns:1fr;}
+  .hamburger{display:flex;}
+  .sidebar{position:fixed;top:0;left:-240px;width:240px;height:100vh;z-index:20;transition:left 0.3s;}
+  .sidebar.open{left:0;}
+  .sidebar-overlay.open{display:block;}
+  .stats-row{grid-template-columns:1fr 1fr;}
+  .form-grid{grid-template-columns:1fr;}
+  .main{padding:14px;}
+  .comp-grid{grid-template-columns:1fr;}
+}
+[data-theme="light"] .fld input,[data-theme="light"] .fld select,[data-theme="light"] .fld textarea{background:#fff;color:#111827;border-color:#dde2ed;}
+[data-theme="light"] .comp-card{box-shadow:0 1px 4px rgba(0,0,0,0.06);}
+</style>
+</head>
+<body>
+
+<div class="topbar" style="grid-column:1/-1">
+  <button class="hamburger" id="btnHamburger"><span></span><span></span><span></span></button>
+  <img class="logo-img" src="../assets/logo512.png" onerror="this.style.display='none'">
+  <span class="logo-name">Infraestructura-IT</span>
+  <div class="topbar-sep"></div>
+  <button class="theme-btn" id="themeBtn">🌙</button>
+</div>
+
+<div class="sidebar" id="sidebar">
+  <div class="nav-section">PRINCIPAL</div>
+  <a class="nav-item" href="dashboard.html"><span class="nav-icon">📋</span>Ordenes</a>
+  <a class="nav-item" href="usuarios.html"><span class="nav-icon">👥</span>Usuarios</a>
+  <a class="nav-item" href="protocolos.html"><span class="nav-icon">🔧</span>Protocolos</a>
+  <a class="nav-item" href="cotizaciones.html"><span class="nav-icon">💰</span>Cotizaciones</a>
+  <a class="nav-item active" href="componentes.html"><span class="nav-icon">🔌</span>Componentes</a>
+  <a class="nav-item" href="ia.html"><span class="nav-icon">⚡</span>Centro IA</a>
+  <div class="nav-section">SISTEMA</div>
+  <a class="nav-item" href="../perfil.html"><span class="nav-icon">👤</span>Perfil</a>
+  <a class="nav-item" id="btnLogout" href="#"><span class="nav-icon">🚪</span>Salir</a>
+</div>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="main">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
+    <div>
+      <div style="font-family:Syne,sans-serif;font-size:20px;font-weight:800;letter-spacing:1px;">BASE DE COMPONENTES</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px;">Insumos, materiales y equipos por categoría</div>
+    </div>
+    <button class="btn btn-p" id="btnNuevo">+ Nuevo Componente</button>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-val" id="stTotal">0</div><div class="stat-lbl">TOTAL</div></div>
+    <div class="stat-card"><div class="stat-val" id="stActivos" style="color:var(--success);">0</div><div class="stat-lbl">ACTIVOS</div></div>
+    <div class="stat-card"><div class="stat-val" id="stLow" style="color:var(--warn);">0</div><div class="stat-lbl">STOCK BAJO</div></div>
+    <div class="stat-card"><div class="stat-val" id="stOut" style="color:var(--error);">0</div><div class="stat-lbl">AGOTADOS</div></div>
+  </div>
+
+  <!-- FILTROS -->
+  <div class="controls">
+    <input class="search-input" id="searchInput" placeholder="Buscar por nombre, código, marca...">
+    <select class="search-input" style="flex:0 0 auto;width:auto;" id="filterStock">
+      <option value="all">Todos los stocks</option>
+      <option value="ok">Stock OK</option>
+      <option value="low">Stock bajo</option>
+      <option value="out">Agotados</option>
+    </select>
+  </div>
+
+  <!-- CATEGORÍAS -->
+  <div class="cat-tabs" id="catTabs"></div>
+
+  <!-- GRID -->
+  <div class="comp-grid" id="compGrid">
+    <div class="empty"><p>Cargando...</p></div>
+  </div>
+</div>
+
+<!-- MODAL EDITOR -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="mhead">
+      <h2 id="modalTitulo">NUEVO COMPONENTE</h2>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-danger btn-sm" id="btnEliminar" style="display:none;">✕ Eliminar</button>
+        <button class="btn btn-o btn-sm" id="btnCerrar">CERRAR</button>
+      </div>
+    </div>
+    <div class="mbody">
+      <input type="hidden" id="f_id">
+      <div class="form-grid">
+        <div class="fld"><label>Código</label><input id="f_codigo" placeholder="EJ: SEG-001"></div>
+        <div class="fld"><label>Categoría *</label>
+          <select id="f_categoria">
+            <option value="seguridad">🔒 Accesorios de Seguridad</option>
+            <option value="computador">💻 Accesorios de Computador</option>
+            <option value="ups">🔋 Accesorios de UPS</option>
+            <option value="cableado_electrico">⚡ Cableado Eléctrico</option>
+            <option value="cableado_estructurado">🌐 Cableado Estructurado</option>
+            <option value="solar">☀️ Sistemas Solares</option>
+            <option value="otro">📦 Otro</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-grid full">
+        <div class="fld"><label>Nombre *</label><input id="f_nombre" placeholder="Nombre del componente"></div>
+      </div>
+      <div class="form-grid full">
+        <div class="fld"><label>Descripción</label><textarea id="f_descripcion" placeholder="Descripción técnica, especificaciones..."></textarea></div>
+      </div>
+      <div class="form-grid">
+        <div class="fld"><label>Marca</label><input id="f_marca" placeholder="Samsung, TP-Link..."></div>
+        <div class="fld"><label>Modelo</label><input id="f_modelo" placeholder="Modelo"></div>
+      </div>
+      <div class="form-grid">
+        <div class="fld"><label>Referencia / Part#</label><input id="f_referencia" placeholder="SKU o referencia"></div>
+        <div class="fld"><label>Unidad</label>
+          <select id="f_unidad">
+            <option value="und">Unidad</option>
+            <option value="m">Metro</option>
+            <option value="rollo">Rollo</option>
+            <option value="caja">Caja</option>
+            <option value="kit">Kit</option>
+            <option value="par">Par</option>
+            <option value="juego">Juego</option>
+          </select>
+        </div>
+      </div>
+      <div style="border-top:1px solid var(--border);margin:14px 0;padding-top:14px;">
+        <div style="font-size:10px;letter-spacing:1.5px;color:var(--muted);margin-bottom:10px;">PRECIOS & STOCK</div>
+        <div class="form-grid">
+          <div class="fld"><label>Precio Compra ($)</label><input id="f_precio_compra" type="number" min="0" placeholder="0"></div>
+          <div class="fld"><label>Precio Venta ($)</label><input id="f_precio_venta" type="number" min="0" placeholder="0"></div>
+        </div>
+        <div class="form-grid">
+          <div class="fld"><label>Stock Actual</label><input id="f_stock" type="number" min="0" placeholder="0"></div>
+          <div class="fld"><label>Stock Mínimo</label><input id="f_stock_minimo" type="number" min="0" placeholder="5"></div>
+        </div>
+        <div class="form-grid">
+          <div class="fld"><label>Ubicación (bodega/estante)</label><input id="f_ubicacion" placeholder="Ej: Bodega A - Estante 2"></div>
+          <div class="fld"><label>Estado</label>
+            <select id="f_activo">
+              <option value="true">Activo</option>
+              <option value="false">Inactivo</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;padding-top:10px;border-top:1px solid var(--border);">
+        <button class="btn btn-o" id="btnCancelar">Cancelar</button>
+        <button class="btn btn-p" id="btnGuardar">GUARDAR</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/supabase.js"></script>
+<script src="../assets/auth.js"></script>
+<script src="../assets/theme.js"></script>
+<script>
+let _user=null, _componentes=[], _catActiva='all', _editId=null;
+
+const CATS = {
+  all:                  {label:'Todos',           icon:'📦'},
+  seguridad:            {label:'Seguridad',        icon:'🔒'},
+  computador:           {label:'Computadores',     icon:'💻'},
+  ups:                  {label:'UPS',              icon:'🔋'},
+  cableado_electrico:   {label:'Cab. Eléctrico',   icon:'⚡'},
+  cableado_estructurado:{label:'Cab. Estructurado',icon:'🌐'},
+  solar:                {label:'Solar',            icon:'☀️'},
+  otro:                 {label:'Otro',             icon:'🗂️'},
+};
+
+const CAT_COLORS = {
+  seguridad:'rgba(255,69,96,0.15)',
+  computador:'rgba(0,119,255,0.15)',
+  ups:'rgba(255,183,0,0.15)',
+  cableado_electrico:'rgba(255,120,0,0.15)',
+  cableado_estructurado:'rgba(0,180,180,0.15)',
+  solar:'rgba(255,220,0,0.15)',
+  otro:'rgba(100,110,130,0.15)',
+};
+const CAT_TEXT = {
+  seguridad:'var(--error)',computador:'var(--accent2)',ups:'var(--warn)',
+  cableado_electrico:'#ff7800',cableado_estructurado:'#00b4b4',
+  solar:'#ffd000',otro:'var(--muted)',
+};
+
+(async()=>{
+  _user = await initAuth('admin');
+  if(!_user) return;
+  await cargar();
+  renderCatTabs();
+  setupEvents();
+})();
+
+async function cargar(){
+  const {data,error} = await db.from('componentes').select('*').eq('activo',true).order('categoria').order('nombre');
+  if(error){ console.error(error); return; }
+  _componentes = data||[];
+  updateStats();
+  renderGrid();
+}
+
+function updateStats(){
+  document.getElementById('stTotal').textContent   = _componentes.length;
+  document.getElementById('stActivos').textContent  = _componentes.filter(c=>c.activo).length;
+  document.getElementById('stLow').textContent      = _componentes.filter(c=>c.stock>0&&c.stock<=c.stock_minimo).length;
+  document.getElementById('stOut').textContent      = _componentes.filter(c=>c.stock===0).length;
+}
+
+function renderCatTabs(){
+  const tabs = document.getElementById('catTabs');
+  tabs.innerHTML = Object.entries(CATS).map(([k,v])=>{
+    const count = k==='all' ? _componentes.length : _componentes.filter(c=>c.categoria===k).length;
+    return '<button class="cat-tab'+(k===_catActiva?' active':'')+'" data-cat="'+k+'">'+
+      v.icon+' '+v.label+'<span class="cat-count">'+count+'</span></button>';
+  }).join('');
+  tabs.querySelectorAll('.cat-tab').forEach(btn=>{
+    btn.addEventListener('click',()=>{ _catActiva=btn.dataset.cat; renderCatTabs(); renderGrid(); });
+  });
+}
+
+function renderGrid(){
+  const q    = document.getElementById('searchInput').value.toLowerCase();
+  const stF  = document.getElementById('filterStock').value;
+  let f = _componentes;
+  if(_catActiva!=='all') f=f.filter(c=>c.categoria===_catActiva);
+  if(q) f=f.filter(c=>(c.nombre+c.codigo+c.marca+c.modelo+c.referencia+c.descripcion).toLowerCase().includes(q));
+  if(stF==='ok')  f=f.filter(c=>c.stock>c.stock_minimo);
+  if(stF==='low') f=f.filter(c=>c.stock>0&&c.stock<=c.stock_minimo);
+  if(stF==='out') f=f.filter(c=>c.stock===0);
+
+  const grid = document.getElementById('compGrid');
+  if(!f.length){ grid.innerHTML='<div class="empty"><p>No hay componentes en esta categoría</p></div>'; return; }
+
+  grid.innerHTML = f.map(c=>{
+    const precio='$'+Math.round(c.precio_venta||0).toLocaleString('es-CO');
+    const stClass=c.stock===0?'stock-out':c.stock<=c.stock_minimo?'stock-low':'stock-ok';
+    const stLabel=c.stock===0?'Agotado':c.stock<=c.stock_minimo?'Stock bajo ('+c.stock+')':c.stock+' '+( c.unidad||'und');
+    const cat=CATS[c.categoria]||CATS.otro;
+    return '<div class="comp-card" data-id="'+c.id+'">'+
+      '<div class="comp-cat-badge" style="background:'+CAT_COLORS[c.categoria]+';color:'+CAT_TEXT[c.categoria]+'">'+cat.icon+' '+cat.label+'</div>'+
+      '<div class="comp-codigo">'+(c.codigo||'')+'</div>'+
+      '<div class="comp-nombre">'+c.nombre+'</div>'+
+      '<div class="comp-marca">'+(c.marca||'')+((c.modelo)?' · '+c.modelo:'')+'</div>'+
+      '<div class="comp-footer">'+
+        '<div class="comp-precio">'+precio+'</div>'+
+        '<span class="comp-stock '+stClass+'">'+stLabel+'</span>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+
+  document.querySelectorAll('.comp-card').forEach(card=>{
+    card.addEventListener('click',()=>abrirEditor(card.dataset.id));
+  });
+}
+
+function abrirEditor(id=null){
+  _editId=id;
+  const c=id?_componentes.find(x=>x.id===id):null;
+  document.getElementById('modalTitulo').textContent = c?'EDITAR COMPONENTE':'NUEVO COMPONENTE';
+  document.getElementById('btnEliminar').style.display = c?'inline-flex':'none';
+  document.getElementById('f_id').value          = c?.id||'';
+  document.getElementById('f_codigo').value       = c?.codigo||'';
+  document.getElementById('f_categoria').value    = c?.categoria||'seguridad';
+  document.getElementById('f_nombre').value       = c?.nombre||'';
+  document.getElementById('f_descripcion').value  = c?.descripcion||'';
+  document.getElementById('f_marca').value        = c?.marca||'';
+  document.getElementById('f_modelo').value       = c?.modelo||'';
+  document.getElementById('f_referencia').value   = c?.referencia||'';
+  document.getElementById('f_unidad').value       = c?.unidad||'und';
+  document.getElementById('f_precio_compra').value= c?.precio_compra||0;
+  document.getElementById('f_precio_venta').value = c?.precio_venta||0;
+  document.getElementById('f_stock').value        = c?.stock||0;
+  document.getElementById('f_stock_minimo').value = c?.stock_minimo||5;
+  document.getElementById('f_ubicacion').value    = c?.ubicacion||'';
+  document.getElementById('f_activo').value       = String(c?.activo!==false);
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+async function guardar(){
+  const nombre=document.getElementById('f_nombre').value.trim();
+  if(!nombre){ toast('El nombre es requerido','error'); return; }
+  const payload={
+    codigo:      document.getElementById('f_codigo').value.trim()||null,
+    categoria:   document.getElementById('f_categoria').value,
+    nombre,
+    descripcion: document.getElementById('f_descripcion').value.trim()||null,
+    marca:       document.getElementById('f_marca').value.trim()||null,
+    modelo:      document.getElementById('f_modelo').value.trim()||null,
+    referencia:  document.getElementById('f_referencia').value.trim()||null,
+    unidad:      document.getElementById('f_unidad').value,
+    precio_compra:Number(document.getElementById('f_precio_compra').value)||0,
+    precio_venta: Number(document.getElementById('f_precio_venta').value)||0,
+    stock:        Number(document.getElementById('f_stock').value)||0,
+    stock_minimo: Number(document.getElementById('f_stock_minimo').value)||0,
+    ubicacion:    document.getElementById('f_ubicacion').value.trim()||null,
+    activo:       document.getElementById('f_activo').value==='true',
+    updated_at:   new Date().toISOString(),
+  };
+  let error;
+  if(_editId){
+    ({error}=await db.from('componentes').update(payload).eq('id',_editId));
+  } else {
+    ({error}=await db.from('componentes').insert(payload));
+  }
+  if(error){ toast('Error: '+error.message,'error'); return; }
+  toast((_editId?'Actualizado':'Creado')+': '+nombre,'success');
+  document.getElementById('modalOverlay').classList.remove('open');
+  await cargar();
+  renderCatTabs();
+}
+
+async function eliminar(){
+  if(!_editId||!confirm('¿Eliminar este componente?')) return;
+  const {error}=await db.from('componentes').delete().eq('id',_editId);
+  if(error){ toast('Error: '+error.message,'error'); return; }
+  toast('Componente eliminado','success');
+  document.getElementById('modalOverlay').classList.remove('open');
+  await cargar();
+  renderCatTabs();
+}
+
+function setupEvents(){
+  document.getElementById('btnNuevo').addEventListener('click',()=>abrirEditor());
+  document.getElementById('btnGuardar').addEventListener('click',guardar);
+  document.getElementById('btnEliminar').addEventListener('click',eliminar);
+  document.getElementById('btnCerrar').addEventListener('click',()=>document.getElementById('modalOverlay').classList.remove('open'));
+  document.getElementById('btnCancelar').addEventListener('click',()=>document.getElementById('modalOverlay').classList.remove('open'));
+  document.getElementById('modalOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)document.getElementById('modalOverlay').classList.remove('open');});
+  document.getElementById('searchInput').addEventListener('input',renderGrid);
+  document.getElementById('filterStock').addEventListener('change',renderGrid);
+  document.getElementById('btnLogout')?.addEventListener('click',async()=>{await supabase.auth.signOut();window.location.href='../login.html';});
+  // Hamburger
+  const btn=document.getElementById('btnHamburger');
+  const sidebar=document.querySelector('.sidebar');
+  const overlay=document.getElementById('sidebarOverlay');
+  btn?.addEventListener('click',()=>{sidebar.classList.toggle('open');overlay.classList.toggle('open');});
+  overlay?.addEventListener('click',()=>{sidebar.classList.remove('open');overlay.classList.remove('open');});
+}
+
+function toast(msg,tipo='success'){
+  const t=document.createElement('div');
+  const c={success:'var(--success)',error:'var(--error)',info:'var(--accent2)',warn:'var(--warn)'};
+  t.style.cssText='position:fixed;bottom:24px;right:24px;z-index:9999;background:var(--surface);border:1px solid '+c[tipo]+';border-radius:10px;padding:12px 18px;box-shadow:0 8px 32px rgba(0,0,0,0.4);font-family:"DM Mono",monospace;font-size:12px;color:'+c[tipo]+';';
+  t.textContent=msg; document.body.appendChild(t);
+  setTimeout(()=>t.remove(),3000);
+}
+</script>
+</body>
+</html>
