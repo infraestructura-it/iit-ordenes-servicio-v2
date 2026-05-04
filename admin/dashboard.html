@@ -1135,10 +1135,23 @@ async function guardarProtocoloModal(protocolo, campos, ejecucion, ordenId) {
     }
 
     // Guardar respuestas
+    // Guardar respuestas con schema correcto
     for(const r of respuestas){
-      await db.from('protocolo_respuestas').upsert({
-        ejecucion_id:ejId, campo_id:r.campo_id, valor:r.valor, tipo:r.tipo
-      },{onConflict:'ejecucion_id,campo_id'});
+      await db.from('protocolo_respuestas').delete()
+        .eq('ejecucion_id',ejId).eq('campo_id',r.campo_id);
+
+      const payload = {ejecucion_id:ejId, campo_id:r.campo_id, tipo:r.tipo, valor:r.valor};
+      switch(r.tipo){
+        case 'texto':      payload.valor_texto   = r.valor; break;
+        case 'numero':
+        case 'rango':      payload.valor_numero  = parseFloat(r.valor)||0; break;
+        case 'si_no':      payload.valor_boolean = r.valor==='si'; break;
+        case 'lista':      payload.valor_opcion  = r.valor; break;
+        case 'fecha_hora': payload.valor_fecha   = r.valor; break;
+        case 'foto':
+        case 'firma':      payload.archivo_url   = r.valor; break;
+      }
+      await db.from('protocolo_respuestas').insert(payload);
     }
 
     const todosReq = campos.filter(c=>c.requerido).every(c=>respuestas.find(r=>r.campo_id===c.id));

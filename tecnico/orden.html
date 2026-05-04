@@ -836,25 +836,29 @@ async function guardarProtocolo(protocolo, campos, ejecucion) {
       _ejecucionId = ejecucionId;
     }
 
-    // Guardar respuestas — delete + insert para evitar problemas de constraint
+    // Guardar respuestas — usar columnas correctas del schema
     if(respuestas.length) {
-      // Eliminar respuestas anteriores de este campo
       for(const r of respuestas) {
+        // Eliminar respuesta anterior
         await db.from('protocolo_respuestas')
-          .delete()
-          .eq('ejecucion_id', ejecucionId)
-          .eq('campo_id', r.campo_id);
+          .delete().eq('ejecucion_id', ejecucionId).eq('campo_id', r.campo_id);
+
+        // Construir payload según tipo
+        const payload = { ejecucion_id: ejecucionId, campo_id: r.campo_id, tipo: r.tipo, valor: r.valor };
+        switch(r.tipo) {
+          case 'texto':       payload.valor_texto   = r.valor; break;
+          case 'numero':
+          case 'rango':       payload.valor_numero  = parseFloat(r.valor)||0; break;
+          case 'si_no':       payload.valor_boolean = r.valor === 'si'; break;
+          case 'lista':       payload.valor_opcion  = r.valor; break;
+          case 'fecha_hora':  payload.valor_fecha   = r.valor; break;
+          case 'foto':
+          case 'firma':       payload.archivo_url   = r.valor; break;
+        }
+
+        const {error:errR} = await db.from('protocolo_respuestas').insert(payload);
+        if(errR) console.warn('Error respuesta campo', r.campo_id, errR.message);
       }
-      // Insertar nuevas
-      const {error:errR} = await db.from('protocolo_respuestas').insert(
-        respuestas.map(r=>({
-          ejecucion_id: ejecucionId,
-          campo_id:     r.campo_id,
-          valor:        r.valor,
-          tipo:         r.tipo
-        }))
-      );
-      if(errR) console.warn('Error respuestas:', errR.message);
     }
 
     // Si todos los campos requeridos completados → marcar como completado

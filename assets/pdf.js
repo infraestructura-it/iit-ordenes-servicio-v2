@@ -206,7 +206,19 @@ async function exportarPDFOrden(orden, historial=[], protocolo=null, logoB64=nul
     y+=11;
 
     const respMap={};
-    (protocolo.respuestas||[]).forEach(r=>respMap[r.campo_id]=r.valor);
+    (protocolo.respuestas||[]).forEach(r=>{
+      // Leer el valor de la columna correcta según tipo
+      let val = r.valor;
+      if(!val) {
+        if(r.valor_texto)   val = r.valor_texto;
+        else if(r.valor_numero!==null&&r.valor_numero!==undefined) val = String(r.valor_numero);
+        else if(r.valor_boolean!==null&&r.valor_boolean!==undefined) val = r.valor_boolean?'si':'no';
+        else if(r.valor_opcion) val = r.valor_opcion;
+        else if(r.valor_fecha)  val = new Date(r.valor_fecha).toLocaleDateString('es-CO');
+        else if(r.archivo_url)  val = r.archivo_url;
+      }
+      respMap[r.campo_id] = val;
+    });
 
     const tipoL={texto:'Texto',numero:'Núm.',si_no:'Sí/No',lista:'Lista',rango:'Rango',foto:'Foto',firma:'Firma',fecha_hora:'Fecha'};
 
