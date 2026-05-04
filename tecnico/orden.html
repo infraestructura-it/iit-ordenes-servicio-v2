@@ -810,16 +810,23 @@ async function guardarProtocolo(protocolo, campos, ejecucion) {
     // Crear o actualizar ejecución
     let ejecucionId = _ejecucionId;
     if(!ejecucionId) {
-      const {data:ej,error} = await db.from('protocolo_ejecucion').insert({
-        orden_id:    _orden.id,
-        protocolo_id:protocolo.id,
-        tecnico_id:  _tecnico?.id,
-        status:      'en_progreso',
-        fecha_inicio:new Date().toISOString()
-      }).select().single();
-      if(error) throw error;
-      ejecucionId = ej.id;
-      _ejecucionId = ej.id;
+      // Buscar primero — evitar 409
+      const {data:ejArr} = await db.from('protocolo_ejecucion')
+        .select('id').eq('orden_id',_orden.id).eq('protocolo_id',protocolo.id).limit(1);
+      if(ejArr?.[0]) {
+        ejecucionId = ejArr[0].id;
+      } else {
+        const {data:ej,error} = await db.from('protocolo_ejecucion').insert({
+          orden_id:    _orden.id,
+          protocolo_id:protocolo.id,
+          tecnico_id:  _tecnico?.id||null,
+          status:      'en_progreso',
+          fecha_inicio:new Date().toISOString()
+        }).select('id').single();
+        if(error) throw error;
+        ejecucionId = ej.id;
+      }
+      _ejecucionId = ejecucionId;
     }
 
     // Guardar respuestas
