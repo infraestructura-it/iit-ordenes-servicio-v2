@@ -57,6 +57,7 @@ create table if not exists public.cotizaciones (
 create table if not exists public.cotizacion_items (
   id              uuid primary key default gen_random_uuid(),
   cotizacion_id   uuid references public.cotizaciones(id) on delete cascade,
+  componente_id   uuid references public.componentes(id),
   orden           int default 1,
   referencia      text,
   descripcion     text not null,
@@ -69,6 +70,8 @@ create table if not exists public.cotizacion_items (
   ) stored,
   created_at      timestamp with time zone default now()
 );
+create index if not exists idx_cotizacion_items_componente
+  on public.cotizacion_items(componente_id);
 
 -- Historial de cambios de cotización
 create table if not exists public.historial_cotizaciones (

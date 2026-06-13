@@ -482,6 +482,8 @@ textarea{resize:vertical;min-height:60px;}
   </div>
 </div>
 
+<datalist id="componentesList"></datalist>
+
 <script src="../assets/supabase.js"></script>
 <script src="../assets/auth.js"></script>
 <script>
@@ -493,9 +495,22 @@ let _user=null, _cotizaciones=[], _clientes=[], _ordenes=[], _editId=null, _item
   if(!_user) return;
   document.getElementById('c_asesor').value = _user.nombre||'';
   document.getElementById('c_fecha').value = new Date().toISOString().slice(0,10);
-  await Promise.all([loadCotizaciones(), loadClientes(), loadOrdenes()]);
+  await Promise.all([loadCotizaciones(), loadClientes(), loadOrdenes(), loadComponentes()]);
   setupEvents();
 })();
+
+// ── COMPONENTES (catalogo para autocompletar items) ────────────
+let _componentes = [];
+async function loadComponentes(){
+  const {data} = await db.from('componentes')
+    .select('id,codigo,nombre,descripcion,referencia,precio_venta,unidad')
+    .eq('activo',true).order('nombre');
+  _componentes = data||[];
+  const dl = document.getElementById('componentesList');
+  if(dl) dl.innerHTML = _componentes.map(c=>
+    '<option value="'+(c.codigo||c.nombre)+'">'+c.nombre+(c.referencia?' — '+c.referencia:'')+' — $'+Math.round(c.precio_venta||0).toLocaleString('es-CO')+'</option>'
+  ).join('');
+}
 
 // ── CARGAR DATOS ─────────────────────────────────────────────
 async function loadCotizaciones(){
@@ -631,8 +646,11 @@ function agregarItemUI(item=null){
   const n = _itemCounter;
   const div = document.createElement('div');
   div.className='item-row'; div.dataset.n=n;
+  div.dataset.componenteId = item?.componente_id || '';
 
-  const ref   = item?.referencia||'';
+  const ref   = item?.componente_id
+    ? (_componentes.find(c=>c.id===item.componente_id)?.codigo || item?.referencia || '')
+    : (item?.referencia||'');
   const desc  = item?.descripcion||'';
   const cant  = item?.cantidad??1;
   const vunit = item?.valor_unitario??0;
@@ -642,7 +660,7 @@ function agregarItemUI(item=null){
 
   div.innerHTML =
     '<div class="item-num">'+n+'</div>' +
-    '<input type="text" class="i-ref" placeholder="REF-001" value="'+ref+'">' +
+    '<input type="text" class="i-ref" list="componentesList" placeholder="REF / codigo" value="'+ref+'">' +
     '<input type="text" class="i-desc" placeholder="Descripcion del producto o servicio..." value="'+desc+'">' +
     '<input type="number" class="i-cant" value="'+cant+'" min="0" step="0.01">' +
     '<input type="number" class="i-vunit" value="'+vunit+'" min="0">' +
@@ -652,6 +670,21 @@ function agregarItemUI(item=null){
     '<button class="btn-del-item" data-n="'+n+'">&#128465;</button>';
 
   document.getElementById('itemsList').appendChild(div);
+
+  // Autocompletar al elegir un componente del datalist (por codigo o nombre)
+  div.querySelector('.i-ref').addEventListener('change', e=>{
+    const val = e.target.value.trim();
+    const comp = _componentes.find(c=>(c.codigo||c.nombre)===val);
+    if(comp){
+      div.dataset.componenteId = comp.id;
+      div.querySelector('.i-desc').value  = comp.nombre + (comp.descripcion?' — '+comp.descripcion:'');
+      div.querySelector('.i-vunit').value = comp.precio_venta||0;
+      e.target.value = comp.codigo || comp.referencia || comp.nombre;
+      actualizarItemTotal(div); calcularTotales();
+    } else {
+      div.dataset.componenteId = '';
+    }
+  });
 
   div.querySelectorAll('.i-cant,.i-vunit,.i-dpct,.i-iva').forEach(inp=>{
     inp.addEventListener('input',()=>{ actualizarItemTotal(div); calcularTotales(); });
@@ -709,6 +742,7 @@ function leerItems(){
     const iva   = parseFloat(div.querySelector('.i-iva').value)||0;
     return {
       orden: i+1,
+      componente_id: div.dataset.componenteId || null,
       referencia:    div.querySelector('.i-ref').value.trim()||null,
       descripcion:   div.querySelector('.i-desc').value.trim(),
       cantidad:      cant,
