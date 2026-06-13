@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IIT — Componentes</title>
+<title>IIT — Inventario de Equipos</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -29,7 +29,7 @@ body{font-family:"DM Mono",monospace;background:var(--bg);color:var(--text);disp
 
 .main{padding:24px;overflow-y:auto;}
 
-/* CATEGORÍAS */
+/* ESTADO TABS */
 .cat-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;}
 .cat-tab{padding:8px 16px;border-radius:20px;border:1px solid var(--border);background:none;font-family:"DM Mono",monospace;font-size:11px;color:var(--muted);cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:6px;}
 .cat-tab:hover{border-color:var(--accent2);color:var(--accent2);}
@@ -44,12 +44,14 @@ body{font-family:"DM Mono",monospace;background:var(--bg);color:var(--text);disp
 .comp-codigo{font-size:10px;color:var(--muted);margin-bottom:6px;letter-spacing:1px;}
 .comp-nombre{font-family:"Syne",sans-serif;font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;line-height:1.3;}
 .comp-marca{font-size:11px;color:var(--muted);margin-bottom:10px;}
-.comp-footer{display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1px solid var(--border);}
-.comp-precio{font-family:"Syne",sans-serif;font-size:15px;font-weight:800;color:var(--success);}
+.comp-footer{display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1px solid var(--border);gap:8px;}
 .comp-stock{font-size:11px;padding:4px 8px;border-radius:6px;}
-.stock-ok{background:rgba(0,229,160,0.1);color:var(--success);}
-.stock-low{background:rgba(255,183,0,0.1);color:var(--warn);}
-.stock-out{background:rgba(255,69,96,0.1);color:var(--error);}
+.estado-activo{background:rgba(0,229,160,0.1);color:var(--success);}
+.estado-garantia{background:rgba(0,119,255,0.1);color:var(--accent2);}
+.estado-en_reparacion{background:rgba(255,183,0,0.1);color:var(--warn);}
+.estado-retirado{background:rgba(255,69,96,0.1);color:var(--error);}
+.btn-mini{background:none;border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;}
+.btn-mini:hover{border-color:var(--accent2);color:var(--accent2);}
 
 /* MODAL */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:200;overflow-y:auto;padding:20px;}
@@ -85,7 +87,7 @@ body{font-family:"DM Mono",monospace;background:var(--bg);color:var(--text);disp
 .stat-val{font-family:"Syne",sans-serif;font-size:22px;font-weight:800;color:var(--accent2);}
 .stat-lbl{font-size:9px;letter-spacing:1.5px;color:var(--muted);margin-top:3px;}
 
-.empty{text-align:center;padding:60px 20px;color:var(--muted);}
+.empty{text-align:center;padding:60px 20px;color:var(--muted);grid-column:1/-1;}
 
 .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:19;}
 @media(max-width:768px){
@@ -119,8 +121,8 @@ body{font-family:"DM Mono",monospace;background:var(--bg);color:var(--text);disp
   <a class="nav-item" href="usuarios.html"><span class="nav-icon">👥</span>Usuarios</a>
   <a class="nav-item" href="protocolos.html"><span class="nav-icon">🔧</span>Protocolos</a>
   <a class="nav-item" href="cotizaciones.html"><span class="nav-icon">💰</span>Cotizaciones</a>
-  <a class="nav-item active" href="componentes.html"><span class="nav-icon">🔌</span>Componentes</a>
-  <a class="nav-item" href="inventario.html"><span class="nav-icon">🗄️</span>Inventario</a>
+  <a class="nav-item" href="componentes.html"><span class="nav-icon">🔌</span>Componentes</a>
+  <a class="nav-item active" href="inventario.html"><span class="nav-icon">🗄️</span>Inventario</a>
   <a class="nav-item" href="ia.html"><span class="nav-icon">⚡</span>Centro IA</a>
   <div class="nav-section">SISTEMA</div>
   <a class="nav-item" href="../perfil.html"><span class="nav-icon">👤</span>Perfil</a>
@@ -131,32 +133,29 @@ body{font-family:"DM Mono",monospace;background:var(--bg);color:var(--text);disp
 <div class="main">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
     <div>
-      <div style="font-family:Syne,sans-serif;font-size:20px;font-weight:800;letter-spacing:1px;">BASE DE COMPONENTES</div>
-      <div style="font-size:11px;color:var(--muted);margin-top:2px;">Insumos, materiales y equipos por categoría</div>
+      <div style="font-family:Syne,sans-serif;font-size:20px;font-weight:800;letter-spacing:1px;">INVENTARIO DE EQUIPOS</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px;">Equipos instalados por cliente — activos, garantías, historial</div>
     </div>
-    <button class="btn btn-p" id="btnNuevo">+ Nuevo Componente</button>
+    <button class="btn btn-p" id="btnNuevo">+ Nuevo Equipo</button>
   </div>
 
   <!-- STATS -->
   <div class="stats-row">
     <div class="stat-card"><div class="stat-val" id="stTotal">0</div><div class="stat-lbl">TOTAL</div></div>
     <div class="stat-card"><div class="stat-val" id="stActivos" style="color:var(--success);">0</div><div class="stat-lbl">ACTIVOS</div></div>
-    <div class="stat-card"><div class="stat-val" id="stLow" style="color:var(--warn);">0</div><div class="stat-lbl">STOCK BAJO</div></div>
-    <div class="stat-card"><div class="stat-val" id="stOut" style="color:var(--error);">0</div><div class="stat-lbl">AGOTADOS</div></div>
+    <div class="stat-card"><div class="stat-val" id="stGarantia" style="color:var(--accent2);">0</div><div class="stat-lbl">EN GARANTIA</div></div>
+    <div class="stat-card"><div class="stat-val" id="stReparacion" style="color:var(--warn);">0</div><div class="stat-lbl">EN REPARACION</div></div>
   </div>
 
   <!-- FILTROS -->
   <div class="controls">
-    <input class="search-input" id="searchInput" placeholder="Buscar por nombre, código, marca...">
-    <select class="search-input" style="flex:0 0 auto;width:auto;" id="filterStock">
-      <option value="all">Todos los stocks</option>
-      <option value="ok">Stock OK</option>
-      <option value="low">Stock bajo</option>
-      <option value="out">Agotados</option>
+    <select class="search-input" style="flex:0 0 auto;width:auto;min-width:220px;" id="filterCliente">
+      <option value="">— Todos los clientes —</option>
     </select>
+    <input class="search-input" id="searchInput" placeholder="Buscar por tipo, marca, modelo, serie...">
   </div>
 
-  <!-- CATEGORÍAS -->
+  <!-- ESTADO TABS -->
   <div class="cat-tabs" id="catTabs"></div>
 
   <!-- GRID -->
@@ -169,7 +168,7 @@ body{font-family:"DM Mono",monospace;background:var(--bg);color:var(--text);disp
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
     <div class="mhead">
-      <h2 id="modalTitulo">NUEVO COMPONENTE</h2>
+      <h2 id="modalTitulo">NUEVO EQUIPO</h2>
       <div style="display:flex;gap:8px;">
         <button class="btn btn-danger btn-sm" id="btnEliminar" style="display:none;">✕ Eliminar</button>
         <button class="btn btn-o btn-sm" id="btnCerrar">CERRAR</button>
@@ -177,63 +176,41 @@ body{font-family:"DM Mono",monospace;background:var(--bg);color:var(--text);disp
     </div>
     <div class="mbody">
       <input type="hidden" id="f_id">
-      <div class="form-grid">
-        <div class="fld"><label>Código</label><input id="f_codigo" placeholder="EJ: SEG-001"></div>
-        <div class="fld"><label>Categoría *</label>
-          <select id="f_categoria">
-            <option value="seguridad">🔒 Accesorios de Seguridad</option>
-            <option value="computador">💻 Accesorios de Computador</option>
-            <option value="ups">🔋 Accesorios de UPS</option>
-            <option value="cableado_electrico">⚡ Cableado Eléctrico</option>
-            <option value="cableado_estructurado">🌐 Cableado Estructurado</option>
-            <option value="solar">☀️ Sistemas Solares</option>
-            <option value="otro">📦 Otro</option>
-          </select>
+      <div class="form-grid full">
+        <div class="fld"><label>Cliente *</label>
+          <select id="f_cliente"><option value="">— Seleccionar cliente —</option></select>
         </div>
       </div>
       <div class="form-grid full">
-        <div class="fld"><label>Nombre *</label><input id="f_nombre" placeholder="Nombre del componente"></div>
-      </div>
-      <div class="form-grid full">
-        <div class="fld"><label>Descripción</label><textarea id="f_descripcion" placeholder="Descripción técnica, especificaciones..."></textarea></div>
+        <div class="fld"><label>Componente del catálogo (opcional)</label>
+          <select id="f_componente"><option value="">— Ninguno / equipo de terceros —</option></select>
+        </div>
       </div>
       <div class="form-grid">
-        <div class="fld"><label>Marca</label><input id="f_marca" placeholder="Samsung, TP-Link..."></div>
+        <div class="fld"><label>Tipo de equipo *</label><input id="f_tipo" placeholder="Ej: Cámara IP, UPS, Switch..."></div>
+        <div class="fld"><label>Estado</label>
+          <select id="f_estado">
+            <option value="activo">Activo</option>
+            <option value="garantia">En garantía</option>
+            <option value="en_reparacion">En reparación</option>
+            <option value="retirado">Retirado</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="fld"><label>Marca</label><input id="f_marca" placeholder="Marca"></div>
         <div class="fld"><label>Modelo</label><input id="f_modelo" placeholder="Modelo"></div>
       </div>
       <div class="form-grid">
-        <div class="fld"><label>Referencia / Part#</label><input id="f_referencia" placeholder="SKU o referencia"></div>
-        <div class="fld"><label>Unidad</label>
-          <select id="f_unidad">
-            <option value="und">Unidad</option>
-            <option value="m">Metro</option>
-            <option value="rollo">Rollo</option>
-            <option value="caja">Caja</option>
-            <option value="kit">Kit</option>
-            <option value="par">Par</option>
-            <option value="juego">Juego</option>
-          </select>
-        </div>
+        <div class="fld"><label>Número de serie</label><input id="f_serie" placeholder="S/N"></div>
+        <div class="fld"><label>Ubicación física</label><input id="f_ubicacion" placeholder="Ej: Recepción, Bodega 2..."></div>
       </div>
-      <div style="border-top:1px solid var(--border);margin:14px 0;padding-top:14px;">
-        <div style="font-size:10px;letter-spacing:1.5px;color:var(--muted);margin-bottom:10px;">PRECIOS & STOCK</div>
-        <div class="form-grid">
-          <div class="fld"><label>Precio Compra ($)</label><input id="f_precio_compra" type="number" min="0" placeholder="0"></div>
-          <div class="fld"><label>Precio Venta ($)</label><input id="f_precio_venta" type="number" min="0" placeholder="0"></div>
-        </div>
-        <div class="form-grid">
-          <div class="fld"><label>Stock Actual</label><input id="f_stock" type="number" min="0" placeholder="0"></div>
-          <div class="fld"><label>Stock Mínimo</label><input id="f_stock_minimo" type="number" min="0" placeholder="5"></div>
-        </div>
-        <div class="form-grid">
-          <div class="fld"><label>Ubicación (bodega/estante)</label><input id="f_ubicacion" placeholder="Ej: Bodega A - Estante 2"></div>
-          <div class="fld"><label>Estado</label>
-            <select id="f_activo">
-              <option value="true">Activo</option>
-              <option value="false">Inactivo</option>
-            </select>
-          </div>
-        </div>
+      <div class="form-grid">
+        <div class="fld"><label>Fecha de instalación</label><input id="f_fecha" type="date"></div>
+        <div class="fld"><label>Comprobante / Factura (URL)</label><input id="f_factura" placeholder="https://..."></div>
+      </div>
+      <div class="form-grid full">
+        <div class="fld"><label>Notas</label><textarea id="f_notas" placeholder="Observaciones, historial relevante..."></textarea></div>
       </div>
       <div style="display:flex;gap:10px;justify-content:flex-end;padding-top:10px;border-top:1px solid var(--border);">
         <button class="btn btn-o" id="btnCancelar">Cancelar</button>
@@ -247,168 +224,207 @@ body{font-family:"DM Mono",monospace;background:var(--bg);color:var(--text);disp
 <script src="../assets/auth.js"></script>
 <script src="../assets/theme.js"></script>
 <script>
-let _user=null, _componentes=[], _catActiva='all', _editId=null;
+let _user=null, _equipos=[], _clientes=[], _componentes=[], _estadoActivo='all', _editId=null;
 
-const CATS = {
-  all:                  {label:'Todos',           icon:'📦'},
-  seguridad:            {label:'Seguridad',        icon:'🔒'},
-  computador:           {label:'Computadores',     icon:'💻'},
-  ups:                  {label:'UPS',              icon:'🔋'},
-  cableado_electrico:   {label:'Cab. Eléctrico',   icon:'⚡'},
-  cableado_estructurado:{label:'Cab. Estructurado',icon:'🌐'},
-  solar:                {label:'Solar',            icon:'☀️'},
-  otro:                 {label:'Otro',             icon:'🗂️'},
-};
-
-const CAT_COLORS = {
-  seguridad:'rgba(255,69,96,0.15)',
-  computador:'rgba(0,119,255,0.15)',
-  ups:'rgba(255,183,0,0.15)',
-  cableado_electrico:'rgba(255,120,0,0.15)',
-  cableado_estructurado:'rgba(0,180,180,0.15)',
-  solar:'rgba(255,220,0,0.15)',
-  otro:'rgba(100,110,130,0.15)',
-};
-const CAT_TEXT = {
-  seguridad:'var(--error)',computador:'var(--accent2)',ups:'var(--warn)',
-  cableado_electrico:'#ff7800',cableado_estructurado:'#00b4b4',
-  solar:'#ffd000',otro:'var(--muted)',
+const ESTADOS = {
+  all:           {label:'Todos',          icon:'🗄️'},
+  activo:        {label:'Activos',        icon:'✅'},
+  garantia:      {label:'En garantía',    icon:'🛡️'},
+  en_reparacion: {label:'En reparación',  icon:'🔧'},
+  retirado:      {label:'Retirados',      icon:'🚫'},
 };
 
 (async()=>{
   _user = await initAuth('admin');
   if(!_user) return;
+  await Promise.all([loadClientes(), loadComponentes()]);
   await cargar();
-  renderCatTabs();
+  renderEstadoTabs();
   setupEvents();
 })();
 
-async function cargar(){
-  const {data,error} = await db.from('componentes').select('*').eq('activo',true).order('categoria').order('nombre');
-  if(error){ console.error(error); return; }
+async function loadClientes(){
+  const {data:cls} = await db.from('clientes').select('id,empresa,usuario_id');
+  const {data:usrs} = await db.from('usuarios').select('id,nombre');
+  const usrMap={}; (usrs||[]).forEach(u=>usrMap[u.id]=u);
+  _clientes = (cls||[]).map(c=>({...c, nombre:usrMap[c.usuario_id]?.nombre||''}));
+  const opts = '<option value="">— Seleccionar cliente —</option>' +
+    _clientes.map(c=>'<option value="'+c.id+'">'+(c.empresa||c.nombre||'Sin nombre')+'</option>').join('');
+  document.getElementById('f_cliente').innerHTML = opts;
+  document.getElementById('filterCliente').innerHTML =
+    '<option value="">— Todos los clientes —</option>' +
+    _clientes.map(c=>'<option value="'+c.id+'">'+(c.empresa||c.nombre||'Sin nombre')+'</option>').join('');
+}
+
+async function loadComponentes(){
+  const {data} = await db.from('componentes').select('id,codigo,nombre,marca,modelo,categoria').eq('activo',true).order('nombre');
   _componentes = data||[];
+  document.getElementById('f_componente').innerHTML =
+    '<option value="">— Ninguno / equipo de terceros —</option>' +
+    _componentes.map(c=>'<option value="'+c.id+'">'+c.nombre+(c.marca?' — '+c.marca:'')+(c.modelo?' '+c.modelo:'')+'</option>').join('');
+}
+
+async function cargar(){
+  const {data,error} = await db.from('equipos_cliente')
+    .select('*, clientes(empresa), componentes(nombre,marca,modelo,categoria)')
+    .order('created_at',{ascending:false});
+  if(error){ console.error(error); toast('Error cargando inventario: '+error.message,'error'); return; }
+  _equipos = data||[];
   updateStats();
   renderGrid();
 }
 
 function updateStats(){
-  document.getElementById('stTotal').textContent   = _componentes.length;
-  document.getElementById('stActivos').textContent  = _componentes.filter(c=>c.activo).length;
-  document.getElementById('stLow').textContent      = _componentes.filter(c=>c.stock>0&&c.stock<=c.stock_minimo).length;
-  document.getElementById('stOut').textContent      = _componentes.filter(c=>c.stock===0).length;
+  document.getElementById('stTotal').textContent       = _equipos.length;
+  document.getElementById('stActivos').textContent     = _equipos.filter(e=>e.estado==='activo').length;
+  document.getElementById('stGarantia').textContent    = _equipos.filter(e=>e.estado==='garantia').length;
+  document.getElementById('stReparacion').textContent  = _equipos.filter(e=>e.estado==='en_reparacion').length;
 }
 
-function renderCatTabs(){
+function renderEstadoTabs(){
   const tabs = document.getElementById('catTabs');
-  tabs.innerHTML = Object.entries(CATS).map(([k,v])=>{
-    const count = k==='all' ? _componentes.length : _componentes.filter(c=>c.categoria===k).length;
-    return '<button class="cat-tab'+(k===_catActiva?' active':'')+'" data-cat="'+k+'">'+
+  tabs.innerHTML = Object.entries(ESTADOS).map(([k,v])=>{
+    const count = k==='all' ? _equipos.length : _equipos.filter(e=>e.estado===k).length;
+    return '<button class="cat-tab'+(k===_estadoActivo?' active':'')+'" data-estado="'+k+'">'+
       v.icon+' '+v.label+'<span class="cat-count">'+count+'</span></button>';
   }).join('');
   tabs.querySelectorAll('.cat-tab').forEach(btn=>{
-    btn.addEventListener('click',()=>{ _catActiva=btn.dataset.cat; renderCatTabs(); renderGrid(); });
+    btn.addEventListener('click',()=>{ _estadoActivo=btn.dataset.estado; renderEstadoTabs(); renderGrid(); });
   });
 }
 
 function renderGrid(){
-  const q    = document.getElementById('searchInput').value.toLowerCase();
-  const stF  = document.getElementById('filterStock').value;
-  let f = _componentes;
-  if(_catActiva!=='all') f=f.filter(c=>c.categoria===_catActiva);
-  if(q) f=f.filter(c=>(c.nombre+c.codigo+c.marca+c.modelo+c.referencia+c.descripcion).toLowerCase().includes(q));
-  if(stF==='ok')  f=f.filter(c=>c.stock>c.stock_minimo);
-  if(stF==='low') f=f.filter(c=>c.stock>0&&c.stock<=c.stock_minimo);
-  if(stF==='out') f=f.filter(c=>c.stock===0);
+  const q   = document.getElementById('searchInput').value.toLowerCase();
+  const clF = document.getElementById('filterCliente').value;
+  let f = _equipos;
+  if(_estadoActivo!=='all') f=f.filter(e=>e.estado===_estadoActivo);
+  if(clF) f=f.filter(e=>e.cliente_id===clF);
+  if(q) f=f.filter(e=>(e.tipo_equipo+' '+(e.marca||'')+' '+(e.modelo||'')+' '+(e.numero_serie||'')).toLowerCase().includes(q));
 
   const grid = document.getElementById('compGrid');
-  if(!f.length){ grid.innerHTML='<div class="empty"><p>No hay componentes en esta categoría</p></div>'; return; }
+  if(!f.length){ grid.innerHTML='<div class="empty"><p>No hay equipos en esta vista</p></div>'; return; }
 
-  grid.innerHTML = f.map(c=>{
-    const precio='$'+Math.round(c.precio_venta||0).toLocaleString('es-CO');
-    const stClass=c.stock===0?'stock-out':c.stock<=c.stock_minimo?'stock-low':'stock-ok';
-    const stLabel=c.stock===0?'Agotado':c.stock<=c.stock_minimo?'Stock bajo ('+c.stock+')':c.stock+' '+( c.unidad||'und');
-    const cat=CATS[c.categoria]||CATS.otro;
-    return '<div class="comp-card" data-id="'+c.id+'">'+
-      '<div class="comp-cat-badge" style="background:'+CAT_COLORS[c.categoria]+';color:'+CAT_TEXT[c.categoria]+'">'+cat.icon+' '+cat.label+'</div>'+
-      '<div class="comp-codigo">'+(c.codigo||'')+'</div>'+
-      '<div class="comp-nombre">'+c.nombre+'</div>'+
-      '<div class="comp-marca">'+(c.marca||'')+((c.modelo)?' · '+c.modelo:'')+'</div>'+
+  grid.innerHTML = f.map(e=>{
+    const est = ESTADOS[e.estado]||ESTADOS.activo;
+    const empresa = e.clientes?.empresa || 'Sin cliente';
+    const marcaModelo = [e.marca,e.modelo].filter(Boolean).join(' ');
+    return '<div class="comp-card" data-id="'+e.id+'">'+
+      '<div class="comp-cat-badge estado-'+e.estado+'">'+est.icon+' '+est.label+'</div>'+
+      '<div class="comp-codigo">'+empresa+'</div>'+
+      '<div class="comp-nombre">'+e.tipo_equipo+'</div>'+
+      '<div class="comp-marca">'+(marcaModelo||'—')+(e.numero_serie?' · S/N '+e.numero_serie:'')+'</div>'+
       '<div class="comp-footer">'+
-        '<div class="comp-precio">'+precio+'</div>'+
-        '<span class="comp-stock '+stClass+'">'+stLabel+'</span>'+
+        '<div style="font-size:10px;color:var(--muted);">'+(e.ubicacion||'Sin ubicación')+'</div>'+
+        '<button class="btn-mini" data-crear-orden="'+e.id+'">+ Orden</button>'+
       '</div>'+
     '</div>';
   }).join('');
 
   document.querySelectorAll('.comp-card').forEach(card=>{
-    card.addEventListener('click',()=>abrirEditor(card.dataset.id));
+    card.addEventListener('click',e=>{
+      if(e.target.closest('[data-crear-orden]')) return;
+      abrirEditor(card.dataset.id);
+    });
+  });
+  document.querySelectorAll('[data-crear-orden]').forEach(btn=>{
+    btn.addEventListener('click',e=>{ e.stopPropagation(); crearOrdenDesdeEquipo(btn.dataset.crearOrden); });
   });
 }
 
 function abrirEditor(id=null){
   _editId=id;
-  const c=id?_componentes.find(x=>x.id===id):null;
-  document.getElementById('modalTitulo').textContent = c?'EDITAR COMPONENTE':'NUEVO COMPONENTE';
-  document.getElementById('btnEliminar').style.display = c?'inline-flex':'none';
-  document.getElementById('f_id').value          = c?.id||'';
-  document.getElementById('f_codigo').value       = c?.codigo||'';
-  document.getElementById('f_categoria').value    = c?.categoria||'seguridad';
-  document.getElementById('f_nombre').value       = c?.nombre||'';
-  document.getElementById('f_descripcion').value  = c?.descripcion||'';
-  document.getElementById('f_marca').value        = c?.marca||'';
-  document.getElementById('f_modelo').value       = c?.modelo||'';
-  document.getElementById('f_referencia').value   = c?.referencia||'';
-  document.getElementById('f_unidad').value       = c?.unidad||'und';
-  document.getElementById('f_precio_compra').value= c?.precio_compra||0;
-  document.getElementById('f_precio_venta').value = c?.precio_venta||0;
-  document.getElementById('f_stock').value        = c?.stock||0;
-  document.getElementById('f_stock_minimo').value = c?.stock_minimo||5;
-  document.getElementById('f_ubicacion').value    = c?.ubicacion||'';
-  document.getElementById('f_activo').value       = String(c?.activo!==false);
+  const e=id?_equipos.find(x=>x.id===id):null;
+  document.getElementById('modalTitulo').textContent = e?'EDITAR EQUIPO':'NUEVO EQUIPO';
+  document.getElementById('btnEliminar').style.display = e?'inline-flex':'none';
+  document.getElementById('f_id').value        = e?.id||'';
+  document.getElementById('f_cliente').value    = e?.cliente_id||'';
+  document.getElementById('f_componente').value= e?.componente_id||'';
+  document.getElementById('f_tipo').value      = e?.tipo_equipo||'';
+  document.getElementById('f_estado').value    = e?.estado||'activo';
+  document.getElementById('f_marca').value     = e?.marca||'';
+  document.getElementById('f_modelo').value    = e?.modelo||'';
+  document.getElementById('f_serie').value     = e?.numero_serie||'';
+  document.getElementById('f_ubicacion').value = e?.ubicacion||'';
+  document.getElementById('f_fecha').value     = e?.fecha_instalacion||'';
+  document.getElementById('f_factura').value   = e?.factura_url||'';
+  document.getElementById('f_notas').value     = e?.notas||'';
   document.getElementById('modalOverlay').classList.add('open');
 }
 
+// Autocompletar marca/modelo al elegir componente del catalogo
+document.addEventListener('change',e=>{
+  if(e.target?.id!=='f_componente') return;
+  const comp=_componentes.find(c=>c.id===e.target.value);
+  if(comp){
+    if(!document.getElementById('f_marca').value)  document.getElementById('f_marca').value  = comp.marca||'';
+    if(!document.getElementById('f_modelo').value) document.getElementById('f_modelo').value = comp.modelo||'';
+    if(!document.getElementById('f_tipo').value)   document.getElementById('f_tipo').value    = comp.nombre||'';
+  }
+});
+
 async function guardar(){
-  const nombre=document.getElementById('f_nombre').value.trim();
-  if(!nombre){ toast('El nombre es requerido','error'); return; }
+  const cliente_id = document.getElementById('f_cliente').value;
+  const tipo_equipo = document.getElementById('f_tipo').value.trim();
+  if(!cliente_id){ toast('Selecciona un cliente','error'); return; }
+  if(!tipo_equipo){ toast('El tipo de equipo es requerido','error'); return; }
   const payload={
-    codigo:      document.getElementById('f_codigo').value.trim()||null,
-    categoria:   document.getElementById('f_categoria').value,
-    nombre,
-    descripcion: document.getElementById('f_descripcion').value.trim()||null,
-    marca:       document.getElementById('f_marca').value.trim()||null,
-    modelo:      document.getElementById('f_modelo').value.trim()||null,
-    referencia:  document.getElementById('f_referencia').value.trim()||null,
-    unidad:      document.getElementById('f_unidad').value,
-    precio_compra:Number(document.getElementById('f_precio_compra').value)||0,
-    precio_venta: Number(document.getElementById('f_precio_venta').value)||0,
-    stock:        Number(document.getElementById('f_stock').value)||0,
-    stock_minimo: Number(document.getElementById('f_stock_minimo').value)||0,
-    ubicacion:    document.getElementById('f_ubicacion').value.trim()||null,
-    activo:       document.getElementById('f_activo').value==='true',
-    updated_at:   new Date().toISOString(),
+    cliente_id,
+    componente_id:   document.getElementById('f_componente').value||null,
+    tipo_equipo,
+    marca:            document.getElementById('f_marca').value.trim()||null,
+    modelo:           document.getElementById('f_modelo').value.trim()||null,
+    numero_serie:     document.getElementById('f_serie').value.trim()||null,
+    ubicacion:        document.getElementById('f_ubicacion').value.trim()||null,
+    fecha_instalacion:document.getElementById('f_fecha').value||null,
+    factura_url:      document.getElementById('f_factura').value.trim()||null,
+    estado:           document.getElementById('f_estado').value,
+    notas:            document.getElementById('f_notas').value.trim()||null,
+    updated_at:       new Date().toISOString(),
   };
   let error;
   if(_editId){
-    ({error}=await db.from('componentes').update(payload).eq('id',_editId));
+    ({error}=await db.from('equipos_cliente').update(payload).eq('id',_editId));
   } else {
-    ({error}=await db.from('componentes').insert(payload));
+    ({error}=await db.from('equipos_cliente').insert(payload));
   }
   if(error){ toast('Error: '+error.message,'error'); return; }
-  toast((_editId?'Actualizado':'Creado')+': '+nombre,'success');
+  toast((_editId?'Actualizado':'Creado')+': '+tipo_equipo,'success');
   document.getElementById('modalOverlay').classList.remove('open');
   await cargar();
-  renderCatTabs();
+  renderEstadoTabs();
 }
 
 async function eliminar(){
-  if(!_editId||!confirm('¿Eliminar este componente?')) return;
-  const {error}=await db.from('componentes').delete().eq('id',_editId);
+  if(!_editId||!confirm('¿Eliminar este equipo del inventario?')) return;
+  const {error}=await db.from('equipos_cliente').delete().eq('id',_editId);
   if(error){ toast('Error: '+error.message,'error'); return; }
-  toast('Componente eliminado','success');
+  toast('Equipo eliminado','success');
   document.getElementById('modalOverlay').classList.remove('open');
   await cargar();
-  renderCatTabs();
+  renderEstadoTabs();
+}
+
+// Prepara los datos del equipo para crear una orden en dashboard.html.
+// La precarga automatica via URL queda pendiente (issue #9);
+// por ahora se copian los datos clave al portapapeles para pegarlos en "Nueva Orden".
+async function crearOrdenDesdeEquipo(id){
+  const e=_equipos.find(x=>x.id===id);
+  if(!e) return;
+  const empresa = e.clientes?.empresa||'';
+  const compNombre = e.componentes?.nombre||'';
+  const resumen =
+    'Empresa: '+empresa+'\n'+
+    'Equipo: '+e.tipo_equipo+(e.marca?' '+e.marca:'')+(e.modelo?' '+e.modelo:'')+'\n'+
+    (e.numero_serie?'N/S: '+e.numero_serie+'\n':'')+
+    (e.ubicacion?'Ubicacion: '+e.ubicacion+'\n':'')+
+    (compNombre?'Componente catalogo: '+compNombre+'\n':'');
+  try{
+    await navigator.clipboard.writeText(resumen);
+    toast('Datos del equipo copiados — pega en "Nueva Orden" en Ordenes','success');
+  }catch(_e){
+    toast('Equipo: '+e.tipo_equipo+' — '+empresa,'info');
+  }
+  setTimeout(()=>{ window.location.href='dashboard.html'; }, 900);
 }
 
 function setupEvents(){
@@ -419,9 +435,8 @@ function setupEvents(){
   document.getElementById('btnCancelar').addEventListener('click',()=>document.getElementById('modalOverlay').classList.remove('open'));
   document.getElementById('modalOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)document.getElementById('modalOverlay').classList.remove('open');});
   document.getElementById('searchInput').addEventListener('input',renderGrid);
-  document.getElementById('filterStock').addEventListener('change',renderGrid);
+  document.getElementById('filterCliente').addEventListener('change',renderGrid);
   document.getElementById('btnLogout')?.addEventListener('click',async()=>{await supabase.auth.signOut();window.location.href='../login.html';});
-  // Hamburger
   const btn=document.getElementById('btnHamburger');
   const sidebar=document.querySelector('.sidebar');
   const overlay=document.getElementById('sidebarOverlay');

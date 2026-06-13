@@ -177,3 +177,56 @@ alter table public.clientes add constraint uq_clientes_usuario unique (usuario_i
 alter function public.get_rol() set search_path = public;
 alter function public.get_cliente_id() set search_path = public;
 alter function public.get_tecnico_id() set search_path = public;
+
+-- ════════════════════════════════════════════════════════════
+-- Issue #8: Inventario de equipos por cliente (2026-06-12)
+-- ════════════════════════════════════════════════════════════
+create table if not exists public.equipos_cliente (
+  id              uuid primary key default gen_random_uuid(),
+  cliente_id      uuid not null references public.clientes(id) on delete cascade,
+  componente_id   uuid references public.componentes(id),
+  tipo_equipo     text not null,
+  marca           text,
+  modelo          text,
+  numero_serie    text,
+  ubicacion       text,
+  factura_url     text,
+  fecha_instalacion date,
+  estado          text not null default 'activo' check (
+                    estado in ('activo','en_reparacion','retirado','garantia')
+                  ),
+  notas           text,
+  created_at      timestamptz default now(),
+  updated_at      timestamptz default now()
+);
+
+create index if not exists idx_equipos_cliente_cliente on public.equipos_cliente(cliente_id);
+create index if not exists idx_equipos_cliente_componente on public.equipos_cliente(componente_id);
+
+alter table public.equipos_cliente enable row level security;
+
+create policy "equipos_cliente_select" on public.equipos_cliente
+  for select using (
+    public.get_rol() = 'admin'
+    or (public.get_rol() = 'cliente' and cliente_id = public.get_cliente_id())
+    or (public.get_rol() = 'tecnico' and exists (
+          select 1 from public.ordenes o
+          where o.equipo_id = equipos_cliente.id
+            and o.tecnico_id = public.get_tecnico_id()
+        ))
+  );
+
+create policy "equipos_cliente_insert" on public.equipos_cliente
+  for insert with check (public.get_rol() = 'admin');
+
+create policy "equipos_cliente_update" on public.equipos_cliente
+  for update using (public.get_rol() = 'admin');
+
+create policy "equipos_cliente_delete" on public.equipos_cliente
+  for delete using (public.get_rol() = 'admin');
+
+-- ordenes.equipo_id: vincula una orden a un equipo del inventario (opcional)
+alter table public.ordenes
+  add column if not exists equipo_id uuid references public.equipos_cliente(id);
+
+create index if not exists idx_ordenes_equipo on public.ordenes(equipo_id);
