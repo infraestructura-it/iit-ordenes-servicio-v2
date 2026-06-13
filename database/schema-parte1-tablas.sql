@@ -166,3 +166,14 @@ create table if not exists public.notificaciones (
   leida       boolean default false,
   created_at  timestamptz default now()
 );
+
+-- ════════════════════════════════════════════════════════════
+-- Constraints y hardening agregados 2026-06-12 (issues #1 y #5)
+-- ════════════════════════════════════════════════════════════
+alter table public.protocolo_ejecucion
+  add constraint uq_ejecucion_orden_protocolo unique (orden_id, protocolo_id);
+alter table public.tecnicos add constraint uq_tecnicos_usuario unique (usuario_id);
+alter table public.clientes add constraint uq_clientes_usuario unique (usuario_id);
+alter function public.get_rol() set search_path = public;
+alter function public.get_cliente_id() set search_path = public;
+alter function public.get_tecnico_id() set search_path = public;

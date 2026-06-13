@@ -530,8 +530,9 @@ async function loadProtocolo() {
     const {data} = await db.from('protocolo_ejecucion')
       .select('*, protocolos(id,nombre,equipo_tipo,protocolo_campos(*))')
       .eq('orden_id', _orden.id)
-      .single();
-    if(data) { ejecucion = data; protocolo = data.protocolos; }
+      .order('created_at',{ascending:false})
+      .limit(1);
+    if(data?.[0]) { ejecucion = data[0]; protocolo = data[0].protocolos; }
   }
 
   if(!protocolo) {
@@ -807,6 +808,17 @@ async function guardarProtocolo(protocolo, campos, ejecucion) {
       if(valor) { camposCompletos++; respuestas.push({campo_id:campo.id,valor,tipo:campo.tipo}); }
     }
 
+    // Asegurar _tecnico antes de guardar (nunca insertar tecnico_id null — RLS lo rechaza)
+    if(!_tecnico) {
+      const {data:tecs} = await db.from('tecnicos').select('id').eq('usuario_id', _user.id).limit(1);
+      _tecnico = tecs?.[0] || null;
+      if(!_tecnico) {
+        toast('Tu usuario no esta registrado como tecnico. Contacta al administrador.','error');
+        btn.classList.remove('loading'); btn.disabled=false;
+        return;
+      }
+    }
+
     // Crear o actualizar ejecución
     let ejecucionId = _ejecucionId;
     if(!ejecucionId) {
@@ -814,7 +826,7 @@ async function guardarProtocolo(protocolo, campos, ejecucion) {
       const {data:ej, error} = await db.from('protocolo_ejecucion').upsert({
         orden_id:    _orden.id,
         protocolo_id:protocolo.id,
-        tecnico_id:  _tecnico?.id||null,
+        tecnico_id:  _tecnico.id,
         status:      'en_progreso',
         fecha_inicio:new Date().toISOString()
       }, {onConflict:'orden_id,protocolo_id', ignoreDuplicates:false})
