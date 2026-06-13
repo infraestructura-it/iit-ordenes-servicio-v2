@@ -121,3 +121,14 @@ const { data } = await db.from('protocolo_respuestas')
    ```
 3. GitHub Pages publica `main` automáticamente (~1 min).
 4. Diagnóstico RLS: probar la query como admin primero; si funciona como admin pero no como técnico/cliente, es política o función helper, no el código.
+
+## Norma: trazabilidad de cambios
+
+Todo bug, mejora o decisión de diseño no trivial sigue este ciclo:
+
+1. **Issue en GitHub** (`gh issue create --title "..." --label "bug|enhancement|chore"`) — describe el problema antes de tocar código.
+2. **Cambio** — SQL en Supabase y/o frontend, probado.
+3. **Commit con `closes #N`** — cierra el issue automáticamente al hacer push.
+4. **`CLAUDE.md`** — se documenta en la sección correspondiente (qué se diagnosticó, qué se cambió, por qué, decisiones tomadas). Esto reemplaza la necesidad de releer el historial de commits o issues cerrados para entender el estado del proyecto.
+
+`gh issue list` debe estar en `0 open` al cerrar una sesión de trabajo, o con issues nuevos creados explícitamente para lo que quedó pendiente — nunca cambios "sueltos" sin tiquete ni documentación.
