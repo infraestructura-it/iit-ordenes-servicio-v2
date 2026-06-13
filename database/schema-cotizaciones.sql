@@ -87,20 +87,53 @@ alter table public.cotizacion_items     enable row level security;
 alter table public.historial_cotizaciones enable row level security;
 
 -- Políticas cotizaciones
-create policy "cotizaciones_select" on public.cotizaciones for select using (true);
-create policy "cotizaciones_insert" on public.cotizaciones for insert with check (auth.role() = 'authenticated');
-create policy "cotizaciones_update" on public.cotizaciones for update using (auth.role() = 'authenticated');
+create policy "cotizaciones_select" on public.cotizaciones
+  for select using (
+    public.get_rol() = 'admin'
+    or (public.get_rol() = 'cliente' and cliente_id = public.get_cliente_id())
+    or (public.get_rol() = 'tecnico' and exists (
+          select 1 from public.ordenes o
+          where o.id = cotizaciones.orden_id
+            and o.tecnico_id = public.get_tecnico_id()
+        ))
+  );
+create policy "cotizaciones_insert" on public.cotizaciones for insert with check (public.get_rol() = 'admin');
+create policy "cotizaciones_update" on public.cotizaciones for update using (public.get_rol() = 'admin');
 create policy "cotizaciones_delete" on public.cotizaciones for delete using (public.get_rol() = 'admin');
 
 -- Políticas items
-create policy "items_select" on public.cotizacion_items for select using (true);
-create policy "items_insert" on public.cotizacion_items for insert with check (auth.role() = 'authenticated');
-create policy "items_update" on public.cotizacion_items for update using (auth.role() = 'authenticated');
-create policy "items_delete" on public.cotizacion_items for delete using (auth.role() = 'authenticated');
+create policy "items_select" on public.cotizacion_items
+  for select using (
+    exists (
+      select 1 from public.cotizaciones c
+      where c.id = cotizacion_items.cotizacion_id
+        and (
+          public.get_rol() = 'admin'
+          or (public.get_rol() = 'cliente' and c.cliente_id = public.get_cliente_id())
+          or (public.get_rol() = 'tecnico' and exists (
+                select 1 from public.ordenes o
+                where o.id = c.orden_id and o.tecnico_id = public.get_tecnico_id()
+              ))
+        )
+    )
+  );
+create policy "items_insert" on public.cotizacion_items for insert with check (public.get_rol() = 'admin');
+create policy "items_update" on public.cotizacion_items for update using (public.get_rol() = 'admin');
+create policy "items_delete" on public.cotizacion_items for delete using (public.get_rol() = 'admin');
 
 -- Políticas historial
-create policy "hist_cot_select" on public.historial_cotizaciones for select using (true);
-create policy "hist_cot_insert" on public.historial_cotizaciones for insert with check (auth.role() = 'authenticated');
+create policy "hist_cot_select" on public.historial_cotizaciones
+  for select using (
+    exists (
+      select 1 from public.cotizaciones c
+      where c.id = historial_cotizaciones.cotizacion_id
+        and (
+          public.get_rol() = 'admin'
+          or (public.get_rol() = 'cliente' and c.cliente_id = public.get_cliente_id())
+        )
+    )
+  );
+create policy "hist_cot_insert" on public.historial_cotizaciones for insert with check (public.get_rol() = 'admin');
 
 -- Función para actualizar updated_at
 create or replace function public.update_cotizacion_timestamp()
