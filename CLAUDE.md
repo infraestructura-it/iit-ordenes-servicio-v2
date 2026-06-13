@@ -96,13 +96,19 @@ const { data } = await db.from('protocolo_respuestas')
 - Commits en español, formato `tipo: descripción` (`feat:`, `fix:`, `docs:`, `sql:`).
 - Identidad visual IIT: fondo `#080b10`, cian `#00d4ff`, verde `#10b981`, púrpura `#7c3aed`; tipografías Syne + Space Mono. Soporte dark/light vía `theme.js`.
 
-## ⚠️ Issues abiertos (sesión 2026-05-03)
+## ✅ Issues resueltos (sesión 2026-06-12)
 
-1. **RLS `protocolo_ejecucion` para técnico:** la política `ejecucion_tecnico` existe pero `get_tecnico_id()` retorna `null` desde el contexto auth del técnico, bloqueando lectura/guardado de sus propias ejecuciones. Workaround actual: traer todos los registros visibles y filtrar en JS (sin `.eq()`). **Hipótesis a verificar:** registros duplicados en `tecnicos` para un mismo `usuario_id` (el `limit 1` puede devolver el id equivocado) o `usuario_id` null en la fila del técnico.
-2. **`protocolo_respuestas` con columnas tipadas:** el código debe mapear cada `tipo` de campo a su columna (`si_no`→`valor_boolean`, `lista`→`valor_opcion`, `rango`/`numero`→`valor_numero`, `fecha_hora`→`valor_fecha`, `foto`/`firma`→`archivo_url`, resto→`valor_texto`). Evaluar migración a columna única `valor jsonb`.
-3. **Políticas laxas pendientes de endurecer:** `cotizaciones_select`, `items_select`, `anexos_select` y `hist_cot_select` usan `using (true)` — cualquier usuario autenticado (y anónimo en select) ve todo. Restringir por rol/cliente cuando se estabilice el flujo.
-4. **PDFs de prueba commiteados** en `admin/` y `tecnico/` (`OS-IIT-*.pdf`, `COT-*.pdf`) — limpiar del repo y agregar `*.pdf` a `.gitignore`.
-5. **Duplicados de técnicos** detectados previamente causando dashboards vacíos — agregar constraint `unique(usuario_id)` en `tecnicos` y `clientes` tras depurar datos.
+1. **RLS `protocolo_ejecucion` para técnico — cerrado (#1, #5).** Diagnóstico: `get_tecnico_id()` y RLS funcionaban correctamente (verificado simulando el JWT del técnico). La causa real era de frontend: `tecnico/orden.html` podía insertar `tecnico_id: null` si `_tecnico` no había cargado, y el `upsert` con `onConflict:'orden_id,protocolo_id'` no tenía constraint que lo respaldara. Fix: guard que recarga `_tecnico` antes de guardar (aborta con mensaje si el usuario no es técnico), constraint `unique(orden_id, protocolo_id)` en `protocolo_ejecucion`, y `unique(usuario_id)` en `tecnicos`/`clientes` para prevenir duplicados futuros. De paso se fijó `search_path = public` en `get_rol()`, `get_cliente_id()`, `get_tecnico_id()` (hardening recomendado por el linter de Supabase).
+
+2. **`protocolo_respuestas` columnas tipadas — cerrado, NO se migra a jsonb.** Decisión de diseño: el mapeo `tipo de campo → columna` (`texto`→`valor_texto`, `numero`/`rango`→`valor_numero`, `si_no`→`valor_boolean`, `lista`→`valor_opcion`, `fecha_hora`→`valor_fecha`, `foto`/`firma`→`archivo_url`) ya está implementado consistentemente en `tecnico/orden.html` (guardado) y `tecnico/protocolo.html` (lectura/render, ~10 sitios). Migrar a `valor jsonb` requeriría reescribir ambos archivos y migrar datos existentes sin beneficio funcional claro — las columnas tipadas son más explícitas para reportes/agregaciones SQL. Se mantiene el esquema actual; este mapeo es la referencia para cualquier código nuevo que toque `protocolo_respuestas`.
+
+3. **RLS laxas (`using(true)`) — cerrado (#3).** `cotizaciones`, `cotizacion_items`, `historial_cotizaciones` y `orden_anexos` ahora filtran por rol: `admin` ve todo; `cliente` solo lo propio (`cliente_id = get_cliente_id()`); `tecnico` solo lo de sus órdenes asignadas (`tecnico_id = get_tecnico_id()` vía join con `ordenes`). `insert`/`update` en cotizaciones e items quedaron restringidos a `admin` (coherente con que el editor vive en `admin/cotizaciones.html`). Una cotización huérfana (`CIT-260513-9714`, sin `cliente_id`) fue vinculada al cliente correcto antes de aplicar el cambio.
+
+4. **PDFs/Excel de prueba — cerrado (#4).** Se removieron del tracking 9 archivos `OS-IIT-*.pdf` / `COT-*.pdf` en `admin/` y `tecnico/` con `git rm --cached`. El `.gitignore` (`*.pdf`, `*.xlsx`, `*.lock`) previene reincidencias.
+
+## ⚠️ Pendiente / a futuro (no urgente)
+
+- **Clientes duplicados de prueba:** existen 3 registros similares ("Cda ecotec Plus", "Cda ecotec Plus Sas", "Cda ecotec Sas") que parecen ser la misma empresa real registrada varias veces. No bloquea nada, pero conviene depurar antes de que crezca el catálogo de clientes.
 
 ## Flujo de trabajo
 
