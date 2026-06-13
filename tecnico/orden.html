@@ -1,17 +1,17 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IIT — Detalle Orden</title>
+<title>IIT â€” Detalle Orden</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{--bg:#080b10;--surface:#0d1117;--surface2:#131820;--border:#1e2a38;--accent:#00d4ff;--accent2:#0077ff;--text:#e8f0f8;--muted:#4a6070;--success:#00e5a0;--error:#ff4560;--warn:#ffb700;}
 
-/* ══════════════════════════════════════════
-   TEMA CLARO — BLANCO PROFESIONAL
-   ══════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   TEMA CLARO â€” BLANCO PROFESIONAL
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 [data-theme="light"] {
   --bg:      #ffffff;
   --surface: #f5f7fa;
@@ -160,7 +160,7 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
 /* STICKY BOTTOM */
 .sticky-bar{position:fixed;bottom:0;left:0;right:0;background:rgba(8,11,16,0.97);border-top:1px solid var(--border);padding:12px 24px;display:flex;gap:10px;justify-content:flex-end;z-index:40;backdrop-filter:blur(10px);}
 
-/* TEMA CLARO — FORMULARIOS LEGIBLES */
+/* TEMA CLARO â€” FORMULARIOS LEGIBLES */
 [data-theme="light"] input,
 [data-theme="light"] select,
 [data-theme="light"] textarea { color: #111827 !important; background: #ffffff; border-color: #d1d5db; }
@@ -182,9 +182,9 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
 [data-theme="light"] .sec-head .sec-title { color: #111827; }
 [data-theme="light"] .field label { color: #374151; }
 
-/* ══════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    RESPONSIVE MOVIL
-   ══════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .hamburger{display:none;background:none;border:none;cursor:pointer;padding:8px;flex-direction:column;gap:5px;}
 .hamburger span{display:block;width:22px;height:2px;background:var(--text);border-radius:2px;transition:all 0.3s;}
 .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:19;backdrop-filter:blur(2px);}
@@ -219,7 +219,7 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
 }
 
 
-/* ── PROTOCOLO INLINE ───────────────────────────────────── */
+/* â”€â”€ PROTOCOLO INLINE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .proto-campo{padding:14px;margin-bottom:10px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;}
 .proto-campo-label{font-size:10px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
 .proto-campo-label .req{color:var(--error);font-size:12px;}
@@ -255,7 +255,7 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
   <span style="font-size:11px;color:var(--accent2);letter-spacing:1.5px;">TECNICO</span>
   <button class="hamburger" id="btnHamburger"><span></span><span></span><span></span></button>
   <div class="topbar-sep"></div>
-  <a href="dashboard.html" class="btn btn-o btn-sm">← MIS ORDENES</a>
+  <a href="dashboard.html" class="btn btn-o btn-sm">â† MIS ORDENES</a>
   <div id="userInfo"></div>
 </div>
 
@@ -264,8 +264,8 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
   <div class="orden-header" id="ordenHeader">
     <div class="oh-left">
       <div class="oh-id" id="ohId">Cargando...</div>
-      <div class="oh-empresa" id="ohEmpresa">—</div>
-      <div class="oh-meta" id="ohMeta">—</div>
+      <div class="oh-empresa" id="ohEmpresa">â€”</div>
+      <div class="oh-meta" id="ohMeta">â€”</div>
     </div>
     <div id="ohBadge"></div>
   </div>
@@ -275,12 +275,12 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
     <div class="sec-head"><div class="sec-num">1</div><div class="sec-title">DATOS DEL SOLICITANTE</div></div>
     <div class="sec-body">
       <div class="dgrid">
-        <div class="df"><div class="dl">NOMBRE</div><div class="dv" id="d_nombre">—</div></div>
-        <div class="df"><div class="dl">EMPRESA</div><div class="dv" id="d_empresa">—</div></div>
-        <div class="df"><div class="dl">TELEFONO</div><div class="dv" id="d_telefono">—</div></div>
-        <div class="df"><div class="dl">CORREO</div><div class="dv" id="d_correo">—</div></div>
-        <div class="df"><div class="dl">CIUDAD</div><div class="dv" id="d_ciudad">—</div></div>
-        <div class="df"><div class="dl">DIRECCION</div><div class="dv" id="d_direccion">—</div></div>
+        <div class="df"><div class="dl">NOMBRE</div><div class="dv" id="d_nombre">â€”</div></div>
+        <div class="df"><div class="dl">EMPRESA</div><div class="dv" id="d_empresa">â€”</div></div>
+        <div class="df"><div class="dl">TELEFONO</div><div class="dv" id="d_telefono">â€”</div></div>
+        <div class="df"><div class="dl">CORREO</div><div class="dv" id="d_correo">â€”</div></div>
+        <div class="df"><div class="dl">CIUDAD</div><div class="dv" id="d_ciudad">â€”</div></div>
+        <div class="df"><div class="dl">DIRECCION</div><div class="dv" id="d_direccion">â€”</div></div>
       </div>
     </div>
   </div>
@@ -290,13 +290,13 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
     <div class="sec-head"><div class="sec-num">2</div><div class="sec-title">DESCRIPCION DEL SERVICIO</div></div>
     <div class="sec-body">
       <div class="dgrid" style="margin-bottom:14px;">
-        <div class="df"><div class="dl">TIPO</div><div class="dv" id="d_tipo">—</div></div>
-        <div class="df"><div class="dl">AREA</div><div class="dv" id="d_area">—</div></div>
-        <div class="df"><div class="dl">PRIORIDAD</div><div class="dv" id="d_prioridad">—</div></div>
-        <div class="df"><div class="dl">FECHA REQUERIDA</div><div class="dv" id="d_fecha">—</div></div>
+        <div class="df"><div class="dl">TIPO</div><div class="dv" id="d_tipo">â€”</div></div>
+        <div class="df"><div class="dl">AREA</div><div class="dv" id="d_area">â€”</div></div>
+        <div class="df"><div class="dl">PRIORIDAD</div><div class="dv" id="d_prioridad">â€”</div></div>
+        <div class="df"><div class="dl">FECHA REQUERIDA</div><div class="dv" id="d_fecha">â€”</div></div>
       </div>
       <div class="dl" style="margin-bottom:8px;">SINTOMA / FALLA</div>
-      <div class="sintoma-box" id="d_sintoma">—</div>
+      <div class="sintoma-box" id="d_sintoma">â€”</div>
       <div style="margin-top:12px;">
         <div class="dl" style="margin-bottom:6px;">EQUIPOS REPORTADOS</div>
         <div class="eq-tags" id="d_equipos"></div>
@@ -322,7 +322,7 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
   <div class="sec" id="secProtocolo">
     <div class="sec-head">
       <div class="sec-num">4</div>
-      <div class="sec-title">PROTOCOLO TÉCNICO</div>
+      <div class="sec-title">PROTOCOLO TÃ‰CNICO</div>
       <div id="protoStatusBadge" style="margin-left:auto;"></div>
     </div>
     <div class="sec-body" id="protoBody">
@@ -364,7 +364,7 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
 
 <!-- STICKY BAR -->
 <div class="sticky-bar">
-  <a href="dashboard.html" class="btn btn-o btn-sm">← VOLVER</a>
+  <a href="dashboard.html" class="btn btn-o btn-sm">â† VOLVER</a>
   <button class="btn btn-o btn-sm" id="btnPdfOrden" style="border-color:rgba(0,229,160,0.3);color:var(--success);">&#8659; PDF</button>
   <button class="btn btn-warn btn-sm" id="btnProtocolo" style="display:none;">&#128295; EJECUTAR PROTOCOLO</button>
 </div>
@@ -376,7 +376,7 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
 <script>
 let _user = null, _tecnico = null, _orden = null;
 
-// ── FLUJO DE ESTADOS PERMITIDOS ───────────────────────────────
+// â”€â”€ FLUJO DE ESTADOS PERMITIDOS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const FLUJO_TECNICO = {
   asignada:   ['en_proceso'],
   en_proceso: ['en_pausa','cerrada'],
@@ -441,23 +441,23 @@ async function loadOrden() {
   if (error || !data) { window.location.href = 'dashboard.html'; return; }
   _orden = data;
 
-  document.getElementById('ohId').textContent = data.orden_id || '—';
-  document.getElementById('ohEmpresa').textContent = data.empresa || '—';
-  document.getElementById('ohMeta').textContent = (data.tipo_servicio||'') + ' · ' + (data.ciudad||'');
+  document.getElementById('ohId').textContent = data.orden_id || 'â€”';
+  document.getElementById('ohEmpresa').textContent = data.empresa || 'â€”';
+  document.getElementById('ohMeta').textContent = (data.tipo_servicio||'') + ' Â· ' + (data.ciudad||'');
   const badge = document.getElementById('ohBadge');
   badge.innerHTML = '<span class="badge b-' + (data.status||'asignada') + '">' + (data.status||'asignada').replace('_',' ').toUpperCase() + '</span>';
 
   // Datos
-  document.getElementById('d_nombre').textContent    = data.nombre || '—';
-  document.getElementById('d_empresa').textContent   = data.empresa || '—';
-  document.getElementById('d_telefono').textContent  = data.telefono || '—';
-  document.getElementById('d_correo').textContent    = data.correo || '—';
-  document.getElementById('d_ciudad').textContent    = data.ciudad || '—';
-  document.getElementById('d_direccion').textContent = data.direccion || '—';
-  document.getElementById('d_tipo').textContent      = data.tipo_servicio || '—';
-  document.getElementById('d_area').textContent      = data.area || '—';
-  document.getElementById('d_fecha').textContent     = data.fecha_requerida || '—';
-  document.getElementById('d_sintoma').textContent   = data.sintoma || '—';
+  document.getElementById('d_nombre').textContent    = data.nombre || 'â€”';
+  document.getElementById('d_empresa').textContent   = data.empresa || 'â€”';
+  document.getElementById('d_telefono').textContent  = data.telefono || 'â€”';
+  document.getElementById('d_correo').textContent    = data.correo || 'â€”';
+  document.getElementById('d_ciudad').textContent    = data.ciudad || 'â€”';
+  document.getElementById('d_direccion').textContent = data.direccion || 'â€”';
+  document.getElementById('d_tipo').textContent      = data.tipo_servicio || 'â€”';
+  document.getElementById('d_area').textContent      = data.area || 'â€”';
+  document.getElementById('d_fecha').textContent     = data.fecha_requerida || 'â€”';
+  document.getElementById('d_sintoma').textContent   = data.sintoma || 'â€”';
 
   const priEl = document.getElementById('d_prioridad');
   priEl.innerHTML = '<span class="pri-badge pri-' + (data.prioridad||'media') + '">' + (data.prioridad||'media').toUpperCase() + '</span>';
@@ -497,13 +497,13 @@ async function loadHistorial() {
   el.innerHTML = data.map(h => '<div class="hist-item">' +
     '<div class="hist-fecha">' + formatFechaCorta(h.created_at) + '</div>' +
     '<div class="hist-cambio"><strong>' + h.campo_modificado + '</strong>: ' +
-    '<span style="color:var(--error);">' + (h.valor_anterior||'—') + '</span> &rarr; ' +
-    '<span style="color:var(--success);">' + (h.valor_nuevo||'—') + '</span>' +
-    ' <span style="color:var(--muted);"> — ' + (h.usuarios?.nombre||'—') + '</span></div>' +
+    '<span style="color:var(--error);">' + (h.valor_anterior||'â€”') + '</span> &rarr; ' +
+    '<span style="color:var(--success);">' + (h.valor_nuevo||'â€”') + '</span>' +
+    ' <span style="color:var(--muted);"> â€” ' + (h.usuarios?.nombre||'â€”') + '</span></div>' +
     '</div>').join('');
 }
 
-// ── PROTOCOLO INLINE ─────────────────────────────────────────
+// â”€â”€ PROTOCOLO INLINE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 let _ejecucionId = null;
 let _firmasCanvas = {};
 let _fotosData = {};
@@ -548,18 +548,18 @@ async function loadProtocolo() {
     '<div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(0,119,255,0.05);border:1px solid rgba(0,119,255,0.15);border-radius:8px;">' +
       '<div style="flex:1;">' +
         '<div style="font-family:Syne,sans-serif;font-size:15px;font-weight:700;color:var(--text);">'+protocolo.nombre+'</div>' +
-        '<div style="font-size:11px;color:var(--muted);">'+(protocolo.equipo_tipo||'')+(protocolo.descripcion?' · '+protocolo.descripcion:'')+'</div>' +
+        '<div style="font-size:11px;color:var(--muted);">'+(protocolo.equipo_tipo||'')+(protocolo.descripcion?' Â· '+protocolo.descripcion:'')+'</div>' +
       '</div>' +
       '<div style="font-size:11px;font-weight:700;color:'+statusColor+';">'+(ejecucion?ejecucion.status.replace(/_/g,' ').toUpperCase():'PENDIENTE')+'</div>' +
     '</div>' +
-    '<div style="font-size:12px;color:var(--muted);margin-top:8px;">'+campos.length+' campos · Completa todos los campos y guarda al finalizar.</div>';
+    '<div style="font-size:12px;color:var(--muted);margin-top:8px;">'+campos.length+' campos Â· Completa todos los campos y guarda al finalizar.</div>';
 
   // Mostrar campos
   const camposWrap = document.getElementById('protoCamposWrap');
   const camposList = document.getElementById('protoCamposList');
   camposWrap.style.display = 'block';
 
-  // Cargar respuestas existentes si hay ejecución
+  // Cargar respuestas existentes si hay ejecuciÃ³n
   let respuestas = {};
   if(ejecucion) {
     _ejecucionId = ejecucion.id;
@@ -583,7 +583,7 @@ async function loadProtocolo() {
     document.getElementById('btnGuardarProto').style.display = 'none';
   }
 
-  if(btn) btn.style.display = 'none'; // Ocultar botón viejo
+  if(btn) btn.style.display = 'none'; // Ocultar botÃ³n viejo
 }
 
 function renderCampoProto(campo, valorActual) {
@@ -606,15 +606,15 @@ function renderCampoProto(campo, valorActual) {
 
     case 'si_no':
       input = '<div class="sino-btns">' +
-        '<button class="sino-btn proto-sino'+(valorActual==='si'?' active-si':'')+'" data-id="'+campo.id+'" data-val="si">✓ SÍ</button>' +
-        '<button class="sino-btn proto-sino'+(valorActual==='no'?' active-no':'')+'" data-id="'+campo.id+'" data-val="no">✗ NO</button>' +
+        '<button class="sino-btn proto-sino'+(valorActual==='si'?' active-si':'')+'" data-id="'+campo.id+'" data-val="si">âœ“ SÃ</button>' +
+        '<button class="sino-btn proto-sino'+(valorActual==='no'?' active-no':'')+'" data-id="'+campo.id+'" data-val="no">âœ— NO</button>' +
       '</div>';
       break;
 
     case 'lista':
       const opciones = (campo.opciones||[]);
       input = '<select class="proto-select proto-input-field" data-id="'+campo.id+'" data-tipo="lista">' +
-        '<option value="">— Seleccionar —</option>' +
+        '<option value="">â€” Seleccionar â€”</option>' +
         opciones.map(op=>'<option value="'+op+'"'+(valorActual===op?' selected':'')+'>'+op+'</option>').join('') +
       '</select>';
       break;
@@ -632,26 +632,26 @@ function renderCampoProto(campo, valorActual) {
     case 'foto':
       input = '<div class="proto-foto-wrap">' +
         '<label style="display:flex;align-items:center;gap:8px;padding:12px;background:rgba(0,119,255,0.05);border:2px dashed rgba(0,119,255,0.2);border-radius:8px;cursor:pointer;">' +
-          '<span style="font-size:24px;">📷</span>' +
+          '<span style="font-size:24px;">ðŸ“·</span>' +
           '<div>' +
             '<div style="font-size:13px;color:var(--accent2);">Tomar foto o seleccionar imagen</div>' +
-            '<div style="font-size:11px;color:var(--muted);">JPG, PNG — máx. 5MB</div>' +
+            '<div style="font-size:11px;color:var(--muted);">JPG, PNG â€” mÃ¡x. 5MB</div>' +
           '</div>' +
           '<input type="file" accept="image/*" capture="environment" class="proto-foto-input" data-id="'+campo.id+'" style="display:none;">' +
         '</label>' +
         (valorActual?'<img src="'+valorActual+'" class="proto-foto-preview visible" id="foto-prev-'+campo.id+'">':
           '<img class="proto-foto-preview" id="foto-prev-'+campo.id+'">') +
-        (valorActual?'<div style="font-size:11px;color:var(--success);">✓ Foto cargada</div>':'') +
+        (valorActual?'<div style="font-size:11px;color:var(--success);">âœ“ Foto cargada</div>':'') +
       '</div>';
       break;
 
     case 'firma':
       input = '<div class="proto-firma-wrap" id="firma-wrap-'+campo.id+'">' +
         '<canvas id="firma-canvas-'+campo.id+'" width="800" height="200"></canvas>' +
-        (valorActual?'':'<div class="proto-firma-ph" id="firma-ph-'+campo.id+'">✍ Firma aquí con el dedo o mouse</div>') +
+        (valorActual?'':'<div class="proto-firma-ph" id="firma-ph-'+campo.id+'">âœ Firma aquÃ­ con el dedo o mouse</div>') +
       '</div>' +
-      '<button class="btn-clear-firma" data-firma-id="'+campo.id+'">✕ Limpiar firma</button>' +
-      (valorActual?'<div style="font-size:11px;color:var(--success);margin-top:4px;">✓ Firma registrada</div>':'');
+      '<button class="btn-clear-firma" data-firma-id="'+campo.id+'">âœ• Limpiar firma</button>' +
+      (valorActual?'<div style="font-size:11px;color:var(--success);margin-top:4px;">âœ“ Firma registrada</div>':'');
       if(valorActual) {
         // Si ya tiene firma, mostrarla como imagen
         input = '<img src="'+valorActual+'" style="max-width:100%;border-radius:8px;border:1px solid var(--border);background:white;padding:8px;" alt="Firma">';
@@ -808,7 +808,7 @@ async function guardarProtocolo(protocolo, campos, ejecucion) {
       if(valor) { camposCompletos++; respuestas.push({campo_id:campo.id,valor,tipo:campo.tipo}); }
     }
 
-    // Asegurar _tecnico antes de guardar (nunca insertar tecnico_id null — RLS lo rechaza)
+    // Asegurar _tecnico antes de guardar (nunca insertar tecnico_id null -- RLS lo rechaza)
     if(!_tecnico) {
       const {data:tecs} = await db.from('tecnicos').select('id').eq('usuario_id', _user.id).limit(1);
       _tecnico = tecs?.[0] || null;
@@ -819,7 +819,7 @@ async function guardarProtocolo(protocolo, campos, ejecucion) {
       }
     }
 
-    // Crear o actualizar ejecución
+    // Crear o actualizar ejecuciÃ³n
     let ejecucionId = _ejecucionId;
     if(!ejecucionId) {
       // Usar upsert para evitar 409 si ya existe
@@ -832,7 +832,7 @@ async function guardarProtocolo(protocolo, campos, ejecucion) {
       }, {onConflict:'orden_id,protocolo_id', ignoreDuplicates:false})
         .select('id').single();
       if(error) {
-        // Si aún falla, buscar con RLS desactivado usando maybeSingle
+        // Si aÃºn falla, buscar con RLS desactivado usando maybeSingle
         console.warn('upsert error:', error.message);
         // Intentar obtener el ID existente via orden_id
         const {data:existing} = await db.from('protocolo_ejecucion')
@@ -848,14 +848,14 @@ async function guardarProtocolo(protocolo, campos, ejecucion) {
       _ejecucionId = ejecucionId;
     }
 
-    // Guardar respuestas — usar columnas correctas del schema
+    // Guardar respuestas â€” usar columnas correctas del schema
     if(respuestas.length) {
       for(const r of respuestas) {
         // Eliminar respuesta anterior
         await db.from('protocolo_respuestas')
           .delete().eq('ejecucion_id', ejecucionId).eq('campo_id', r.campo_id);
 
-        // Construir payload según tipo
+        // Construir payload segÃºn tipo
         const payload = { ejecucion_id: ejecucionId, campo_id: r.campo_id, tipo: r.tipo, valor: r.valor };
         switch(r.tipo) {
           case 'texto':       payload.valor_texto   = r.valor; break;
@@ -873,7 +873,7 @@ async function guardarProtocolo(protocolo, campos, ejecucion) {
       }
     }
 
-    // Si todos los campos requeridos completados → marcar como completado
+    // Si todos los campos requeridos completados â†’ marcar como completado
     const requeridosCompletos = campos.filter(c=>c.requerido).every(c=>
       respuestas.find(r=>r.campo_id===c.id)
     );
@@ -881,10 +881,10 @@ async function guardarProtocolo(protocolo, campos, ejecucion) {
       await db.from('protocolo_ejecucion').update({
         status:'completado', fecha_fin:new Date().toISOString()
       }).eq('id',ejecucionId);
-      toast('✓ Protocolo completado — '+camposCompletos+' campos guardados','success');
+      toast('âœ“ Protocolo completado â€” '+camposCompletos+' campos guardados','success');
     } else {
       await db.from('protocolo_ejecucion').update({status:'en_progreso'}).eq('id',ejecucionId);
-      toast('✓ Progreso guardado — '+camposCompletos+' campos','success');
+      toast('âœ“ Progreso guardado â€” '+camposCompletos+' campos','success');
     }
 
     await loadProtocolo();
@@ -951,7 +951,7 @@ function toast(msg, tipo='success') {
   t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3500);
 }
 
-// ── CARGAR LOGO PARA PDF ──────────────────────────────────────
+// â”€â”€ CARGAR LOGO PARA PDF â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function cargarLogoPDF() {
   return new Promise((res) => {
     const img = new Image(); img.crossOrigin = 'anonymous';
@@ -967,7 +967,7 @@ async function cargarLogoPDF() {
 }
 
 
-// ── MENU HAMBURGUESA ──────────────────────────────────────────
+// â”€â”€ MENU HAMBURGUESA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 (function(){
   const btn=document.getElementById('btnHamburger');
   const sidebar=document.querySelector('.sidebar');
